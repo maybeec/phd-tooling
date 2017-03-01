@@ -143,10 +143,6 @@ public class Node<T> {
         return this.data;
     }
 
-    /**
-     * {@inheritDoc}
-     * @author fkreis (06.05.2016)
-     */
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();

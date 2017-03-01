@@ -50,54 +50,23 @@
         </configuration>
         <executions>
           <execution>
-            <id>antlr4-c11-parser</id>
             <goals>
               <goal>antlr4</goal>
             </goals>
             <configuration>
+              <grammars>ANTLRv4Parser.g4</grammars>
               <includes>
-                <include>C11.g4</include>
+                <include>ANTLRv4Lexer.g4</include>
+                <include>ANTLRv4Parser.g4</include>
               </includes>
-              <listener>false</listener>
               <arguments>
                 <argument>-package</argument>
-                <argument>io.github.maybeec.parsers.c11</argument>
+                <argument>org.antlr.parser.antlr4</argument>
               </arguments>
-              <outputDirectory>${project.build.directory}/generated-sources/antlr4/io/github/maybeec/parsers/c11</outputDirectory>
+              <outputDirectory>${project.build.directory}/generated-sources/antlr4/org/antlr/parser/antlr4</outputDirectory>
+              <listener>true</listener>
             </configuration>
           </execution>
-          <!-- <execution>
-            <id>antlr4-cobol85-parser</id>
-            <goals>
-              <goal>antlr4</goal>
-            </goals>
-            <configuration>
-              <includes>
-                <include>Cobol85.g4</include>
-              </includes>
-              <arguments>
-                <argument>-package</argument>
-                <argument>io.github.maybeec.parsers.cobol85</argument>
-              </arguments>
-              <outputDirectory>${project.build.directory}/generated-sources/antlr4/io/github/maybeec/parsers/cobol85</outputDirectory>
-            </configuration>
-          </execution>
-          <execution>
-            <id>antlr4-fortran77-parser</id>
-            <goals>
-              <goal>antlr4</goal>
-            </goals>
-            <configuration>
-              <includes>
-                <include>fortran77.g4</include>
-              </includes>
-              <arguments>
-                <argument>-package</argument>
-                <argument>io.github.maybeec.parsers.fortran77</argument>
-              </arguments>
-              <outputDirectory>${project.build.directory}/generated-sources/antlr4/io/github/maybeec/parsers/fortran77</outputDirectory>
-            </configuration>
-          </execution> -->
           <execution>
             <id>antlr4-java7-parser</id>
             <goals>
@@ -110,9 +79,9 @@
               <listener>false</listener>
               <arguments>
                 <argument>-package</argument>
-                <argument>io.github.maybeec.parsers.java7</argument>
+                <argument>org.antlr.parser.java7</argument>
               </arguments>
-              <outputDirectory>${project.build.directory}/generated-sources/antlr4/io/github/maybeec/parsers/java7</outputDirectory>
+              <outputDirectory>${project.build.directory}/generated-sources/antlr4/org/antlr/parser/java7</outputDirectory>
             </configuration>
           </execution>
           <execution>
@@ -127,27 +96,11 @@
               <listener>false</listener>
               <arguments>
                 <argument>-package</argument>
-                <argument>io.github.maybeec.parsers.java8</argument>
+                <argument>org.antlr.parser.java8</argument>
               </arguments>
-              <outputDirectory>${project.build.directory}/generated-sources/antlr4/io/github/maybeec/parsers/java8</outputDirectory>
+              <outputDirectory>${project.build.directory}/generated-sources/antlr4/org/antlr/parser/java8</outputDirectory>
             </configuration>
           </execution>
-          <!-- <execution>
-            <id>antlr4-javaexcerpt-parser</id>
-            <goals>
-              <goal>antlr4</goal>
-            </goals>
-            <configuration>
-              <includes>
-                <include>JavaExcerpt.g4</include>
-              </includes>
-              <arguments>
-                <argument>-package</argument>
-                <argument>io.github.maybeec.parsers.javaexcerpt</argument>
-              </arguments>
-              <outputDirectory>${project.build.directory}/generated-sources/antlr4/io/github/maybeec/parsers/javaexcerpt</outputDirectory>
-            </configuration>
-          </execution> -->
         </executions>
       </plugin>
 

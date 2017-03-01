@@ -99,7 +99,8 @@ public class Tree<T> {
     /**
      * Finds the next Node that has not already been visited.
      *
-     * @return The next Node that has not already been visited. Is there is none null is returned.
+     * @return The next Node that has not already been visited. Returns null if no more not visited nodes
+     *         exist.
      * @author fkreis (05.05.2016)
      */
     public Node<T> getNextNonVisitedNode() {
