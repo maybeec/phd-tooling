@@ -164,7 +164,9 @@ public class ObjectLanguageListener extends ANTLRv4ParserBaseListener {
                 break;
             case CUSTOM:
                 // add only custom selected rules
-                System.out.println(tactic + " not implemented yet!");
+                if (tactic.containsToken(lexerRuleName)) {
+                    selectedRules.add(lexerRuleName);
+                }
                 break;
             case INTELLIGENT:
                 // add only lexer rules which are variable (e.g. identifier in java)
@@ -191,7 +193,9 @@ public class ObjectLanguageListener extends ANTLRv4ParserBaseListener {
             selectedRules.add(ruleName);
             break;
         case CUSTOM:
-            System.out.println(tactic + " not implemented yet!");
+            if (tactic.containsToken(ruleName)) {
+                selectedRules.add(ruleName);
+            }
             break;
         case INTELLIGENT:
             if (containsSequence(ctx)) {

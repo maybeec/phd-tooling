@@ -1,33 +1,56 @@
 package io.github.maybeec.antlr4.generator;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * A enum of all available grammar transformation strategies
- *
- * @author fkreis (28.04.2016)
  */
 public enum Tactics {
     /**
      *
      */
-    ALL,
+    ALL(null),
 
     /**
      *
      */
-    ONLYPARSER,
+    ONLYPARSER(null),
 
     /**
      *
      */
-    ONLYTOKEN,
+    ONLYTOKEN(null),
 
     /**
      *
      */
-    INTELLIGENT,
+    INTELLIGENT(null),
 
     /**
      *
      */
-    CUSTOM
+    CUSTOM(new HashSet<>());
+
+    private Set<String> tokenNames;
+
+    private Tactics(Set<String> tokenNames) {
+        this.tokenNames = tokenNames;
+    }
+
+    public void addToken(String tokenName) {
+        if (tokenNames != null) {
+            tokenNames.add(tokenName);
+        }
+    }
+
+    public void addTokens(Set<String> tokenNames) {
+        if (this.tokenNames != null) {
+            this.tokenNames.addAll(tokenNames);
+        }
+    }
+
+    public boolean containsToken(String tokenName) {
+        return tokenNames != null && tokenNames.contains(tokenName);
+    }
 }
