@@ -1,9 +1,9 @@
 grammar SimpleFreeMarker;
 
-PlaceHolder: '${' .*? '}';
+PlaceHolder: '${' ~'}'+? '}';
 
-if: '<#if' .*? '>' body ('<#elseif' .*? '>' body)* '</#if>';
+if: '<#if' ~'>'+? '>' body ('<#elseif' ~'>'+? '>' body)* '</#if>';
 
-ifElse: '<#if' .*? '>' body ('<#elseif' .*? '>' body )* '<#else>' body '</#if>';
+ifElse: '<#if' ~'>'+? '>' body ('<#elseif' ~'>'+? '>' body )* '<#else>' body '</#if>';
 
-loop: '<#list' .*? 'as' .*? '>' body '</#list>';
+loop: '<#list' .+? 'as' ~'>'+? '>' body '</#list>';
