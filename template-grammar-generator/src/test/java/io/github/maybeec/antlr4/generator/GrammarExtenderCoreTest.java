@@ -15,7 +15,7 @@ public class GrammarExtenderCoreTest {
         String placeHolderName = "PlaceHolder";
         String uniqueStart = "fm_";
         String targetPackage = "io.github.maybeec.antlr4.templateparser.java8";
-        Tactics customTactic = Tactics.INTELLIGENT;
+        Tactics customTactic = Tactics.ONLYTOKEN;
         HashSet<String> tokenNames = new HashSet<>();
         tokenNames.add("literal");
         tokenNames.add("type");

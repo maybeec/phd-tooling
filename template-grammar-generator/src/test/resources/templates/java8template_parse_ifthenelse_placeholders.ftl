@@ -5,15 +5,15 @@ public class TestClass{
   private int i;
 
   <#if x == 1>
-    private int i1; // = ${value};
+    private int = ${value};
   <#elseif x == 2>
-    private int i2; // = ${class}.${"another" + method};
+    private int = ${class}.${"another" + method};
   <#else>
-    private int ix;
+    ${acb}
   </#if>
 
   <#list fieldnames as fieldname>
-    private int abc; // ${fieldname};
+    private int ${fieldname};
   </#list>
 
   public void lala() {

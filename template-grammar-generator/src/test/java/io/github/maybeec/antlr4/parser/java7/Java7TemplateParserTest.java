@@ -1,4 +1,4 @@
-package io.github.maybeec.antlr4.templateparser.java7;
+package io.github.maybeec.antlr4.parser.java7;
 
 import static org.junit.Assert.assertTrue;
 
