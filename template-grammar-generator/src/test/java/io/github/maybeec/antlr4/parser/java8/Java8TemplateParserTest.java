@@ -61,7 +61,7 @@ public class Java8TemplateParserTest {
     public void parseCompilationUnit_java8_LL_EXACT_AMBIG_parse_field_snippet() throws Exception {
         File template = new File("src/test/resources/templates/java8template_parse_field_snippet.ftl");
         List<ParserRuleContext> trees =
-            ParserTestUtil.parseAmbiguities(template, PredictionMode.LL_EXACT_AMBIG_DETECTION, true);
+            ParserTestUtil.parseAmbiguities(template, PredictionMode.LL_EXACT_AMBIG_DETECTION, false);
         assertThat(trees).hasSize(2);
     }
 

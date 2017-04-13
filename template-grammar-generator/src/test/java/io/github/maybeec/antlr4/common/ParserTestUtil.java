@@ -27,6 +27,8 @@ import io.github.maybeec.antlr4.templateparser.java8.Java8TemplateParser;
  */
 public class ParserTestUtil {
 
+    private static boolean printToFile = false;
+
     /**
      * @see #parse(File, PredictionMode, boolean, boolean)
      */
@@ -96,6 +98,10 @@ public class ParserTestUtil {
                 PredictionMode.updateAmbiguityDataForNextRun();
             }
             count++;
+
+            if (printToFile) {
+                Trees.save(tree, parser, file.getName() + "_" + count + ".ps", "Calibri", 8);
+            }
 
             // Generates the GUI
             if (debug) {
