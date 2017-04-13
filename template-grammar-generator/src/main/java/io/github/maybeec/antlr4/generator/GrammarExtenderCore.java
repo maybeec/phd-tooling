@@ -33,7 +33,7 @@ public class GrammarExtenderCore {
 
     /**
      * @param objectGrammarPath
-     * @param destinyPath
+     * @param destinationPath
      * @param extensionTactic
      * @param grammarSpec
      * @throws IOException
@@ -44,9 +44,9 @@ public class GrammarExtenderCore {
      * @param placeHolderName
      * @throws TemplateException
      */
-    public static void extendGrammar(String objectGrammarPath, String destinyPath, Tactics extensionTactic,
+    public static void extendGrammar(String objectGrammarPath, String destinationPath, Tactics extensionTactic,
         String metaGrammarPath, String newGrammarName, String uniquePlaceholderStart, String uniqueStart,
-        String placeHolderName) throws IOException, TemplateException {
+        String placeHolderName, String targetPackage) throws IOException, TemplateException {
 
         // parse metalanguage
         File metaGrammar = new File(metaGrammarPath);
@@ -92,11 +92,11 @@ public class GrammarExtenderCore {
         objectWalker.walk(placeholderListener, objectTree); // walk parse tree
 
         // print manipulated grammar to file
-        String destinyFilePath = destinyPath + grammarSpec.getNewGrammarName() + ".g4";
-        printToFile(destinyFilePath, placeholderListener.getRewriter().getText());
+        String destinationFilePath = destinationPath + grammarSpec.getNewGrammarName() + ".g4";
+        printToFile(destinationFilePath, placeholderListener.getRewriter().getText());
 
         // parse grammar with Placeholder
-        File grammarWithPlaceholder = new File(destinyFilePath);
+        File grammarWithPlaceholder = new File(destinationFilePath);
         objectReader = new FileReader(grammarWithPlaceholder);
         objectLexer = new ANTLRv4Lexer(new ANTLRInputStream(objectReader));
         objectTokens = new CommonTokenStream(objectLexer);
@@ -109,38 +109,30 @@ public class GrammarExtenderCore {
         objectWalker.walk(conditionLoopListener, objectTree); // walk parse tree
 
         // print manipulated grammar to file
-        printToFile(destinyFilePath, conditionLoopListener.getRewriter().getText());
+        printToFile(destinationFilePath, conditionLoopListener.getRewriter().getText());
 
         // generate parser based on new grammar
-        File newGrammarFile = new File(destinyFilePath);
-        generateParserWithANTLR(newGrammarFile);
+        File newGrammarFile = new File(destinationFilePath);
+        generateParserWithANTLR(newGrammarFile, targetPackage);
 
         // generate PlaceholderDetectorListener using Freemarker
         try {
-            generatePlaceholderDetectorListenerWithFreemarker(destinyPath, grammarSpec);
+            generatePlaceholderDetectorListenerWithFreemarker(destinationPath, grammarSpec, targetPackage);
         } catch (TemplateException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
 
-    /**
-     *
-     * @author fkreis (25.05.2016)
-     * @param destinyPath
-     * @param grammarSpec
-     * @throws IOException
-     * @throws TemplateException
-     */
-    private static void generatePlaceholderDetectorListenerWithFreemarker(String destinyPath, GrammarSpec grammarSpec)
-        throws IOException, TemplateException {
+    private static void generatePlaceholderDetectorListenerWithFreemarker(String destinationPath,
+        GrammarSpec grammarSpec, String targetPackage) throws IOException, TemplateException {
 
         /* Create and adjust the configuration singleton */
         Configuration cfg = new Configuration(Configuration.VERSION_2_3_23);
         cfg.setDirectoryForTemplateLoading(new File("src/main/resources"));
         cfg.setDefaultEncoding("UTF-8");
         cfg.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
-        cfg.setSharedVariable("package", (new File(destinyPath)).getName());
+        cfg.setSharedVariable("package", targetPackage);
 
         /* Create a data-model */
         // just reuse grammarSpec
@@ -150,20 +142,15 @@ public class GrammarExtenderCore {
 
         /* Merge data-model with template */
         Writer out = new FileWriter(
-            new File(destinyPath + grammarSpec.getNewGrammarName() + "PlaceholderDetectorListener.java"));
+            new File(destinationPath + grammarSpec.getNewGrammarName() + "PlaceholderDetectorListener.java"));
         temp.process(grammarSpec, out);
         out.close();
 
     }
 
-    /**
-     * @param grammarFile
-     * @author fkreis (25.05.2016)
-     * @throws IOException
-     */
-    private static void generateParserWithANTLR(File grammarFile) throws IOException {
+    private static void generateParserWithANTLR(File grammarFile, String targetPackage) throws IOException {
         String[] args = { grammarFile.getCanonicalPath(), "-listener", "-o",
-            grammarFile.getParentFile().getCanonicalPath(), "-package", grammarFile.getParentFile().getName() };
+            grammarFile.getParentFile().getCanonicalPath(), "-package", targetPackage };
         Tool antlr = new Tool(args);
         if (args.length == 0) {
             antlr.help();
