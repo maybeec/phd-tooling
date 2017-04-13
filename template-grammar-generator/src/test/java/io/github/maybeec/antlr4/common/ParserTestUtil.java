@@ -2,15 +2,20 @@ package io.github.maybeec.antlr4.common;
 
 import static org.junit.Assert.fail;
 
+import java.awt.Graphics;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileReader;
 import java.io.Reader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Future;
 
+import javax.imageio.ImageIO;
 import javax.swing.JFrame;
 
+import org.antlr.v4.gui.TreeViewer;
 import org.antlr.v4.gui.Trees;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -27,6 +32,7 @@ import io.github.maybeec.antlr4.templateparser.java8.Java8TemplateParser;
  */
 public class ParserTestUtil {
 
+    /** If true, all runs will be printed to eps and png into the project root */
     private static boolean printToFile = false;
 
     /**
@@ -100,7 +106,7 @@ public class ParserTestUtil {
             count++;
 
             if (printToFile) {
-                Trees.save(tree, parser, file.getName() + "_" + count + ".ps", "Calibri", 8);
+                printToFile(file, parser, count, tree);
             }
 
             // Generates the GUI
@@ -114,9 +120,42 @@ public class ParserTestUtil {
                 }
             }
         } while (parseAmbiguities && PredictionMode.hasNextRun());
+
         long end = System.nanoTime();
 
         System.out.println(count + " trees parsed in " + ((end - start) / Math.pow(10, 9)) + "s");
         return trees;
+    }
+
+    /**
+     * Prints eps as well as png files for a given tree.
+     * @param file
+     *            to retrieve the filename from
+     * @param parser
+     *            the tree is parsed from
+     * @param count
+     *            running counter for file naming
+     * @param tree
+     *            to be printed
+     * @throws Exception
+     *             if anything went wrong
+     */
+    private static void printToFile(File file, Java8TemplateParser parser, int count, ParserRuleContext tree)
+        throws Exception {
+        String fileName = file.getName() + "_" + count;
+        Trees.save(tree, parser, fileName + ".eps", "Calibri", 8);
+
+        TreeViewer treeViewer = new TreeViewer(new ArrayList<>(Arrays.asList(parser.getRuleNames())), tree);
+        Future<JFrame> future = treeViewer.open();
+        future.get();
+
+        BufferedImage bi = new BufferedImage(treeViewer.getPreferredSize().width, treeViewer.getPreferredSize().height,
+            BufferedImage.TYPE_INT_ARGB);
+        Graphics g = bi.createGraphics();
+        treeViewer.paint(g);
+        g.dispose();
+        ImageIO.write(bi, "png", new File(fileName + ".png"));
+
+        future.cancel(true);
     }
 }

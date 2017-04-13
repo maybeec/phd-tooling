@@ -13,9 +13,13 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Future;
+
+import javax.swing.JFrame;
 
 import org.antlr.parser.java8.Java8Lexer;
 import org.antlr.parser.java8.Java8Parser;
+import org.antlr.v4.gui.Trees;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -120,8 +124,13 @@ public class Java8TemplateParserTest {
             }
 
             // Generates the GUI
-            // Future<JDialog> future = Trees.inspect(tree, parser); // for ANTLR 4.5.1
-            // Utils.waitForClose(future.get());
+            Future<JFrame> future = Trees.inspect(tree, parser);
+            while (future.get().isVisible()) {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                }
+            }
         } while (PredictionMode.hasNextRun());
 
         // input data analysis
