@@ -14,8 +14,6 @@ import org.antlr.v4.runtime.tree.ParseTree;
 
 /**
  * A class to introduce conditions and loops of a given meta language into an object language grammar
- *
- * @author fkreis (20.01.2016)
  */
 public class ConditionAndLoopIncluderListener extends ANTLRv4ParserBaseListener {
 
@@ -33,11 +31,6 @@ public class ConditionAndLoopIncluderListener extends ANTLRv4ParserBaseListener 
 
     private GrammarSpec grammarSpec;
 
-    /**
-     * @param tokens
-     * @param grammarSpec
-     * @author fkreis (06.05.2016)
-     */
     public ConditionAndLoopIncluderListener(CommonTokenStream tokens, GrammarSpec grammarSpec) {
         rewriter = new TokenStreamRewriter(tokens);
         oneRuleMap = new HashMap<String, String[]>();
@@ -88,7 +81,7 @@ public class ConditionAndLoopIncluderListener extends ANTLRv4ParserBaseListener 
 
                 // if there is no existing rule create new rule
                 if (rule == null) {
-                    ruleName = createRuleName(originalBlock, "One");
+                    ruleName = createRuleName(originalBlock, "");
                     String body = "(" + originalBlock + " | " + ruleName + ")";
                     String newRuleContent = createOneRuleContent(body);
                     oneRuleMap.put(originalBlock, new String[] { ruleName, newRuleContent });
@@ -106,7 +99,7 @@ public class ConditionAndLoopIncluderListener extends ANTLRv4ParserBaseListener 
 
                 // if there is no existing rule create new rule
                 if (rule == null) {
-                    ruleName = createRuleName(originalBlock, "Question");
+                    ruleName = createRuleName(originalBlock, "Opt");
                     String body = "(" + originalBlock + "? | " + ruleName + "?)";
                     String newRuleContent = createQuestionRuleContent(body);
 
@@ -200,17 +193,11 @@ public class ConditionAndLoopIncluderListener extends ANTLRv4ParserBaseListener 
     /**
      * Returns the field 'rewriter'
      * @return value of rewriter
-     * @author fkreis (08.02.2016)
      */
     public TokenStreamRewriter getRewriter() {
         return rewriter;
     }
 
-    /**
-     * @param ctx
-     * @return
-     * @author fkreis (28.04.2016)
-     */
     private String retrieveBlockWithSpaces(ParseTree ctx) {
         String blockWithSpaces = "";
         if (ctx.getChildCount() == 0) {
@@ -224,110 +211,42 @@ public class ConditionAndLoopIncluderListener extends ANTLRv4ParserBaseListener 
         return blockWithSpaces;
     }
 
-    /**
-     * @param body
-     * @return
-     * @author fkreis (07.03.2016)
-     */
     private String createIfLoopRuleContent(String body) {
-        // String content =
-        // ifStartOpen + booleanExpression + ifStartClose + ifBodyStart + body + ifBodyEnd
-        //
-        // + "(" + elseIfStartOpen + booleanExpression + elseIfStartClose + elseifBodyStart + body
-        // + elseifBodyEnd + ")*"
-        //
-        // + ifEnd
-        //
-        // + "| " + loopStartOpen + loopCollection + loopSeparator + loopVariable + loopStartClose
-        // + loopBodyStart + body + loopBodyEnd + loopEnd;
-
         String content = grammarSpec.getIfRuleDef().replaceAll("body", body) + " | "
             + grammarSpec.getLoopRuleDef().replaceAll("body", body);
         return content;
     }
 
-    /**
-     * @param body
-     * @return
-     * @author fkreis (07.03.2016)
-     */
     private String createStarRuleContent(String body) {
-        // String content =
-        // ifStartOpen + booleanExpression + ifStartClose + ifBodyStart + body + ifBodyEnd
-        //
-        // + "(" + elseIfStartOpen + booleanExpression + elseIfStartClose + elseifBodyStart + body
-        // + elseifBodyEnd + ")*"
-        //
-        // + "(" + elseToken + elseifBodyStart + body + elseifBodyEnd + ")?"
-        //
-        // + ifEnd
-        //
-        // + "| " + loopStartOpen + loopCollection + loopSeparator + loopVariable + loopStartClose
-        // + loopBodyStart + body + loopBodyEnd + loopEnd;
-
         String content = grammarSpec.getIfRuleDef().replaceAll("body", body) + " | "
             + grammarSpec.getIfElseRuleDef().replaceAll("body", body) + " | "
             + grammarSpec.getLoopRuleDef().replaceAll("body", body);
         return content;
     }
 
-    /**
-     * @param body
-     * @return
-     * @author fkreis (07.03.2016)
-     */
     private String createQuestionRuleContent(String body) {
-        // String content =
-        // ifStartOpen + booleanExpression + ifStartClose + ifBodyStart + body + ifBodyEnd
-        //
-        // + "(" + elseIfStartOpen + booleanExpression + elseIfStartClose + elseifBodyStart + body
-        // + elseifBodyEnd + ")*"
-        //
-        // + "(" + elseToken + elseifBodyStart + body + elseifBodyEnd + ")?"
-        //
-        // + ifEnd;
-
         String content = grammarSpec.getIfRuleDef().replaceAll("body", body) + " | "
             + grammarSpec.getIfElseRuleDef().replaceAll("body", body);
 
         return content;
     }
 
-    /**
-     * @param body
-     * @return
-     * @author fkreis (07.03.2016)
-     */
     private String createOneRuleContent(String body) {
-        // String content =
-        // ifStartOpen + booleanExpression + ifStartClose + ifBodyStart + body + ifBodyEnd
-        //
-        // + "(" + elseIfStartOpen + booleanExpression + elseIfStartClose + elseifBodyStart + body
-        // + elseifBodyEnd + ")*"
-        //
-        // + elseToken + elseifBodyStart + body + elseifBodyEnd
-        //
-        // + ifEnd;
         String content = grammarSpec.getIfElseRuleDef().replaceAll("body", body);
         return content;
     }
 
-    /**
-     *
-     * @return
-     * @author fkreis (04.03.2016)
-     * @param originalRule
-     * @param suffix
-     */
     private String createRuleName(String originalRule, String suffix) {
 
-        String ruleName = grammarSpec.getUniqueStart() + originalRule.replaceAll("\\|", "Or").replaceAll(" ", "")
-            .replaceAll("\\(", "LParen").replaceAll("\\)", "RParen").replaceAll("\\?", "Question")
-            .replaceAll("\\*", "Star").replaceAll("\\+", "Plus") + suffix;
+        String ruleName = grammarSpec.getMetaLangRulePrefix()
+            + originalRule.replace("|", "Or").replaceAll(" ", "")
+                // .replaceAll("\\(", "LParen").replaceAll("\\)", "RParen")
+                .replace("(", "").replace(")", "").replace("?", "Opt").replace("*", "Star").replace("+", "Plus")
+            + suffix;
 
         if (ruleName.length() > 130) {
             System.out.println("Name too long: " + ruleName.length() + ruleName);
-            ruleName = grammarSpec.getUniqueStart() + "newRulexXXx" + nameSuffix;
+            ruleName = grammarSpec.getMetaLangRulePrefix() + "newRulexXXx" + nameSuffix;
             nameSuffix++;
         }
 

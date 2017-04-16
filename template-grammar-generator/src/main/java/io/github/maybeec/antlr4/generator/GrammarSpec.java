@@ -2,59 +2,39 @@ package io.github.maybeec.antlr4.generator;
 
 /**
  * A container class for information exchange during template transformation
- *
- * @author fkreis (06.05.2016)
  */
 public class GrammarSpec {
 
-    /**
-     * The name for the new grammar
-     */
+    /** The name for the new grammar */
     private String newGrammarName;
 
-    /**
-     * A capitalized unique prefix usable for the placeholder lexer rule name
-     */
-    private String uniquePlaceholderStart;
+    /** A capitalized unique prefix usable for the placeholder lexer rule name */
+    private String metaLangPlaceholderPrefix;
 
-    /**
-     * An uncapitalized unique prefix usable for the parser rule names
-     */
-    private String uniqueStart;
+    /** An uncapitalized unique prefix usable for the parser rule names */
+    private String metaLangRulePrefix;
 
-    /**
-     * The name for the placeholder in the template grammar
-     */
-    private static String placeHolderName;
+    /** The name for the placeholder in the template grammar */
+    private static String placeHolderSuffix;
 
-    /**
-     * The definition for the placeholder in the template grammar
-     */
+    /** The definition for the placeholder in the template grammar */
     private String placeHolderDef;
 
-    /**
-     * The definition for the if rule in the template grammar
-     */
+    /** The definition for the if rule in the template grammar */
     private String ifRuleDef;
 
-    /**
-     * The definition for the ifelse rule in the template grammar
-     */
+    /** The definition for the ifelse rule in the template grammar */
     private String ifElseRuleDef;
 
-    /**
-     * The definition for the loop rule in the template grammar
-     */
+    /** The definition for the loop rule in the template grammar */
     private String loopRuleDef;
 
     /**
      * @param newGrammarName
      *            The name for the new grammar
-     * @param uniquePlaceholderStart
-     *            A capitalized unique prefix usable for the placeholder lexer rule name
-     * @param uniqueStart
-     *            An uncapitalized unique prefix usable for the parser rule names
-     * @param placeHolderName
+     * @param metaLangPrefix
+     *            An unique prefix to be used for newly create meta lang productions
+     * @param placeHolderSuffix
      *            The name for the placeholder in the template grammar
      * @param placeHolderDef
      *            The definition for the placeholder in the template grammar
@@ -64,15 +44,14 @@ public class GrammarSpec {
      *            The definition for the ifelse rule in the template grammar
      * @param loopDef
      *            The definition for the loop rule in the template grammar
-     * @author fkreis (30.06.2016)
      */
-    public GrammarSpec(String newGrammarName, String uniquePlaceholderStart, String uniqueStart,
-        String placeHolderName, String placeHolderDef, String ifRuleDef, String ifElseRuleDef, String loopDef) {
+    public GrammarSpec(String newGrammarName, String metaLangPrefix, String placeHolderSuffix, String placeHolderDef,
+        String ifRuleDef, String ifElseRuleDef, String loopDef) {
         super();
         this.newGrammarName = newGrammarName;
-        this.uniquePlaceholderStart = uniquePlaceholderStart;
-        this.uniqueStart = uniqueStart;
-        GrammarSpec.placeHolderName = placeHolderName;
+        metaLangPlaceholderPrefix = metaLangPrefix.toUpperCase();
+        metaLangRulePrefix = metaLangPrefix.toLowerCase();
+        GrammarSpec.placeHolderSuffix = placeHolderSuffix;
         this.placeHolderDef = placeHolderDef;
         this.ifRuleDef = ifRuleDef;
         this.ifElseRuleDef = ifElseRuleDef;
@@ -82,43 +61,38 @@ public class GrammarSpec {
     /**
      * Returns the field 'newGrammarName'
      * @return value of newGrammarName
-     * @author fkreis (06.05.2016)
      */
     public String getNewGrammarName() {
         return newGrammarName;
     }
 
     /**
-     * Returns the field 'uniquePlaceholderStart'
-     * @return value of uniquePlaceholderStart
-     * @author fkreis (06.05.2016)
+     * Returns the field 'metaLangPlaceholderPrefix'
+     * @return value of metaLangPlaceholderPrefix
      */
-    public String getUniquePlaceholderStart() {
-        return uniquePlaceholderStart;
+    public String getMetaLangPlaceholderPrefix() {
+        return metaLangPlaceholderPrefix;
     }
 
     /**
-     * Returns the field 'uniqueStart'
-     * @return value of uniqueStart
-     * @author fkreis (06.05.2016)
+     * Returns the field 'metaLangRulePrefix'
+     * @return value of metaLangRulePrefix
      */
-    public String getUniqueStart() {
-        return uniqueStart;
+    public String getMetaLangRulePrefix() {
+        return metaLangRulePrefix;
     }
 
     /**
-     * Returns the field 'placeHolderName'
-     * @return value of placeHolderName
-     * @author fkreis (06.05.2016)
+     * Returns the field 'placeHolderSuffix'
+     * @return value of placeHolderSuffix
      */
-    public String getPlaceHolderName() {
-        return placeHolderName;
+    public String getPlaceHolderSuffix() {
+        return placeHolderSuffix;
     }
 
     /**
      * Returns the field 'placeHolderDef'
      * @return value of placeHolderDef
-     * @author fkreis (06.05.2016)
      */
     public String getPlaceHolderDef() {
         return placeHolderDef;
@@ -127,7 +101,6 @@ public class GrammarSpec {
     /**
      * Returns the field 'ifRuleDef'
      * @return value of ifRuleDef
-     * @author fkreis (30.06.2016)
      */
     public String getIfRuleDef() {
         return ifRuleDef;
@@ -136,7 +109,6 @@ public class GrammarSpec {
     /**
      * Returns the field 'ifElseRuleDef'
      * @return value of ifElseRuleDef
-     * @author fkreis (30.06.2016)
      */
     public String getIfElseRuleDef() {
         return ifElseRuleDef;
@@ -145,7 +117,6 @@ public class GrammarSpec {
     /**
      * Returns the field 'loopDef'
      * @return value of loopDef
-     * @author fkreis (30.06.2016)
      */
     public String getLoopRuleDef() {
         return loopRuleDef;

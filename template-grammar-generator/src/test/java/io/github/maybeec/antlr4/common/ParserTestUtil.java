@@ -32,8 +32,11 @@ import io.github.maybeec.antlr4.templateparser.java8.Java8TemplateParser;
  */
 public class ParserTestUtil {
 
-    /** If true, all runs will be printed to eps and png into the project root */
-    private static boolean printToFile = false;
+    /** If true, all runs will be printed to png into the project root */
+    private static boolean printToPng = false;
+
+    /** If true, all runs will be printed to eps into the project root */
+    private static boolean printEps = false;
 
     /**
      * @see #parse(File, PredictionMode, boolean, boolean)
@@ -93,6 +96,7 @@ public class ParserTestUtil {
             } catch (ANTLRParseException e) {
                 System.out.println("parsing not successfull!");
                 System.err.println(e.getMsg());
+                e.printStackTrace();
                 fail(e.getMsg());
                 break;
             }
@@ -105,9 +109,7 @@ public class ParserTestUtil {
             }
             count++;
 
-            if (printToFile) {
-                printToFile(file, parser, count, tree);
-            }
+            printToFile(file, parser, count, tree);
 
             // Generates the GUI
             if (debug) {
@@ -143,19 +145,23 @@ public class ParserTestUtil {
     private static void printToFile(File file, Java8TemplateParser parser, int count, ParserRuleContext tree)
         throws Exception {
         String fileName = file.getName() + "_" + count;
-        Trees.save(tree, parser, fileName + ".eps", "Calibri", 8);
+        if (printEps) {
+            Trees.save(tree, parser, fileName + ".eps", "Calibri", 8);
+        }
 
-        TreeViewer treeViewer = new TreeViewer(new ArrayList<>(Arrays.asList(parser.getRuleNames())), tree);
-        Future<JFrame> future = treeViewer.open();
-        future.get();
+        if (printToPng) {
+            TreeViewer treeViewer = new TreeViewer(new ArrayList<>(Arrays.asList(parser.getRuleNames())), tree);
+            Future<JFrame> future = treeViewer.open();
+            future.get();
 
-        BufferedImage bi = new BufferedImage(treeViewer.getPreferredSize().width, treeViewer.getPreferredSize().height,
-            BufferedImage.TYPE_INT_ARGB);
-        Graphics g = bi.createGraphics();
-        treeViewer.paint(g);
-        g.dispose();
-        ImageIO.write(bi, "png", new File(fileName + ".png"));
+            BufferedImage bi = new BufferedImage(treeViewer.getPreferredSize().width,
+                treeViewer.getPreferredSize().height, BufferedImage.TYPE_INT_ARGB);
+            Graphics g = bi.createGraphics();
+            treeViewer.paint(g);
+            g.dispose();
+            ImageIO.write(bi, "png", new File(fileName + ".png"));
 
-        future.cancel(true);
+            future.cancel(true);
+        }
     }
 }

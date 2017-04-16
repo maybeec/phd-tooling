@@ -26,27 +26,12 @@ import freemarker.template.TemplateExceptionHandler;
 
 /**
  * The core of the template transformation tool.
- *
- * @author fkreis (06.05.2016)
  */
 public class GrammarExtenderCore {
 
-    /**
-     * @param objectGrammarPath
-     * @param destinationPath
-     * @param extensionTactic
-     * @param grammarSpec
-     * @throws IOException
-     * @author fkreis (06.05.2016)
-     * @param uniqueStart
-     * @param uniquePlaceholderStart
-     * @param newGrammarName
-     * @param placeHolderName
-     * @throws TemplateException
-     */
     public static void extendGrammar(String objectGrammarPath, String destinationPath, Tactics extensionTactic,
-        String metaGrammarPath, String newGrammarName, String uniquePlaceholderStart, String uniqueStart,
-        String placeHolderName, String targetPackage) throws IOException, TemplateException {
+        String metaGrammarPath, String newGrammarName, String metaLangPrefix, String placeHolderName,
+        String targetPackage) throws IOException, TemplateException {
 
         // parse metalanguage
         File metaGrammar = new File(metaGrammarPath);
@@ -64,9 +49,9 @@ public class GrammarExtenderCore {
         metaWalker.walk(metaCollector, metaTree); // walk parse tree
 
         // create grammarspec using metagrammar infos
-        GrammarSpec grammarSpec = new GrammarSpec(newGrammarName, uniquePlaceholderStart, uniqueStart, placeHolderName,
-            metaCollector.getPlaceHolderRule(), metaCollector.getIfRule(), metaCollector.getIfElseRule(),
-            metaCollector.getLoopRule());
+        GrammarSpec grammarSpec =
+            new GrammarSpec(newGrammarName, metaLangPrefix, placeHolderName, metaCollector.getPlaceHolderRule(),
+                metaCollector.getIfRule(), metaCollector.getIfElseRule(), metaCollector.getLoopRule());
 
         // parse object Language
         File objectGrammar = new File(objectGrammarPath);
@@ -86,7 +71,7 @@ public class GrammarExtenderCore {
         Map<String, String> tokenNames = objectCollector.getTokenNames();
         HashSet<String> selectedRules = objectCollector.getSelectedRules();
 
-        // extend with Placeholder
+        // extend lexer rules
         PlaceholderIncluderListener placeholderListener =
             new PlaceholderIncluderListener(objectTokens, tokenNames, selectedRules, multiLexerRules, grammarSpec);
         objectWalker.walk(placeholderListener, objectTree); // walk parse tree
@@ -96,21 +81,21 @@ public class GrammarExtenderCore {
         printToFile(destinationFilePath, placeholderListener.getRewriter().getText());
 
         // parse grammar with Placeholder
-        File grammarWithPlaceholder = new File(destinationFilePath);
-        objectReader = new FileReader(grammarWithPlaceholder);
-        objectLexer = new ANTLRv4Lexer(new ANTLRInputStream(objectReader));
-        objectTokens = new CommonTokenStream(objectLexer);
-        objectParser = new ANTLRv4Parser(objectTokens);
-        objectTree = objectParser.grammarSpec();
-
-        // extend with Conditions and Loops
-        ConditionAndLoopIncluderListener conditionLoopListener =
-            new ConditionAndLoopIncluderListener(objectTokens, grammarSpec);
-        objectWalker.walk(conditionLoopListener, objectTree); // walk parse tree
-
-        // print manipulated grammar to file
-        printToFile(destinationFilePath, conditionLoopListener.getRewriter().getText());
-
+        // File grammarWithPlaceholder = new File(destinationFilePath);
+        // objectReader = new FileReader(grammarWithPlaceholder);
+        // objectLexer = new ANTLRv4Lexer(new ANTLRInputStream(objectReader));
+        // objectTokens = new CommonTokenStream(objectLexer);
+        // objectParser = new ANTLRv4Parser(objectTokens);
+        // objectTree = objectParser.grammarSpec();
+        //
+        // // extend with Conditions and Loops
+        // ConditionAndLoopIncluderListener conditionLoopListener =
+        // new ConditionAndLoopIncluderListener(objectTokens, grammarSpec);
+        // objectWalker.walk(conditionLoopListener, objectTree); // walk parse tree
+        //
+        // // print manipulated grammar to file
+        // printToFile(destinationFilePath, conditionLoopListener.getRewriter().getText());
+        //
         // generate parser based on new grammar
         File newGrammarFile = new File(destinationFilePath);
         generateParserWithANTLR(newGrammarFile, targetPackage);

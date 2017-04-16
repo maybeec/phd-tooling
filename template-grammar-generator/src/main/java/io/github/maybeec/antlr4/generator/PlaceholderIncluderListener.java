@@ -4,7 +4,10 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import org.antlr.parser.antlr4.ANTLRv4Parser.EbnfSuffixContext;
+import org.antlr.parser.antlr4.ANTLRv4Parser.ElementContext;
 import org.antlr.parser.antlr4.ANTLRv4Parser.GrammarSpecContext;
 import org.antlr.parser.antlr4.ANTLRv4Parser.LexerRuleSpecContext;
 import org.antlr.parser.antlr4.ANTLRv4Parser.ParserRuleSpecContext;
@@ -24,45 +27,28 @@ public class PlaceholderIncluderListener extends ANTLRv4ParserBaseListener {
 
     private Map<String, String> tokenNames;
 
-    private String placeHolderName;
-
-    private String placeHolderDef;
-
-    private String newGrammarName;
-
     private HashSet<String> selectedRules;
 
     private List<String> multiLexerRules;
 
-    private String uniqueStart;
+    private GrammarSpec grammarSpec;
 
-    private String uniquePlaceholderStart;
+    private final String phTokenName;
 
     private int uniqueNameCounter;
 
+    private Set<String> rewrittenPlaceholderBlocks = new HashSet<>();
+
     private List<String> createdLexerRuleList = new LinkedList<>();
 
-    /**
-     * @author fkreis (06.05.2016)
-     * @param tokenNames
-     * @param tokens
-     * @param grammarSpec
-     * @param selectedRules
-     * @param multiLexerRules
-     * @param metaLanguageRuleSet
-     */
     public PlaceholderIncluderListener(CommonTokenStream tokens, Map<String, String> tokenNames,
         HashSet<String> selectedRules, List<String> multiLexerRules, GrammarSpec grammarSpec) {
         rewriter = new TokenStreamRewriter(tokens);
         this.tokenNames = tokenNames;
         this.selectedRules = selectedRules;
         this.multiLexerRules = multiLexerRules;
-
-        placeHolderName = grammarSpec.getPlaceHolderName();
-        placeHolderDef = grammarSpec.getPlaceHolderDef();
-        newGrammarName = grammarSpec.getNewGrammarName();
-        uniquePlaceholderStart = grammarSpec.getUniquePlaceholderStart();
-        uniqueStart = grammarSpec.getUniqueStart();
+        this.grammarSpec = grammarSpec;
+        phTokenName = grammarSpec.getMetaLangPlaceholderPrefix() + grammarSpec.getPlaceHolderSuffix();
     }
 
     /**
@@ -72,18 +58,56 @@ public class PlaceholderIncluderListener extends ANTLRv4ParserBaseListener {
      *            The rule to create a type placeholder for
      * @param placeholderType
      *            The name of the original rule
-     * @author fkreis (28.04.2016)
      */
     private void addTypedPlaceholder(ParserRuleContext originalRule, String placeholderType) {
-        rewriter.insertAfter(originalRule.stop, "\n" + uniqueStart + placeholderType + placeHolderName + ": "
-            + uniquePlaceholderStart + placeHolderName + "; //language extension");
+
+        String placeHolderSuffix = grammarSpec.getPlaceHolderSuffix();
+        String metaLangRulePrefix = grammarSpec.getMetaLangRulePrefix();
+
+        String optPhRuleName = getOptPhRuleName(placeholderType);
+
+        rewriter.insertAfter(originalRule.stop,
+            "\n//language extension\n" //
+                + metaLangRulePrefix + placeholderType + ": " + phTokenName + ";\n" //
+                + optPhRuleName + ": " + phTokenName + " | "
+                + (createQuestionRuleContent("(" + optPhRuleName + " | " + placeholderType + ")") + ";")//
+        );
+    }
+
+    private String getOptPhRuleName(String atomName) {
+        return grammarSpec.getMetaLangRulePrefix() + atomName + "Opt";
+    }
+
+    private String createIfLoopRuleContent(String body) {
+        String content = grammarSpec.getIfRuleDef().replace("body", body) + " | "
+            + grammarSpec.getLoopRuleDef().replace("body", body);
+        return content;
+    }
+
+    private String createStarRuleContent(String body) {
+        String content = grammarSpec.getIfRuleDef().replaceAll("body", body) + " | "
+            + grammarSpec.getIfElseRuleDef().replaceAll("body", body) + " | "
+            + grammarSpec.getLoopRuleDef().replaceAll("body", body);
+        return content;
+    }
+
+    private String createQuestionRuleContent(String body) {
+        String content = grammarSpec.getIfRuleDef().replaceAll("body", body) + " | "
+            + grammarSpec.getIfElseRuleDef().replaceAll("body", body);
+
+        return content;
+    }
+
+    private String createOneRuleContent(String body) {
+        String content = grammarSpec.getIfElseRuleDef().replaceAll("body", body);
+        return content;
     }
 
     @Override
     public void exitGrammarSpec(GrammarSpecContext ctx) {
 
         // insert Placeholder
-        rewriter.insertAfter(ctx.stop, "\n" + uniquePlaceholderStart + placeHolderName + ": " + placeHolderDef + ";");
+        rewriter.insertAfter(ctx.stop, "\n" + phTokenName + ": " + grammarSpec.getPlaceHolderDef() + ";");
 
         // insert implicit tokens
         for (String s : createdLexerRuleList) {
@@ -91,7 +115,7 @@ public class PlaceholderIncluderListener extends ANTLRv4ParserBaseListener {
         }
 
         // rename grammar
-        rewriter.replace(ctx.identifier().stop, newGrammarName);
+        rewriter.replace(ctx.identifier().stop, grammarSpec.getNewGrammarName());
     }
 
     @Override
@@ -115,26 +139,22 @@ public class PlaceholderIncluderListener extends ANTLRv4ParserBaseListener {
     /**
      * Extend a reference to rule with the respective placeholder type accordingly to the tactic. Recursive
      * references are ignored in general.
-     * @author fkreis (08.02.2016)
      */
     @Override
     public void exitRuleref(RulerefContext ctx) {
         String referencedRuleName = ctx.getText();
 
         if (!isRecursive(ctx) && selectedRules.contains(referencedRuleName)) {
-            extendRuleRef(ctx);
+            EbnfSuffixContext ebnfSuffixContext = ((ElementContext) ctx.parent.parent).ebnfSuffix();
+            String ebnfSuffix = ebnfSuffixContext != null ? ebnfSuffixContext.getText() : "";
+            extendRuleRef(ctx, ebnfSuffix);
         } else if (!isRecursive(ctx) && !selectedRules.contains(referencedRuleName)) {
             // add () to allow condition and loop extension
             rewriter.insertBefore(ctx.start, "(");
             rewriter.insertAfter(ctx.stop, ")");
         }
-
     }
 
-    /**
-     * {@inheritDoc}
-     * @author fkreis (08.02.2016)
-     */
     @Override
     public void exitTerminal(TerminalContext ctx) {
         // change lexer token to extended rule (add "OrPlaceholder")
@@ -159,7 +179,8 @@ public class PlaceholderIncluderListener extends ANTLRv4ParserBaseListener {
                         System.out
                             .println("Did not find appropriate Tokenname for clean text in a parser rule: " + terminal);
                         uniqueNameCounter++;
-                        String newLexerRuleName = uniquePlaceholderStart + "ImplicitToken" + uniqueNameCounter;
+                        String newLexerRuleName =
+                            grammarSpec.getMetaLangPlaceholderPrefix() + "ImplicitToken" + uniqueNameCounter;
                         tokenName = newLexerRuleName;
                         createdLexerRuleList.add(newLexerRuleName + ":" + ctx.getText() + ";");
                     }
@@ -201,35 +222,40 @@ public class PlaceholderIncluderListener extends ANTLRv4ParserBaseListener {
 
     }
 
-    /**
-     * @param ctx
-     * @author fkreis (28.04.2016)
-     */
-    private void extendRuleRef(RulerefContext ctx) {
+    private void extendRuleRef(RulerefContext ctx, String cardinality) {
         String ruleName = ctx.getText();
-        rewriter.insertBefore(ctx.start, "(" + uniqueStart + ruleName + placeHolderName + " | ");
-        rewriter.insertAfter(ctx.stop, ")");
+        rewriteRule(ctx, cardinality, ruleName);
+    }
+
+    private void rewriteRule(ParserRuleContext ctx, String cardinality, String ruleName) {
+        switch (cardinality) {
+        case "":
+            rewriter.insertBefore(ctx.start, "(" + grammarSpec.getMetaLangRulePrefix() + ruleName + " | ");
+            rewriter.insertAfter(ctx.stop, ")");
+            break;
+        case "?":
+            rewriter.insertBefore(ctx.start, "(" + getOptPhRuleName(ruleName) + " | ");
+            rewriter.insertAfter(ctx.stop, ")");
+            break;
+        default:
+            break;
+        }
     }
 
     private void extendTerminal(TerminalContext ctx, String tokenName) {
-        rewriter.insertBefore(ctx.start, "(" + uniqueStart + tokenName + placeHolderName + " | ");
-        rewriter.insertAfter(ctx.stop, ")");
+        EbnfSuffixContext ebnfSuffixContext = ((ElementContext) ctx.parent.parent).ebnfSuffix();
+        String ebnfSuffix = ebnfSuffixContext != null ? ebnfSuffixContext.getText() : "";
+        rewriteRule(ctx, ebnfSuffix, tokenName);
     }
 
     /**
      * Returns the field 'rewriter'
      * @return value of rewriter
-     * @author fkreis (08.02.2016)
      */
     public TokenStreamRewriter getRewriter() {
         return rewriter;
     }
 
-    /**
-     * @param ctx
-     * @return
-     * @author fkreis (28.04.2016)
-     */
     private boolean isRecursive(RulerefContext ctx) {
         String ruleName = ctx.getText();
         ParserRuleContext currentParent = ctx.getParent();

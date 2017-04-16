@@ -20,12 +20,14 @@ public enum Tactics {
     /**
      *
      */
-    ONLYTOKEN(null),
+    ONLYLEXER(null),
 
     /**
      *
      */
     INTELLIGENT(null),
+
+    ALL_PARSER_CUSTOM_LEXER(new HashSet<>()),
 
     /**
      *

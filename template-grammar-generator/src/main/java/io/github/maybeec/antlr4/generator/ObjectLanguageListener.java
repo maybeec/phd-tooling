@@ -19,11 +19,7 @@ import org.antlr.parser.antlr4.ANTLRv4Parser.RulerefContext;
 import org.antlr.parser.antlr4.ANTLRv4ParserBaseListener;
 import org.antlr.v4.runtime.tree.ParseTree;
 
-/**
- * A class to collect information about a certain object language
- *
- * @author fkreis (20.01.2016)
- */
+/** A class to collect information about a certain object language */
 public class ObjectLanguageListener extends ANTLRv4ParserBaseListener {
 
     private List<String> fragmentRules;
@@ -40,31 +36,16 @@ public class ObjectLanguageListener extends ANTLRv4ParserBaseListener {
 
     private HashMap<String, ArrayList<String>> maybeSequenceParserRules;
 
-    /**
-     *
-     * @author fkreis (28.04.2016)
-     * @param tactic
-     */
     public ObjectLanguageListener(Tactics tactic) {
         this.tactic = tactic;
-
         fragmentRules = new LinkedList<>();
-
         tokenNames = new HashMap<>();
-
         multiLexerRules = new LinkedList<>();
-
         selectedRules = new HashSet<>();
-
         sequenceParserRules = new HashSet<>();
-
         maybeSequenceParserRules = new HashMap<>();
     }
 
-    /**
-     *
-     * @author fkreis (29.04.2016)
-     */
     private void analyzeMaybeSequenceParserRules() {
         boolean changeHappend = true;
         while (changeHappend) {
@@ -108,11 +89,6 @@ public class ObjectLanguageListener extends ANTLRv4ParserBaseListener {
         }
     }
 
-    /**
-     * @param ctx
-     * @return
-     * @author fkreis (29.04.2016)
-     */
     private boolean containsSequence(ParseTree ctx) {
 
         if (ctx instanceof AlternativeContext) {
@@ -177,8 +153,13 @@ public class ObjectLanguageListener extends ANTLRv4ParserBaseListener {
             case ONLYPARSER:
                 // nothing to add here, ctx is a lexer rule at this point
                 break;
-            case ONLYTOKEN:
+            case ONLYLEXER:
                 selectedRules.add(lexerRuleName);
+                break;
+            case ALL_PARSER_CUSTOM_LEXER:
+                if (tactic.containsToken(lexerRuleName)) {
+                    selectedRules.add(lexerRuleName);
+                }
                 break;
             }
         }
@@ -217,19 +198,15 @@ public class ObjectLanguageListener extends ANTLRv4ParserBaseListener {
             }
             break;
         case ONLYPARSER:
+        case ALL_PARSER_CUSTOM_LEXER:
             selectedRules.add(ruleName);
             break;
-        case ONLYTOKEN:
+        case ONLYLEXER:
             // nothing to add here, ctx is a parser rule at this point
             break;
         }
     }
 
-    /**
-     * @param ctx
-     * @return
-     * @author fkreis (29.04.2016)
-     */
     private ArrayList<String> findReferencedParserRuleNames(ParseTree ctx) {
         ArrayList<String> referencedRules = new ArrayList<>();
 
@@ -246,7 +223,6 @@ public class ObjectLanguageListener extends ANTLRv4ParserBaseListener {
     /**
      * Returns the field 'fragmentRules'
      * @return value of fragmentRules
-     * @author fkreis (08.02.2016)
      */
     public List<String> getFragmentRules() {
         return fragmentRules;
@@ -255,7 +231,6 @@ public class ObjectLanguageListener extends ANTLRv4ParserBaseListener {
     /**
      * Returns the field 'multiLexerRules'
      * @return value of multiLexerRules
-     * @author fkreis (02.03.2016)
      */
     public List<String> getMultiLexerRules() {
         return multiLexerRules;
@@ -264,7 +239,6 @@ public class ObjectLanguageListener extends ANTLRv4ParserBaseListener {
     /**
      * Returns the field 'selectedRules'
      * @return value of selectedRules
-     * @author fkreis (28.04.2016)
      */
     public HashSet<String> getSelectedRules() {
         return selectedRules;
@@ -273,17 +247,11 @@ public class ObjectLanguageListener extends ANTLRv4ParserBaseListener {
     /**
      * Returns the field 'tokenNames'
      * @return value of tokenNames
-     * @author fkreis (08.02.2016)
      */
     public Map<String, String> getTokenNames() {
         return tokenNames;
     }
 
-    /**
-     * @param children
-     * @return
-     * @author fkreis (02.03.2016)
-     */
     private boolean isMultiple(ParseTree tree) {
 
         List<ParseTree> children = new LinkedList<>();

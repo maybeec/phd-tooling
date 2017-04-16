@@ -8,49 +8,23 @@ import org.antlr.v4.runtime.TokenStreamRewriter;
 
 /**
  * A class to collect information about a certain meta language
- *
- * @author fkreis (30.06.2016)
  */
 public class MetaLanguageListener extends ANTLRv4ParserBaseListener {
 
-    /**
-     *
-     */
     private TokenStream token;
 
-    /**
-     *
-     */
     private String placeHolderRule;
 
-    /**
-     *
-     */
     private String ifRule;
 
-    /**
-     *
-     */
     private String ifElseRule;
 
-    /**
-     *
-     */
     private String loopRule;
 
-    /**
-     *
-     * @author fkreis (30.06.2016)
-     * @param token
-     */
     public MetaLanguageListener(TokenStream token) {
         this.token = token;
     }
 
-    /**
-     * {@inheritDoc}
-     * @author fkreis (30.06.2016)
-     */
     @Override
     public void exitLexerRuleSpec(LexerRuleSpecContext ctx) {
 
@@ -64,10 +38,6 @@ public class MetaLanguageListener extends ANTLRv4ParserBaseListener {
 
     }
 
-    /**
-     * {@inheritDoc}
-     * @author fkreis (30.06.2016)
-     */
     @Override
     public void exitParserRuleSpec(ParserRuleSpecContext ctx) {
 
@@ -100,7 +70,6 @@ public class MetaLanguageListener extends ANTLRv4ParserBaseListener {
     /**
      * Returns the field 'completePlaceHolderRule'
      * @return value of completePlaceHolderRule
-     * @author fkreis (30.06.2016)
      */
     public String getPlaceHolderRule() {
         return placeHolderRule;
@@ -109,7 +78,6 @@ public class MetaLanguageListener extends ANTLRv4ParserBaseListener {
     /**
      * Returns the field 'ifRule'
      * @return value of ifRule
-     * @author fkreis (30.06.2016)
      */
     public String getIfRule() {
         return ifRule;
@@ -118,7 +86,6 @@ public class MetaLanguageListener extends ANTLRv4ParserBaseListener {
     /**
      * Returns the field 'ifElseRule'
      * @return value of ifElseRule
-     * @author fkreis (30.06.2016)
      */
     public String getIfElseRule() {
         return ifElseRule;
@@ -127,7 +94,6 @@ public class MetaLanguageListener extends ANTLRv4ParserBaseListener {
     /**
      * Returns the field 'loop'
      * @return value of loop
-     * @author fkreis (30.06.2016)
      */
     public String getLoopRule() {
         return loopRule;

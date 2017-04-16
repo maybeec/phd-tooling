@@ -16,39 +16,25 @@ import org.antlr.v4.runtime.tree.TerminalNode;
  */
 public class ${newGrammarName}PlaceholderDetectorListener extends ${newGrammarName}BaseListener {
 
-    /**
-     * Index for placeholder token definition
-     */
+    /** Index for placeholder token definition */
     private int placeholderIndex;
 
-    /**
-     * Unique rule prefix as defined in the GrammarSpec
-     */
-    private String uniqueStart;
+    /** Unique rule prefix as defined in the GrammarSpec */
+    private String metaLangRulePrefix;
 
-    /**
-     * The placeholder rule's name as defined in the GrammarSpec
-     */
-    private String placeHolderName;
+    /** The placeholder rule's name as defined in the GrammarSpec */
+    private String placeHolderSuffix;
 
-    /**
-     * Maps the placeholder's
-     */
+    /** Maps the placeholder's */
     private Map<String, String> placeHolderTypes;
 
-    /**
-     * A list of all parser rule names sorted by their index numbers
-     */
+    /** A list of all parser rule names sorted by their index numbers */
     private List<String> parserRuleNames;
 
-    /**
-     * A list of all detected placeholders that occur more than once
-     */
+    /** A list of all detected placeholders that occur more than once */
     private HashSet<String> allMultiplePlaceholders;
 
-    /**
-     * The placeholder that caused a runtime exception due to an implausibility
-     */
+    /** The placeholder that caused a runtime exception due to an implausibility */
     private String problematicMultiplePlaceholder;
 
     /**
@@ -57,14 +43,14 @@ public class ${newGrammarName}PlaceholderDetectorListener extends ${newGrammarNa
     public ${newGrammarName}PlaceholderDetectorListener() {
         super();
         try {
-            String uniquePlaceholderStart = "${uniquePlaceholderStart}";
-            placeHolderName = "${placeHolderName}";
-            uniqueStart = "${uniqueStart}";
+            String metaLangPlaceholderPrefix = "${metaLangPlaceholderPrefix}";
+            placeHolderSuffix = "${placeHolderSuffix}";
+            metaLangRulePrefix = "${metaLangRulePrefix}";
 
             ${newGrammarName}Parser parser = new ${newGrammarName}Parser(null);
             Class<? extends ${newGrammarName}Parser> parserClass = parser.getClass();
 
-            Field placeholderNumberField = parserClass.getField(uniquePlaceholderStart + placeHolderName);
+            Field placeholderNumberField = parserClass.getField(metaLangPlaceholderPrefix + placeHolderSuffix);
             placeholderIndex = placeholderNumberField.getInt(null); // static field
 
             placeHolderTypes = new HashMap<>();
@@ -76,9 +62,6 @@ public class ${newGrammarName}PlaceholderDetectorListener extends ${newGrammarNa
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void visitTerminal(TerminalNode node) {
 
@@ -113,9 +96,9 @@ public class ${newGrammarName}PlaceholderDetectorListener extends ${newGrammarNa
     private String placeholderIndexToPlaceholderType(int placeholderTypeIndex) {
         String ruleName = parserRuleNames.get(placeholderTypeIndex);
         String placeHolderType;
-        if (ruleName.startsWith(uniqueStart) && ruleName.endsWith(placeHolderName)) {
-            placeHolderType = ruleName.replaceFirst(uniqueStart, "");
-            placeHolderType = placeHolderType.substring(0, placeHolderType.lastIndexOf(placeHolderName));
+        if (ruleName.startsWith(metaLangRulePrefix) && ruleName.endsWith(placeHolderSuffix)) {
+            placeHolderType = ruleName.replaceFirst(metaLangRulePrefix, "");
+            placeHolderType = placeHolderType.substring(0, placeHolderType.lastIndexOf(placeHolderSuffix));
         } else {
             System.out.println("Found Placeholder violating naming convention: " + ruleName);
             placeHolderType = "";
