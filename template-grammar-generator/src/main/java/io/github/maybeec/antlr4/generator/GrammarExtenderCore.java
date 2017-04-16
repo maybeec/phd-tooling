@@ -45,13 +45,12 @@ public class GrammarExtenderCore {
         ParseTreeWalker metaWalker = new ParseTreeWalker();
 
         // collect information about metagrammar
-        MetaLanguageListener metaCollector = new MetaLanguageListener(metaTokens);
+        MetaLanguageListener metaCollector = new MetaLanguageListener(metaTokens, metaLangPrefix);
         metaWalker.walk(metaCollector, metaTree); // walk parse tree
 
         // create grammarspec using metagrammar infos
-        GrammarSpec grammarSpec =
-            new GrammarSpec(newGrammarName, metaLangPrefix, placeHolderName, metaCollector.getPlaceHolderRule(),
-                metaCollector.getIfRule(), metaCollector.getIfElseRule(), metaCollector.getLoopRule());
+        GrammarSpec grammarSpec = new GrammarSpec(newGrammarName, metaLangPrefix, placeHolderName,
+            metaCollector.getParserRules(), metaCollector.getLexerRules());
 
         // parse object Language
         File objectGrammar = new File(objectGrammarPath);
@@ -71,14 +70,18 @@ public class GrammarExtenderCore {
         Map<String, String> tokenNames = objectCollector.getTokenNames();
         HashSet<String> selectedRules = objectCollector.getSelectedRules();
 
-        // extend lexer rules
-        PlaceholderIncluderListener placeholderListener =
-            new PlaceholderIncluderListener(objectTokens, tokenNames, selectedRules, multiLexerRules, grammarSpec);
-        objectWalker.walk(placeholderListener, objectTree); // walk parse tree
+        // extend rules
+        RulePlaceholderRewriter ruleRewriter =
+            new RulePlaceholderRewriter(objectTokens, tokenNames, selectedRules, multiLexerRules, grammarSpec);
+        objectWalker.walk(ruleRewriter, objectTree); // walk parse tree
+
+        PlaceholderRulesCreator rulesCreator = new PlaceholderRulesCreator(ruleRewriter.getRewriter(),
+            selectedRules, grammarSpec, ruleRewriter.getCreatedLexerRuleList(), ruleRewriter.getUsedPlaceholderRules());
+        objectWalker.walk(rulesCreator, objectTree); // walk parse tree
 
         // print manipulated grammar to file
         String destinationFilePath = destinationPath + grammarSpec.getNewGrammarName() + ".g4";
-        printToFile(destinationFilePath, placeholderListener.getRewriter().getText());
+        printToFile(destinationFilePath, rulesCreator.getRewriter().getText());
 
         // parse grammar with Placeholder
         // File grammarWithPlaceholder = new File(destinationFilePath);
@@ -135,7 +138,7 @@ public class GrammarExtenderCore {
 
     private static void generateParserWithANTLR(File grammarFile, String targetPackage) throws IOException {
         String[] args = { grammarFile.getCanonicalPath(), "-listener", "-o",
-            grammarFile.getParentFile().getCanonicalPath(), "-package", targetPackage };
+            grammarFile.getParentFile().getCanonicalPath(), "-package", targetPackage, "-long-messages" };
         Tool antlr = new Tool(args);
         if (args.length == 0) {
             antlr.help();
@@ -159,12 +162,6 @@ public class GrammarExtenderCore {
         }
     }
 
-    /**
-     * @param filePath
-     * @param data
-     * @throws IOException
-     * @author fkreis (06.05.2016)
-     */
     private static void printToFile(String filePath, String data) throws IOException {
         Writer fw = null;
         try {

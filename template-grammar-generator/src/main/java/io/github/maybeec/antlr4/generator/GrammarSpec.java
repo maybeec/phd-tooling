@@ -1,61 +1,59 @@
 package io.github.maybeec.antlr4.generator;
 
-/**
- * A container class for information exchange during template transformation
- */
+import java.util.Map;
+
+/** A container class for information exchange during template transformation */
 public class GrammarSpec {
+
+    public static final String RULE_PH = "body";
+
+    public static final String RULE_IF = "if";
+
+    public static final String RULE_IF_ELSE = "ifElse";
+
+    public static final String RULE_LOOP = "loop";
 
     /** The name for the new grammar */
     private String newGrammarName;
 
     /** A capitalized unique prefix usable for the placeholder lexer rule name */
-    private String metaLangPlaceholderPrefix;
+    private String metaLangLexerRulePrefix;
 
     /** An uncapitalized unique prefix usable for the parser rule names */
-    private String metaLangRulePrefix;
+    private String metaLangParserRulePrefix;
 
     /** The name for the placeholder in the template grammar */
-    private static String placeHolderSuffix;
+    private String placeHolderLabel;
 
-    /** The definition for the placeholder in the template grammar */
-    private String placeHolderDef;
+    private String ruleBodyPlaceholder;
 
-    /** The definition for the if rule in the template grammar */
-    private String ifRuleDef;
+    /** Grammar rules of the meta language. */
+    private Map<String, String> metaLangParserRules;
 
-    /** The definition for the ifelse rule in the template grammar */
-    private String ifElseRuleDef;
-
-    /** The definition for the loop rule in the template grammar */
-    private String loopRuleDef;
+    /** Grammar rules of the meta language. */
+    private Map<String, String> metaLangLexerRules;
 
     /**
      * @param newGrammarName
      *            The name for the new grammar
      * @param metaLangPrefix
-     *            An unique prefix to be used for newly create meta lang productions
-     * @param placeHolderSuffix
+     *            An unique prefix to be used for newly create meta language productions
+     * @param placeHolderLabel
      *            The name for the placeholder in the template grammar
-     * @param placeHolderDef
-     *            The definition for the placeholder in the template grammar
-     * @param ifRuleDef
-     *            The definition for the if rule in the template grammar
-     * @param ifElseRuleDef
-     *            The definition for the ifelse rule in the template grammar
-     * @param loopDef
-     *            The definition for the loop rule in the template grammar
+     * @param metaLangParserRules
+     *            Grammar rules of the meta language
+     * @param metaLangLexerRules
+     *            Grammar rules of the meta language
      */
-    public GrammarSpec(String newGrammarName, String metaLangPrefix, String placeHolderSuffix, String placeHolderDef,
-        String ifRuleDef, String ifElseRuleDef, String loopDef) {
-        super();
+    public GrammarSpec(String newGrammarName, String metaLangPrefix, String placeHolderLabel,
+        Map<String, String> metaLangParserRules, Map<String, String> metaLangLexerRules) {
         this.newGrammarName = newGrammarName;
-        metaLangPlaceholderPrefix = metaLangPrefix.toUpperCase();
-        metaLangRulePrefix = metaLangPrefix.toLowerCase();
-        GrammarSpec.placeHolderSuffix = placeHolderSuffix;
-        this.placeHolderDef = placeHolderDef;
-        this.ifRuleDef = ifRuleDef;
-        this.ifElseRuleDef = ifElseRuleDef;
-        loopRuleDef = loopDef;
+        metaLangLexerRulePrefix = metaLangPrefix.toUpperCase();
+        metaLangParserRulePrefix = metaLangPrefix.toLowerCase();
+        this.placeHolderLabel = placeHolderLabel;
+        this.metaLangParserRules = metaLangParserRules;
+        this.metaLangLexerRules = metaLangLexerRules;
+        ruleBodyPlaceholder = metaLangParserRulePrefix + RULE_PH;
     }
 
     /**
@@ -70,56 +68,59 @@ public class GrammarSpec {
      * Returns the field 'metaLangPlaceholderPrefix'
      * @return value of metaLangPlaceholderPrefix
      */
-    public String getMetaLangPlaceholderPrefix() {
-        return metaLangPlaceholderPrefix;
+    public String getMetaLangLexerRulePrefix() {
+        return metaLangLexerRulePrefix;
     }
 
     /**
      * Returns the field 'metaLangRulePrefix'
      * @return value of metaLangRulePrefix
      */
-    public String getMetaLangRulePrefix() {
-        return metaLangRulePrefix;
+    public String getMetaLangParserRulePrefix() {
+        return metaLangParserRulePrefix;
     }
 
     /**
      * Returns the field 'placeHolderSuffix'
      * @return value of placeHolderSuffix
      */
-    public String getPlaceHolderSuffix() {
-        return placeHolderSuffix;
+    public String getPlaceHolderLabel() {
+        return placeHolderLabel;
     }
 
-    /**
-     * Returns the field 'placeHolderDef'
-     * @return value of placeHolderDef
-     */
-    public String getPlaceHolderDef() {
-        return placeHolderDef;
+    public String getOptPhParserRuleName(String atomName) {
+        return metaLangParserRulePrefix + atomName + "Opt";
     }
 
-    /**
-     * Returns the field 'ifRuleDef'
-     * @return value of ifRuleDef
-     */
-    public String getIfRuleDef() {
-        return ifRuleDef;
+    public String getParserRule(String label) {
+        return metaLangParserRules.get(label);
     }
 
-    /**
-     * Returns the field 'ifElseRuleDef'
-     * @return value of ifElseRuleDef
-     */
-    public String getIfElseRuleDef() {
-        return ifElseRuleDef;
+    public Map<String, String> getLexerRules() {
+        return metaLangLexerRules;
     }
 
-    /**
-     * Returns the field 'loopDef'
-     * @return value of loopDef
-     */
-    public String getLoopRuleDef() {
-        return loopRuleDef;
+    public String getPlaceHolderRule() {
+        return metaLangLexerRules.get(placeHolderLabel);
     }
 
+    public String createIfLoopRuleContent(String body) {
+        return getParserRule(metaLangParserRulePrefix + RULE_IF).replace(ruleBodyPlaceholder, body) + " | "
+            + getParserRule(metaLangParserRulePrefix + RULE_LOOP).replace(ruleBodyPlaceholder, body);
+    }
+
+    public String createStarRuleContent(String body) {
+        return getParserRule(metaLangParserRulePrefix + RULE_IF).replace(ruleBodyPlaceholder, body) + " | "
+            + getParserRule(metaLangParserRulePrefix + RULE_IF_ELSE).replace(ruleBodyPlaceholder, body) + " | "
+            + getParserRule(metaLangParserRulePrefix + RULE_LOOP).replace(ruleBodyPlaceholder, body);
+    }
+
+    public String createOptRuleContent(String body) {
+        return getParserRule(metaLangParserRulePrefix + RULE_IF).replace(ruleBodyPlaceholder, body) + " | "
+            + getParserRule(metaLangParserRulePrefix + RULE_IF_ELSE).replace(ruleBodyPlaceholder, body);
+    }
+
+    public String createOneRuleContent(String body) {
+        return getParserRule(metaLangParserRulePrefix + RULE_IF_ELSE).replace(ruleBodyPlaceholder, body);
+    }
 }

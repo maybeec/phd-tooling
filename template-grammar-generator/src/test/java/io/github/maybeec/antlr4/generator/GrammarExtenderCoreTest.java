@@ -11,7 +11,7 @@ public class GrammarExtenderCoreTest {
 
         // define template grammar properties
         String newGrammarName = "Java8Template";
-        String placeHolderName = "PlaceHolder";
+        String placeHolderName = "PLACEHOLDER";
         String metaLangPrefix = "fm_";
         String targetPackage = "io.github.maybeec.antlr4.templateparser.java8";
         Tactics customTactic = Tactics.ALL_PARSER_CUSTOM_LEXER;
@@ -30,7 +30,7 @@ public class GrammarExtenderCoreTest {
 
         // define template grammar properties
         String newGrammarName = "Java7Template";
-        String placeHolderName = "PlaceHolder";
+        String placeHolderName = "PLACEHOLDER";
         String metaLangPrefix = "fm_";
         String targetPackage = "io.github.maybeec.antlr4.templateparser.java7";
 

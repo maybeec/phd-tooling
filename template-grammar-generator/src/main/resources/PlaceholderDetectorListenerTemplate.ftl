@@ -43,9 +43,9 @@ public class ${newGrammarName}PlaceholderDetectorListener extends ${newGrammarNa
     public ${newGrammarName}PlaceholderDetectorListener() {
         super();
         try {
-            String metaLangPlaceholderPrefix = "${metaLangPlaceholderPrefix}";
-            placeHolderSuffix = "${placeHolderSuffix}";
-            metaLangRulePrefix = "${metaLangRulePrefix}";
+            String metaLangPlaceholderPrefix = "${metaLangLexerRulePrefix}";
+            placeHolderSuffix = "${placeHolderLabel}";
+            metaLangRulePrefix = "${metaLangParserRulePrefix}";
 
             ${newGrammarName}Parser parser = new ${newGrammarName}Parser(null);
             Class<? extends ${newGrammarName}Parser> parserClass = parser.getClass();

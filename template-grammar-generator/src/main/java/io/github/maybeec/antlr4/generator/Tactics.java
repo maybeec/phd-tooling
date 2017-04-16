@@ -3,9 +3,7 @@ package io.github.maybeec.antlr4.generator;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * A enum of all available grammar transformation strategies
- */
+/** A enum of all available grammar transformation strategies */
 public enum Tactics {
     /**
      *

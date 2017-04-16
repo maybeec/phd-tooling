@@ -1,9 +1,16 @@
 grammar SimpleFreeMarker;
 
-PlaceHolder: '${' ~'}'+? '}';
+if: IF body (body)* IF_CLOSE;
 
-if: '<#if' ~'>'+? '>' body ('<#elseif' ~'>'+? '>' body)* '</#if>';
+ifElse: IF body (ELSE_IF body)* ELSE body IF_CLOSE;
 
-ifElse: '<#if' ~'>'+? '>' body ('<#elseif' ~'>'+? '>' body )* '<#else>' body '</#if>';
+loop: LIST body LIST_CLOSE;
 
-loop: '<#list' .+? 'as' ~'>'+? '>' body '</#list>';
+
+PLACEHOLDER: '${' ~'}'+? '}';
+IF: '<#if' ~'>'+? '>';
+IF_CLOSE: '</#if>';
+ELSE_IF: '<#elseif' ~'>'+? '>';
+ELSE: '<#else>';
+LIST: '<#list' .+? 'as' ~'>'+? '>';
+LIST_CLOSE: '</#list>';

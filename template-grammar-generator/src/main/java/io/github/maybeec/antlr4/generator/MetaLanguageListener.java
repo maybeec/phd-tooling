@@ -1,102 +1,119 @@
 package io.github.maybeec.antlr4.generator;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.antlr.parser.antlr4.ANTLRv4Parser.AlternativeContext;
+import org.antlr.parser.antlr4.ANTLRv4Parser.ElementContext;
+import org.antlr.parser.antlr4.ANTLRv4Parser.LabeledAltContext;
+import org.antlr.parser.antlr4.ANTLRv4Parser.LexerAltContext;
+import org.antlr.parser.antlr4.ANTLRv4Parser.LexerElementContext;
 import org.antlr.parser.antlr4.ANTLRv4Parser.LexerRuleSpecContext;
 import org.antlr.parser.antlr4.ANTLRv4Parser.ParserRuleSpecContext;
+import org.antlr.parser.antlr4.ANTLRv4Parser.TerminalContext;
 import org.antlr.parser.antlr4.ANTLRv4ParserBaseListener;
 import org.antlr.v4.runtime.TokenStream;
 import org.antlr.v4.runtime.TokenStreamRewriter;
+import org.antlr.v4.runtime.misc.Interval;
+import org.antlr.v4.runtime.tree.TerminalNode;
 
-/**
- * A class to collect information about a certain meta language
- */
+/** A class to collect information about a certain meta language */
 public class MetaLanguageListener extends ANTLRv4ParserBaseListener {
 
-    private TokenStream token;
+    /** Token stream of meta language */
+    private TokenStream tokenStream;
 
-    private String placeHolderRule;
+    /** A capitalized unique prefix usable for the placeholder lexer rule name */
+    private String metaLangLexerRulePrefix;
 
-    private String ifRule;
+    /** An uncapitalized unique prefix usable for the parser rule names */
+    private String metaLangParserRulePrefix;
 
-    private String ifElseRule;
+    /** Mapping from parser production labels to its production */
+    private Map<String, String> parserRules = new LinkedHashMap<>();
 
-    private String loopRule;
+    /** Mapping from parser production labels to its production */
+    private Map<String, String> lexerRules = new LinkedHashMap<>();
 
-    public MetaLanguageListener(TokenStream token) {
-        this.token = token;
+    /**
+     * @param tokenStream
+     *            of meta language
+     * @param metaLangPrefix
+     *            An unique prefix to be used for newly create meta language productions
+     */
+    public MetaLanguageListener(TokenStream tokenStream, String metaLangPrefix) {
+        this.tokenStream = tokenStream;
+        metaLangLexerRulePrefix = metaLangPrefix.toUpperCase();
+        metaLangParserRulePrefix = metaLangPrefix.toLowerCase();
     }
 
     @Override
     public void exitLexerRuleSpec(LexerRuleSpecContext ctx) {
+        TokenStreamRewriter rewriter = new TokenStreamRewriter(tokenStream);
+        rewriteLexerRule(rewriter, ctx.lexerRuleBlock().lexerAltList().lexerAlt());
+        lexerRules.put(metaLangLexerRulePrefix + ctx.TOKEN_REF().getText(), tokenStream
+            .getText(new Interval(ctx.lexerRuleBlock().start.getTokenIndex(), ctx.stop.getTokenIndex() - 1)));
+    }
 
-        // derive Placeholder Rule
-        if (ctx.TOKEN_REF().getText().equals("PlaceHolder")) {
-            TokenStreamRewriter rewriter = new TokenStreamRewriter(token);
-            rewriter.delete(0, ctx.lexerRuleBlock().start.getTokenIndex() - 1);
-            rewriter.delete(ctx.stop.getTokenIndex(), token.size() - 1);
-            placeHolderRule = rewriter.getText();
+    private void rewriteLexerRule(TokenStreamRewriter rewriter, List<LexerAltContext> lexerAlts) {
+        for (LexerAltContext alt : lexerAlts) {
+            for (LexerElementContext elem : alt.lexerElements().lexerElement()) {
+                if (elem.lexerAtom() != null) {
+                    TerminalContext terminal = elem.lexerAtom().terminal();
+                    if (terminal != null && terminal.TOKEN_REF() != null) {
+                        rewriter.replace(terminal.TOKEN_REF().getSymbol(),
+                            metaLangParserRulePrefix + terminal.getText());
+                    } else if (elem.lexerBlock() != null) {
+                        rewriteLexerRule(rewriter, elem.lexerBlock().lexerAltList().lexerAlt());
+                    }
+                }
+            }
         }
-
     }
 
     @Override
     public void exitParserRuleSpec(ParserRuleSpecContext ctx) {
+        TokenStreamRewriter rewriter = new TokenStreamRewriter(tokenStream);
 
-        // derive If Rule
-        if (ctx.RULE_REF().getText().equals("if")) {
-            TokenStreamRewriter rewriter = new TokenStreamRewriter(token);
-            rewriter.delete(0, ctx.ruleBlock().start.getTokenIndex() - 1);
-            rewriter.delete(ctx.stop.getTokenIndex(), token.size() - 1);
-            ifRule = rewriter.getText();
+        List<AlternativeContext> alternatives = new ArrayList<>();
+        for (LabeledAltContext labeledAlt : ctx.ruleBlock().ruleAltList().labeledAlt()) {
+            alternatives.add(labeledAlt.alternative());
         }
+        rewriteParserRule(rewriter, alternatives);
 
-        // derive If Else Rule
-        if (ctx.RULE_REF().getText().equals("ifElse")) {
-            TokenStreamRewriter rewriter = new TokenStreamRewriter(token);
-            rewriter.delete(0, ctx.ruleBlock().start.getTokenIndex() - 1);
-            rewriter.delete(ctx.stop.getTokenIndex(), token.size() - 1);
-            ifElseRule = rewriter.getText();
+        parserRules.put(metaLangParserRulePrefix + ctx.RULE_REF().getText(),
+            rewriter.getText(new Interval(ctx.ruleBlock().start.getTokenIndex(), ctx.stop.getTokenIndex() - 1)));
+    }
+
+    private void rewriteParserRule(TokenStreamRewriter rewriter, List<AlternativeContext> parserAlts) {
+        for (AlternativeContext alt : parserAlts) {
+            for (ElementContext elem : alt.element()) {
+                if (elem.atom() != null) {
+                    if (elem.atom().ruleref() != null) {
+                        TerminalNode ruleRef = elem.atom().ruleref().RULE_REF();
+                        rewriter.replace(ruleRef.getSymbol(), metaLangParserRulePrefix + ruleRef.getText());
+                    } else if (elem.atom().terminal() != null) {
+                        TerminalNode tokenRef = elem.atom().terminal().TOKEN_REF();
+                        rewriter.replace(tokenRef.getSymbol(), metaLangLexerRulePrefix + tokenRef.getText());
+                    } else if (elem.labeledElement() != null && elem.labeledElement().block() != null) {
+                        rewriteParserRule(rewriter, elem.labeledElement().block().altList().alternative());
+                    }
+                } else if (elem.labeledElement() != null && elem.labeledElement().block() != null) {
+                    rewriteParserRule(rewriter, elem.labeledElement().block().altList().alternative());
+                } else if (elem.ebnf() != null && elem.ebnf().block() != null) {
+                    rewriteParserRule(rewriter, elem.ebnf().block().altList().alternative());
+                }
+            }
         }
-
-        // derive Loop Rule
-        if (ctx.RULE_REF().getText().equals("loop")) {
-            TokenStreamRewriter rewriter = new TokenStreamRewriter(token);
-            rewriter.delete(0, ctx.ruleBlock().start.getTokenIndex() - 1);
-            rewriter.delete(ctx.stop.getTokenIndex(), token.size() - 1);
-            loopRule = rewriter.getText();
-        }
-
     }
 
-    /**
-     * Returns the field 'completePlaceHolderRule'
-     * @return value of completePlaceHolderRule
-     */
-    public String getPlaceHolderRule() {
-        return placeHolderRule;
+    public Map<String, String> getLexerRules() {
+        return lexerRules;
     }
 
-    /**
-     * Returns the field 'ifRule'
-     * @return value of ifRule
-     */
-    public String getIfRule() {
-        return ifRule;
+    public Map<String, String> getParserRules() {
+        return parserRules;
     }
-
-    /**
-     * Returns the field 'ifElseRule'
-     * @return value of ifElseRule
-     */
-    public String getIfElseRule() {
-        return ifElseRule;
-    }
-
-    /**
-     * Returns the field 'loop'
-     * @return value of loop
-     */
-    public String getLoopRule() {
-        return loopRule;
-    }
-
 }
