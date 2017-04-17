@@ -85,7 +85,7 @@ public class GrammarExtenderCore {
 
         // generate parser based on new grammar
         File newGrammarFile = new File(destinationFilePath);
-        generateParserWithANTLR(newGrammarFile, targetPackage, metaLangPrefix);
+        generateParserWithANTLR(newGrammarFile, targetPackage, metaLangPrefix.toUpperCase() + placeHolderName);
 
         // generate PlaceholderDetectorListener using Freemarker
         try {
@@ -120,11 +120,11 @@ public class GrammarExtenderCore {
 
     }
 
-    private static void generateParserWithANTLR(File grammarFile, String targetPackage, String metaLangPrefix)
+    private static void generateParserWithANTLR(File grammarFile, String targetPackage, String placeholderName)
         throws IOException {
         String[] args =
             { grammarFile.getCanonicalPath(), "-listener", "-o", grammarFile.getParentFile().getCanonicalPath(),
-                "-package", targetPackage, "-long-messages", "-metalang-prefix", metaLangPrefix };
+                "-package", targetPackage, "-long-messages", "-metalang-placeholder", placeholderName };
         Tool antlr = new Tool(args);
         if (args.length == 0) {
             antlr.help();

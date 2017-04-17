@@ -33,7 +33,7 @@ import io.github.maybeec.antlr4.templateparser.java8.Java8TemplateParser;
 public class ParserTestUtil {
 
     /** If true, all runs will be printed to png into the project root */
-    private static boolean printToPng = true;
+    private static boolean printToPng = false;
 
     /** If true, all runs will be printed to eps into the project root */
     private static boolean printEps = false;
