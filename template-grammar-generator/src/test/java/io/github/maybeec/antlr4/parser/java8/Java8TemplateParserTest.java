@@ -50,7 +50,7 @@ public class Java8TemplateParserTest {
         File template = new File("src/test/resources/templates/java8template_parse_ifthenelse2.ftl");
         List<ParserRuleContext> trees =
             ParserTestUtil.parseAmbiguities(template, PredictionMode.LL_EXACT_AMBIG_DETECTION, false);
-        assertThat(trees).hasSize(2);
+        assertThat(trees).hasSize(1);
     }
 
     @Test

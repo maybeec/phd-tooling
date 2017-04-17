@@ -75,33 +75,17 @@ public class GrammarExtenderCore {
             new RulePlaceholderRewriter(objectTokens, tokenNames, selectedRules, multiLexerRules, grammarSpec);
         objectWalker.walk(ruleRewriter, objectTree); // walk parse tree
 
-        PlaceholderRulesCreator rulesCreator = new PlaceholderRulesCreator(ruleRewriter.getRewriter(),
-            selectedRules, grammarSpec, ruleRewriter.getCreatedLexerRuleList(), ruleRewriter.getUsedPlaceholderRules());
+        PlaceholderRulesCreator rulesCreator = new PlaceholderRulesCreator(ruleRewriter.getRewriter(), selectedRules,
+            grammarSpec, ruleRewriter.getCreatedLexerRuleList(), ruleRewriter.getUsedPlaceholderRules());
         objectWalker.walk(rulesCreator, objectTree); // walk parse tree
 
         // print manipulated grammar to file
         String destinationFilePath = destinationPath + grammarSpec.getNewGrammarName() + ".g4";
         printToFile(destinationFilePath, rulesCreator.getRewriter().getText());
 
-        // parse grammar with Placeholder
-        // File grammarWithPlaceholder = new File(destinationFilePath);
-        // objectReader = new FileReader(grammarWithPlaceholder);
-        // objectLexer = new ANTLRv4Lexer(new ANTLRInputStream(objectReader));
-        // objectTokens = new CommonTokenStream(objectLexer);
-        // objectParser = new ANTLRv4Parser(objectTokens);
-        // objectTree = objectParser.grammarSpec();
-        //
-        // // extend with Conditions and Loops
-        // ConditionAndLoopIncluderListener conditionLoopListener =
-        // new ConditionAndLoopIncluderListener(objectTokens, grammarSpec);
-        // objectWalker.walk(conditionLoopListener, objectTree); // walk parse tree
-        //
-        // // print manipulated grammar to file
-        // printToFile(destinationFilePath, conditionLoopListener.getRewriter().getText());
-        //
         // generate parser based on new grammar
         File newGrammarFile = new File(destinationFilePath);
-        generateParserWithANTLR(newGrammarFile, targetPackage);
+        generateParserWithANTLR(newGrammarFile, targetPackage, metaLangPrefix);
 
         // generate PlaceholderDetectorListener using Freemarker
         try {
@@ -136,9 +120,11 @@ public class GrammarExtenderCore {
 
     }
 
-    private static void generateParserWithANTLR(File grammarFile, String targetPackage) throws IOException {
-        String[] args = { grammarFile.getCanonicalPath(), "-listener", "-o",
-            grammarFile.getParentFile().getCanonicalPath(), "-package", targetPackage, "-long-messages" };
+    private static void generateParserWithANTLR(File grammarFile, String targetPackage, String metaLangPrefix)
+        throws IOException {
+        String[] args =
+            { grammarFile.getCanonicalPath(), "-listener", "-o", grammarFile.getParentFile().getCanonicalPath(),
+                "-package", targetPackage, "-long-messages", "-metalang-prefix", metaLangPrefix };
         Tool antlr = new Tool(args);
         if (args.length == 0) {
             antlr.help();
