@@ -152,6 +152,12 @@ public class RulePlaceholderRewriter extends ANTLRv4ParserBaseListener {
             rewriter.insertBefore(ctx.start, "(" + phRuleName + " | ");
             rewriter.insertAfter(ctx.stop, ")");
             break;
+        case "*":
+            phRuleName = grammarSpec.getStarPhParserRuleName(ruleName);
+            usedPlaceholderRules.add(phRuleName);
+            rewriter.insertBefore(ctx.start, "(" + phRuleName + " | ");
+            rewriter.insertAfter(ctx.stop, ")");
+            break;
         default:
             break;
         }

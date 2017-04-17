@@ -2,7 +2,7 @@ import a.c.b;
 
 public class TestClass{
 
-  private ${mod} int i;
+  ${mod} int i;
 
   <#if x == 1>
     private int i1;
@@ -12,8 +12,8 @@ public class TestClass{
     private int ix;
   </#if>
 
-  <#list fieldnames as fieldname>
+  /*<#list fieldnames as fieldname>
     private int ${fieldname};
-  </#list>
+  </#list>*/
 
 }

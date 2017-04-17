@@ -23,7 +23,7 @@ public class ${newGrammarName}PlaceholderDetectorListener extends ${newGrammarNa
     private String metaLangRulePrefix;
 
     /** The placeholder rule's name as defined in the GrammarSpec */
-    private String placeHolderSuffix;
+    private String placeHolderLabel;
 
     /** Maps the placeholder's */
     private Map<String, String> placeHolderTypes;
@@ -44,13 +44,13 @@ public class ${newGrammarName}PlaceholderDetectorListener extends ${newGrammarNa
         super();
         try {
             String metaLangPlaceholderPrefix = "${metaLangLexerRulePrefix}";
-            placeHolderSuffix = "${placeHolderLabel}";
+            placeHolderLabel = "${placeHolderLabel}";
             metaLangRulePrefix = "${metaLangParserRulePrefix}";
 
             ${newGrammarName}Parser parser = new ${newGrammarName}Parser(null);
             Class<? extends ${newGrammarName}Parser> parserClass = parser.getClass();
 
-            Field placeholderNumberField = parserClass.getField(metaLangPlaceholderPrefix + placeHolderSuffix);
+            Field placeholderNumberField = parserClass.getField(metaLangPlaceholderPrefix + placeHolderLabel);
             placeholderIndex = placeholderNumberField.getInt(null); // static field
 
             placeHolderTypes = new HashMap<>();
@@ -96,9 +96,8 @@ public class ${newGrammarName}PlaceholderDetectorListener extends ${newGrammarNa
     private String placeholderIndexToPlaceholderType(int placeholderTypeIndex) {
         String ruleName = parserRuleNames.get(placeholderTypeIndex);
         String placeHolderType;
-        if (ruleName.startsWith(metaLangRulePrefix) && ruleName.endsWith(placeHolderSuffix)) {
+        if (ruleName.startsWith(metaLangRulePrefix)) {
             placeHolderType = ruleName.replaceFirst(metaLangRulePrefix, "");
-            placeHolderType = placeHolderType.substring(0, placeHolderType.lastIndexOf(placeHolderSuffix));
         } else {
             System.out.println("Found Placeholder violating naming convention: " + ruleName);
             placeHolderType = "";

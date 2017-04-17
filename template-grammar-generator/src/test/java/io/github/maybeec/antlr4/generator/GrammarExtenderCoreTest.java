@@ -17,6 +17,18 @@ public class GrammarExtenderCoreTest {
         Tactics customTactic = Tactics.ALL_PARSER_CUSTOM_LEXER;
         HashSet<String> tokenNames = new HashSet<>();
         tokenNames.add("Identifier");
+        // tokenNames.add("PUBLIC");
+        // tokenNames.add("PROTECTED");
+        // tokenNames.add("PRIVATE");
+        // tokenNames.add("ABSTRACT");
+        // tokenNames.add("STATIC");
+        // tokenNames.add("CLASS");
+        // tokenNames.add("INTERFACE");
+        // tokenNames.add("VOID");
+        // tokenNames.add("FINAL");
+        // tokenNames.add("SYNCHRONIZED");
+        // tokenNames.add("NATIVE");
+        // tokenNames.add("STRICTFP");
         customTactic.addTokens(tokenNames);
 
         // transform grammar

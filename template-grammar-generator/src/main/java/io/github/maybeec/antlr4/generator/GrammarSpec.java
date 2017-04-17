@@ -92,6 +92,10 @@ public class GrammarSpec {
         return metaLangParserRulePrefix + atomName + "Opt";
     }
 
+    public String getStarPhParserRuleName(String atomName) {
+        return metaLangParserRulePrefix + atomName + "Star";
+    }
+
     public String getParserRule(String label) {
         return metaLangParserRules.get(label);
     }
