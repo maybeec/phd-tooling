@@ -13,13 +13,9 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Future;
-
-import javax.swing.JFrame;
 
 import org.antlr.parser.java8.Java8Lexer;
 import org.antlr.parser.java8.Java8Parser;
-import org.antlr.v4.gui.Trees;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -67,6 +63,38 @@ public class Java8TemplateParserTest {
         List<ParserRuleContext> trees =
             ParserTestUtil.parseAmbiguities(template, PredictionMode.LL_EXACT_AMBIG_DETECTION, false);
         assertThat(trees).hasSize(2);
+    }
+
+    @Test
+    public final void parserCompilationUnit_LL_EXACT_AMIG_parse_loop() throws Exception {
+        File template = new File("src/test/resources/templates/java8template.ftl");
+        List<ParserRuleContext> trees =
+            ParserTestUtil.parseAmbiguities(template, PredictionMode.LL_EXACT_AMBIG_DETECTION, false);
+        assertThat(trees).hasSize(2);
+    }
+
+    @Test
+    public final void parserCompilationUnit_LL_EXACT_AMIG_parse_field_mod_snippet() throws Exception {
+        File template = new File("src/test/resources/templates/java8template_parse_field_mod_snippet.ftl");
+        List<ParserRuleContext> trees =
+            ParserTestUtil.parseAmbiguities(template, PredictionMode.LL_EXACT_AMBIG_DETECTION, false);
+        assertThat(trees).hasSize(2);
+    }
+
+    @Test
+    public final void parserCompilationUnit_LL_EXACT_AMIG_parse_field_mod_snippet2() throws Exception {
+        File template = new File("src/test/resources/templates/java8template_parse_field_mod_snippet2.ftl");
+        List<ParserRuleContext> trees =
+            ParserTestUtil.parseAmbiguities(template, PredictionMode.LL_EXACT_AMBIG_DETECTION, false);
+        assertThat(trees).hasSize(5);
+    }
+
+    @Test
+    public final void parserCompilationUnit_LL_EXACT_AMIG_parse_field_initializer_snippet() throws Exception {
+        File template = new File("src/test/resources/templates/java8template_parse_field_initializer_snippet.ftl");
+        List<ParserRuleContext> trees =
+            ParserTestUtil.parseAmbiguities(template, PredictionMode.LL_EXACT_AMBIG_DETECTION, false);
+        assertThat(trees).hasSize(1);
     }
 
     /**
@@ -124,13 +152,13 @@ public class Java8TemplateParserTest {
             }
 
             // Generates the GUI
-            Future<JFrame> future = Trees.inspect(tree, parser);
-            while (future.get().isVisible()) {
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                }
-            }
+            // Future<JFrame> future = Trees.inspect(tree, parser);
+            // while (future.get().isVisible()) {
+            // try {
+            // Thread.sleep(100);
+            // } catch (InterruptedException e) {
+            // }
+            // }
         } while (PredictionMode.hasNextRun());
 
         // input data analysis

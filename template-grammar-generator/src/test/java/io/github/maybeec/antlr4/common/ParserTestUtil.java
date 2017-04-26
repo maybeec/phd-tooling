@@ -27,9 +27,7 @@ import io.github.maybeec.antlr4.analysis.ErrorListener;
 import io.github.maybeec.antlr4.templateparser.java8.Java8TemplateLexer;
 import io.github.maybeec.antlr4.templateparser.java8.Java8TemplateParser;
 
-/**
- * Test Util class for parser tests.
- */
+/** Test Util class for parser tests. */
 public class ParserTestUtil {
 
     /** If true, all runs will be printed to png into the project root */
