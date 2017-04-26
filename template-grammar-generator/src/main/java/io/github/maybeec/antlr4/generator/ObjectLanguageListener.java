@@ -26,7 +26,7 @@ public class ObjectLanguageListener extends ANTLRv4ParserBaseListener {
 
     private Map<String, String> tokenNames;
 
-    private List<String> multiLexerRules;
+    private List<String> lexerRules;
 
     private Tactics tactic;
 
@@ -40,7 +40,7 @@ public class ObjectLanguageListener extends ANTLRv4ParserBaseListener {
         this.tactic = tactic;
         fragmentRules = new LinkedList<>();
         tokenNames = new HashMap<>();
-        multiLexerRules = new LinkedList<>();
+        lexerRules = new LinkedList<>();
         selectedRules = new HashSet<>();
         sequenceParserRules = new HashSet<>();
         maybeSequenceParserRules = new HashMap<>();
@@ -126,11 +126,11 @@ public class ObjectLanguageListener extends ANTLRv4ParserBaseListener {
             // boolean isMultiple = isMultiple(ctx);
 
             // collect token names with only one possible text
-            // look at all childeren recursively and check for | * ? + range []
-            if (!isMultiple(ctx)) {
+            // look at all children recursively and check for | * ? + range []
+            if (!isAtomToken(ctx)) {
                 tokenNames.put(ctx.lexerRuleBlock().lexerAltList().getText(), lexerRuleName);
             } else { // collect token names with multiple possible texts
-                multiLexerRules.add(ctx.TOKEN_REF().getText());
+                lexerRules.add(ctx.TOKEN_REF().getText());
             }
 
             switch (tactic) {
@@ -146,7 +146,7 @@ public class ObjectLanguageListener extends ANTLRv4ParserBaseListener {
                 break;
             case INTELLIGENT:
                 // add only lexer rules which are variable (e.g. identifier in java)
-                if (multiLexerRules.contains(lexerRuleName)) {
+                if (lexerRules.contains(lexerRuleName)) {
                     selectedRules.add(lexerRuleName);
                 }
                 break;
@@ -233,7 +233,7 @@ public class ObjectLanguageListener extends ANTLRv4ParserBaseListener {
      * @return value of multiLexerRules
      */
     public List<String> getMultiLexerRules() {
-        return multiLexerRules;
+        return lexerRules;
     }
 
     /**
@@ -252,7 +252,7 @@ public class ObjectLanguageListener extends ANTLRv4ParserBaseListener {
         return tokenNames;
     }
 
-    private boolean isMultiple(ParseTree tree) {
+    private boolean isAtomToken(ParseTree tree) {
 
         List<ParseTree> children = new LinkedList<>();
         int childCount = tree.getChildCount();
@@ -278,7 +278,7 @@ public class ObjectLanguageListener extends ANTLRv4ParserBaseListener {
                 // System.out.println("set []");
                 return true;
             }
-            if (isMultiple(child)) {
+            if (isAtomToken(child)) {
                 // System.out.println("wg Child");
                 return true;
             }

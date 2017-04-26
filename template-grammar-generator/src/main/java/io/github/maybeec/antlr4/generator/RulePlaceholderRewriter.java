@@ -6,8 +6,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.antlr.parser.antlr4.ANTLRv4Parser.AtomContext;
+import org.antlr.parser.antlr4.ANTLRv4Parser.EbnfContext;
 import org.antlr.parser.antlr4.ANTLRv4Parser.EbnfSuffixContext;
 import org.antlr.parser.antlr4.ANTLRv4Parser.ElementContext;
+import org.antlr.parser.antlr4.ANTLRv4Parser.LabeledElementContext;
 import org.antlr.parser.antlr4.ANTLRv4Parser.ParserRuleSpecContext;
 import org.antlr.parser.antlr4.ANTLRv4Parser.RulerefContext;
 import org.antlr.parser.antlr4.ANTLRv4Parser.TerminalContext;
@@ -15,6 +18,7 @@ import org.antlr.parser.antlr4.ANTLRv4ParserBaseListener;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.TokenStreamRewriter;
+import org.antlr.v4.runtime.tree.ParseTree;
 
 /**
  * A class to introduce placeholders of a given meta language into an object language grammar
@@ -55,14 +59,43 @@ public class RulePlaceholderRewriter extends ANTLRv4ParserBaseListener {
         String referencedRuleName = ctx.getText();
 
         if (!isRecursive(ctx) && selectedRules.contains(referencedRuleName)) {
-            EbnfSuffixContext ebnfSuffixContext = ((ElementContext) ctx.parent.parent).ebnfSuffix();
-            String ebnfSuffix = ebnfSuffixContext != null ? ebnfSuffixContext.getText() : "";
-            extendRuleRef(ctx, ebnfSuffix);
+            if (countSiblings(ctx) > 1) {
+                EbnfSuffixContext ebnfSuffixContext = getElementParent(ctx).ebnfSuffix();
+                String ebnfSuffix = ebnfSuffixContext != null ? ebnfSuffixContext.getText() : "";
+                extendRuleRef(ctx, ebnfSuffix);
+            }
         } else if (!isRecursive(ctx) && !selectedRules.contains(referencedRuleName)) {
             // add () to allow condition and loop extension
             rewriter.insertBefore(ctx.start, "(");
             rewriter.insertAfter(ctx.stop, ")");
         }
+    }
+
+    private int countSiblings(ParserRuleContext ctx) {
+        int elementCount = 0;
+        ElementContext elementCtx = getElementParent(ctx);
+        for (ParseTree sibling : elementCtx.getParent().children) {
+            if (sibling instanceof ElementContext) {
+                for (ParseTree elementChild : ((ElementContext) sibling).children) {
+                    if (elementChild instanceof AtomContext || elementChild instanceof LabeledElementContext
+                        || elementChild instanceof EbnfContext) {
+                        elementCount++;
+                    }
+                }
+            }
+        }
+        return elementCount;
+    }
+
+    private ElementContext getElementParent(ParserRuleContext ctx) {
+        ParserRuleContext parent = ctx.getParent();
+        while (parent != null) {
+            if (parent instanceof ElementContext) {
+                return (ElementContext) parent;
+            }
+            parent = parent.getParent();
+        }
+        return null;
     }
 
     @Override
@@ -120,9 +153,9 @@ public class RulePlaceholderRewriter extends ANTLRv4ParserBaseListener {
         }
 
         if (tokenName != null && isInParserRule && selectedRules.contains(tokenName)) {
-
-            extendTerminal(ctx, tokenName);
-
+            if (countSiblings(ctx) > 1) {
+                extendTerminal(ctx, tokenName);
+            }
         } else if (tokenName != null && isInParserRule && !selectedRules.contains(tokenName)
             && multiLexerRules.contains(tokenName)) {
             // add () to allow condition and loop extension if not fixed token
