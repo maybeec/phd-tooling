@@ -1,6 +1,6 @@
 grammar SimpleFreeMarker;
 
-if: IF body (body)* IF_CLOSE;
+if: IF body (ELSE_IF body)* (ELSE body)? IF_CLOSE;
 
 ifElse: IF body (ELSE_IF body)* ELSE body IF_CLOSE;
 
