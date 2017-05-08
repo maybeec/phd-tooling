@@ -44,16 +44,19 @@ public class GrammarSpec {
      *            Grammar rules of the meta language
      * @param metaLangLexerRules
      *            Grammar rules of the meta language
+     * @param anyTokenName
+     *            ANY Token name
      */
     public GrammarSpec(String newGrammarName, String metaLangPrefix, String placeHolderLabel,
-        Map<String, String> metaLangParserRules, Map<String, String> metaLangLexerRules) {
+        Map<String, String> metaLangParserRules, Map<String, String> metaLangLexerRules, String anyTokenName) {
         this.newGrammarName = newGrammarName;
         metaLangLexerRulePrefix = metaLangPrefix.toUpperCase();
         metaLangParserRulePrefix = metaLangPrefix.toLowerCase();
         this.placeHolderLabel = placeHolderLabel;
         this.metaLangParserRules = metaLangParserRules;
         this.metaLangLexerRules = metaLangLexerRules;
-        ruleBodyPlaceholder = metaLangParserRulePrefix + RULE_PH;
+        this.anyTokenName = anyTokenName;
+        ruleBodyPlaceholder = metaLangLexerRulePrefix + anyTokenName;
     }
 
     /**

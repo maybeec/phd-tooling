@@ -31,7 +31,7 @@ public class GrammarExtenderCore {
 
     public static void extendGrammar(String objectGrammarPath, String destinationPath, Tactics extensionTactic,
         String metaGrammarPath, String newGrammarName, String metaLangPrefix, String placeHolderName,
-        String targetPackage) throws IOException, TemplateException {
+        String targetPackage, String anyTokenName) throws IOException, TemplateException {
 
         // parse metalanguage
         File metaGrammar = new File(metaGrammarPath);
@@ -45,12 +45,12 @@ public class GrammarExtenderCore {
         ParseTreeWalker metaWalker = new ParseTreeWalker();
 
         // collect information about metagrammar
-        MetaLanguageListener metaCollector = new MetaLanguageListener(metaTokens, metaLangPrefix);
+        MetaLanguageListener metaCollector = new MetaLanguageListener(metaTokens, metaLangPrefix, anyTokenName);
         metaWalker.walk(metaCollector, metaTree); // walk parse tree
 
         // create grammarspec using metagrammar infos
         GrammarSpec grammarSpec = new GrammarSpec(newGrammarName, metaLangPrefix, placeHolderName,
-            metaCollector.getParserRules(), metaCollector.getLexerRules());
+            metaCollector.getParserRules(), metaCollector.getLexerRules(), anyTokenName);
 
         // parse object Language
         File objectGrammar = new File(objectGrammarPath);

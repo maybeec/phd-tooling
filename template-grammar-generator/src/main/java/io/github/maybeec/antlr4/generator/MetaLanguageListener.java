@@ -37,24 +37,32 @@ public class MetaLanguageListener extends ANTLRv4ParserBaseListener {
     /** Mapping from parser production labels to its production */
     private Map<String, String> lexerRules = new LinkedHashMap<>();
 
+    /** ANY Token of meta language */
+    private String anyToken;
+
     /**
      * @param tokenStream
      *            of meta language
      * @param metaLangPrefix
      *            An unique prefix to be used for newly create meta language productions
+     * @param anyToken
+     *            ANY Token of meta language
      */
-    public MetaLanguageListener(TokenStream tokenStream, String metaLangPrefix) {
+    public MetaLanguageListener(TokenStream tokenStream, String metaLangPrefix, String anyToken) {
         this.tokenStream = tokenStream;
         metaLangLexerRulePrefix = metaLangPrefix.toUpperCase();
         metaLangParserRulePrefix = metaLangPrefix.toLowerCase();
+        this.anyToken = anyToken;
     }
 
     @Override
     public void exitLexerRuleSpec(LexerRuleSpecContext ctx) {
         TokenStreamRewriter rewriter = new TokenStreamRewriter(tokenStream);
         rewriteLexerRule(rewriter, ctx.lexerRuleBlock().lexerAltList().lexerAlt());
-        lexerRules.put(metaLangLexerRulePrefix + ctx.TOKEN_REF().getText(), tokenStream
-            .getText(new Interval(ctx.lexerRuleBlock().start.getTokenIndex(), ctx.stop.getTokenIndex() - 1)));
+        if (!ctx.TOKEN_REF().getText().equals(anyToken)) { // skip ANY token copy
+            lexerRules.put(metaLangLexerRulePrefix + ctx.TOKEN_REF().getText(), tokenStream
+                .getText(new Interval(ctx.lexerRuleBlock().start.getTokenIndex(), ctx.stop.getTokenIndex() - 1)));
+        }
     }
 
     private void rewriteLexerRule(TokenStreamRewriter rewriter, List<LexerAltContext> lexerAlts) {

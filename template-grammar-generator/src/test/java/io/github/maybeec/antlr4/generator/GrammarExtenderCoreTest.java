@@ -17,24 +17,13 @@ public class GrammarExtenderCoreTest {
         Tactics customTactic = Tactics.ALL_PARSER_CUSTOM_LEXER;
         HashSet<String> tokenNames = new HashSet<>();
         tokenNames.add("Identifier");
-        // tokenNames.add("PUBLIC");
-        // tokenNames.add("PROTECTED");
-        // tokenNames.add("PRIVATE");
-        // tokenNames.add("ABSTRACT");
-        // tokenNames.add("STATIC");
-        // tokenNames.add("CLASS");
-        // tokenNames.add("INTERFACE");
-        // tokenNames.add("VOID");
-        // tokenNames.add("FINAL");
-        // tokenNames.add("SYNCHRONIZED");
-        // tokenNames.add("NATIVE");
-        // tokenNames.add("STRICTFP");
         customTactic.addTokens(tokenNames);
 
         // transform grammar
         GrammarExtenderCore.extendGrammar("src/main/antlr4/Java8.g4",
             "target/generated-sources/antlr4/" + targetPackage.replace(".", "/") + "/", customTactic,
-            "src/main/antlr4/SimpleFreeMarker.g4", newGrammarName, metaLangPrefix, placeHolderName, targetPackage);
+            "src/main/antlr4/SimpleFreeMarker.g4", newGrammarName, metaLangPrefix, placeHolderName, targetPackage,
+            "ANY");
     }
 
     @Test
@@ -45,11 +34,16 @@ public class GrammarExtenderCoreTest {
         String placeHolderName = "PLACEHOLDER";
         String metaLangPrefix = "fm_";
         String targetPackage = "io.github.maybeec.antlr4.templateparser.java7";
+        Tactics customTactic = Tactics.ALL_PARSER_CUSTOM_LEXER;
+        HashSet<String> tokenNames = new HashSet<>();
+        tokenNames.add("Identifier");
+        customTactic.addTokens(tokenNames);
 
         // transform grammar
         GrammarExtenderCore.extendGrammar("src/main/antlr4/Java7.g4",
-            "target/generated-sources/antlr4/" + targetPackage.replace(".", "/") + "/", Tactics.ONLYLEXER,
-            "src/main/antlr4/SimpleFreeMarker.g4", newGrammarName, metaLangPrefix, placeHolderName, targetPackage);
+            "target/generated-sources/antlr4/" + targetPackage.replace(".", "/") + "/", customTactic,
+            "src/main/antlr4/SimpleFreeMarker.g4", newGrammarName, metaLangPrefix, placeHolderName, targetPackage,
+            "ANY");
     }
 
 }
