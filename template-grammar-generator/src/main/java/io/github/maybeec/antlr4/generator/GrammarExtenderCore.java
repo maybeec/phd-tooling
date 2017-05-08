@@ -91,7 +91,6 @@ public class GrammarExtenderCore {
         try {
             generatePlaceholderDetectorListenerWithFreemarker(destinationPath, grammarSpec, targetPackage);
         } catch (TemplateException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }

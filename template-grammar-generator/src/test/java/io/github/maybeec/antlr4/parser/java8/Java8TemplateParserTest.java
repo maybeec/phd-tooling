@@ -9,25 +9,50 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
+import org.antlr.parser.java8.Java8Lexer;
+import org.antlr.parser.java8.Java8Parser;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.atn.PredictionMode;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import io.github.maybeec.antlr4.analysis.ANTLRParseException;
 import io.github.maybeec.antlr4.analysis.ErrorListener;
 import io.github.maybeec.antlr4.analysis.FreeMarkerInputAnalysis;
 import io.github.maybeec.antlr4.common.ParserTestUtil;
+import io.github.maybeec.antlr4.generator.GrammarExtenderCore;
+import io.github.maybeec.antlr4.generator.Tactics;
 import io.github.maybeec.antlr4.templateparser.java8.Java8TemplateLexer;
 import io.github.maybeec.antlr4.templateparser.java8.Java8TemplateParser;
 import io.github.maybeec.antlr4.templateparser.java8.Java8TemplatePlaceholderDetectorListener;
 
 public class Java8TemplateParserTest {
+
+    @BeforeClass
+    public static void createJava8TemplateGrammar() throws Exception {
+        // define template grammar properties
+        String newGrammarName = "Java8Template";
+        String placeHolderName = "PLACEHOLDER";
+        String metaLangPrefix = "fm_";
+        String targetPackage = "io.github.maybeec.antlr4.templateparser.java8";
+        Tactics customTactic = Tactics.ALL_PARSER_CUSTOM_LEXER;
+        HashSet<String> tokenNames = new HashSet<>();
+        tokenNames.add("Identifier");
+        customTactic.addTokens(tokenNames);
+
+        // transform grammar
+        GrammarExtenderCore.extendGrammar("src/main/antlr4/Java8.g4",
+            "target/generated-sources/antlr4/" + targetPackage.replace(".", "/") + "/", customTactic,
+            "src/main/antlr4/SimpleFreeMarker.g4", newGrammarName, metaLangPrefix, placeHolderName, targetPackage,
+            "ANY");
+    }
 
     @Test
     public void parseCompilationUnit_java8_LL_EXACT_AMBIG_parse_ifthenelse() throws Exception {
@@ -142,8 +167,8 @@ public class Java8TemplateParserTest {
         } while (PredictionMode.hasNextRun());
 
         // input data analysis
-        Java8TemplateLexer objectLangLexer = new Java8TemplateLexer(null);
-        Java8TemplateParser objectLangParser = new Java8TemplateParser(null);
+        Java8Lexer objectLangLexer = new Java8Lexer(null);
+        Java8Parser objectLangParser = new Java8Parser(null);
 
         Map inputData = new HashMap();
         inputData.put("mod", "public");
@@ -161,6 +186,9 @@ public class Java8TemplateParserTest {
             isValidInput |= FreeMarkerInputAnalysis.isValidInput(inputData, placeHolderTypesList, objectLangLexer,
                 objectLangParser);
             System.out.println(isValidInput ? "Valid input!" : "Invalid...");
+            if (isValidInput) {
+                break;
+            }
         }
 
         assertThat(isValidInput).as("Is valid input").isTrue();
