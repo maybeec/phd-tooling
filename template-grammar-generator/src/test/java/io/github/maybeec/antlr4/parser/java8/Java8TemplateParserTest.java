@@ -1,7 +1,6 @@
 package io.github.maybeec.antlr4.parser.java8;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.File;
@@ -10,12 +9,9 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.antlr.parser.java8.Java8Lexer;
-import org.antlr.parser.java8.Java8Parser;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -127,7 +123,6 @@ public class Java8TemplateParserTest {
         parser.addErrorListener(new ErrorListener());
         parser.getInterpreter().setPredictionMode(PredictionMode.LL_EXACT_AMBIG_DETECTION);
 
-        List<Map<String, String>> placeHolderTypesList = new LinkedList<>();
         List<ParserRuleContext> trees = new ArrayList<>();
         do {
             ParserRuleContext tree;
@@ -136,8 +131,6 @@ public class Java8TemplateParserTest {
                 tree = parser.compilationUnit();
                 trees.add(tree);
             } catch (ANTLRParseException e) {
-                System.out.println("parsing not successfull!");
-                System.err.println(e.getMsg());
                 fail(e.getMsg());
                 break;
             }
@@ -146,39 +139,30 @@ public class Java8TemplateParserTest {
             System.out.println("Number of ambiguities detected: " + PredictionMode.getAmbiguityCounter());
             PredictionMode.updateAmbiguityDataForNextRun();
 
-            // plausibility check
-            ParseTreeWalker walker = new ParseTreeWalker();
-            Java8TemplatePlaceholderDetectorListener listener = new Java8TemplatePlaceholderDetectorListener();
-            try {
-                walker.walk(listener, tree); // walk parse tree
-                if (listener.getPlaceHolderTypes() != null) {
-                    placeHolderTypesList.add(listener.getPlaceHolderTypes());
-                }
-            } catch (RuntimeException e) {
-                // e.printStackTrace();
-                continue;
-            }
-
-            // Generates the GUI
-            // Future<JFrame> future = Trees.inspect(tree, parser);
-            // while (future.get().isVisible()) {
-            // try {
-            // Thread.sleep(100);
-            // } catch (InterruptedException e) {
-            // }
-            // }
         } while (PredictionMode.hasNextRun());
 
         // input data analysis
-        Java8Lexer objectLangLexer = new Java8Lexer(null);
-        Java8Parser objectLangParser = new Java8Parser(null);
+        Java8TemplateLexer objectLangLexer = new Java8TemplateLexer(null);
+        Java8TemplateParser objectLangParser = new Java8TemplateParser(null);
+
         Map inputData = new HashMap();
         inputData.put("mod", "public");
         inputData.put("fieldname", "iField");
 
-        boolean isValidInput = (new FreeMarkerInputAnalysis()).isValidInput(inputData, placeHolderTypesList,
-            objectLangLexer, objectLangParser);
+        boolean isValidInput = false;
+        for (ParserRuleContext tree : trees) {
+            ParseTreeWalker walker = new ParseTreeWalker();
+            Java8TemplatePlaceholderDetectorListener listener = new Java8TemplatePlaceholderDetectorListener();
+            List<Map<String, String>> placeHolderTypesList = new ArrayList<>();
+            walker.walk(listener, tree);
+            if (listener.getPlaceHolderTypes() != null) {
+                placeHolderTypesList.add(listener.getPlaceHolderTypes());
+            }
+            isValidInput |= FreeMarkerInputAnalysis.isValidInput(inputData, placeHolderTypesList, objectLangLexer,
+                objectLangParser);
+            System.out.println(isValidInput ? "Valid input!" : "Invalid...");
+        }
 
-        assertTrue(isValidInput);
+        assertThat(isValidInput).as("Is valid input").isTrue();
     }
 }

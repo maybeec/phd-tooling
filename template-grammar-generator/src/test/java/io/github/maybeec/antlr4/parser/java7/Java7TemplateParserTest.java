@@ -1,13 +1,15 @@
 package io.github.maybeec.antlr4.parser.java7;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -58,16 +60,15 @@ public class Java7TemplateParserTest {
         parser.addErrorListener(new ErrorListener());
         parser.getInterpreter().setPredictionMode(PredictionMode.LL_EXACT_AMBIG_DETECTION);
 
-        List<Map<String, String>> placeHolderTypesList = new LinkedList<>();
-        int count = 0;
+        List<ParserRuleContext> trees = new ArrayList<>();
         do {
             ParserRuleContext tree;
             System.out.println("start parsing");
             try {
                 tree = parser.compilationUnit();
+                trees.add(tree);
             } catch (ANTLRParseException e) {
-                System.out.println("parsing not successfull!");
-                System.out.println(e.getMsg());
+                fail(e.getMsg());
                 break;
             }
             System.out.println("parsing complete");
@@ -75,25 +76,10 @@ public class Java7TemplateParserTest {
             System.out.println("Number of ambiguities detected: " + PredictionMode.getAmbiguityCounter());
             PredictionMode.updateAmbiguityDataForNextRun();
 
-            // plausibility check
-            ParseTreeWalker walker = new ParseTreeWalker();
-            Java7TemplatePlaceholderDetectorListener listener = new Java7TemplatePlaceholderDetectorListener();
-            try {
-                walker.walk(listener, tree); // walk parse tree
-                if (listener.getPlaceHolderTypes() != null) {
-                    placeHolderTypesList.add(listener.getPlaceHolderTypes());
-                }
-            } catch (RuntimeException e) {
-                e.printStackTrace();
-                continue;
-            }
-            count++;
-
             // Generates the GUI
             // Future<JDialog> future = Trees.inspect(tree, parser); // for ANTLR 4.5.1
             // Utils.waitForClose(future.get());
         } while (PredictionMode.hasNextRun());
-        System.out.println(count);
 
         // input data analysis
         Java7Lexer objectLangLexer = new Java7Lexer(null);
@@ -102,8 +88,21 @@ public class Java7TemplateParserTest {
         inputData.put("mod", "public");
         inputData.put("fieldname", "iField");
 
-        boolean isValidInput = (new FreeMarkerInputAnalysis()).isValidInput(inputData, placeHolderTypesList,
-            objectLangLexer, objectLangParser);
+        boolean isValidInput = false;
+        for (ParserRuleContext tree : trees) {
+            ParseTreeWalker walker = new ParseTreeWalker();
+            Java7TemplatePlaceholderDetectorListener listener = new Java7TemplatePlaceholderDetectorListener();
+            List<Map<String, String>> placeHolderTypesList = new ArrayList<>();
+            walker.walk(listener, tree);
+            if (listener.getPlaceHolderTypes() != null) {
+                placeHolderTypesList.add(listener.getPlaceHolderTypes());
+            }
+            isValidInput |= FreeMarkerInputAnalysis.isValidInput(inputData, placeHolderTypesList, objectLangLexer,
+                objectLangParser);
+            System.out.println(isValidInput ? "Valid input!" : "Invalid...");
+        }
+
+        assertThat(isValidInput).as("Is valid input").isTrue();
 
         assertTrue(isValidInput);
 

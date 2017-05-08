@@ -22,27 +22,18 @@ import freemarker.template.TemplateExceptionHandler;
 
 /**
  * A class for the analysis of input data. This class have to be instantiated for each template engine
- *
- * @author fkreis (30.06.2016)
  */
 public class FreeMarkerInputAnalysis {
 
-    /**
-     * A unique prefix needed for grammar transformation
-     */
-    private String prefix = "fm_";
+    /** A unique prefix needed for grammar transformation */
+    private static String prefix = "fm_";
 
-    /**
-     * A freemarker configuration
-     */
-    private Configuration cfg;
+    private static String[] metaRuleSuffixes = { "Opt", "Star", "Plus" };
 
-    /**
-     *
-     * @author fkreis (01.07.2016)
-     * @throws IOException
-     */
-    public FreeMarkerInputAnalysis() throws IOException {
+    /** Basic FreeMarker configuration */
+    private static Configuration cfg;
+
+    static {
         cfg = new Configuration(Configuration.VERSION_2_3_23);
         cfg.setDefaultEncoding("UTF-8");
         cfg.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
@@ -51,7 +42,6 @@ public class FreeMarkerInputAnalysis {
 
     /**
      * @return true if the provided input data is valid, false otherwise
-     * @author fkreis (30.06.2016)
      * @param inputData
      *            the input data to analyze
      * @param placeholderTypeList
@@ -61,8 +51,8 @@ public class FreeMarkerInputAnalysis {
      * @param objectLangParser
      *            a parser of the ordinary object grammar (not of the template grammar)
      */
-    public boolean isValidInput(Object inputData, List<Map<String, String>> placeholderTypeList, Lexer objectLangLexer,
-        Parser objectLangParser) {
+    public static boolean isValidInput(Object inputData, List<Map<String, String>> placeholderTypeList,
+        Lexer objectLangLexer, Parser objectLangParser) {
 
         // template without placeholder is valid
         if (placeholderTypeList == null) {
@@ -84,6 +74,12 @@ public class FreeMarkerInputAnalysis {
             boolean isValid = true;
             for (String placehoderName : typeMap.keySet()) {
                 String expectedRuleName = typeMap.get(placehoderName).replaceFirst(prefix, "");
+                for (String suffix : metaRuleSuffixes) {
+                    if (expectedRuleName.endsWith(suffix)) {
+                        expectedRuleName = expectedRuleName.substring(0, expectedRuleName.length() - suffix.length());
+                        break;
+                    }
+                }
                 String actualData = placeholderValuesList.get(placehoderName);
                 System.out.println(expectedRuleName + " : " + actualData);
 
@@ -146,18 +142,16 @@ public class FreeMarkerInputAnalysis {
 
     /**
      * An internal method to retrieve the actual data from the input data. This method has to defined manually
-     * for each template evluator
+     * for each template evaluator
      *
      * @param placehoderName
      *            the placeholder to retrieve the actual value for
      * @return the actual value for a certain placeholder name
-     * @author fkreis (30.06.2016)
      * @param inputData
      *            the input data to retrieve the actual value from
-     * @throws IOException
-     * @throws TemplateException
      */
-    private String getActualValue(String placehoderName, Object inputData) throws IOException, TemplateException {
+    private static String getActualValue(String placehoderName, Object inputData)
+        throws IOException, TemplateException {
 
         Template template = new Template("temp", new StringReader(placehoderName), cfg);
         try (StringWriter out = new StringWriter()) {

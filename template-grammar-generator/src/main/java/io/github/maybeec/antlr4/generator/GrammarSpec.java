@@ -5,13 +5,13 @@ import java.util.Map;
 /** A container class for information exchange during template transformation */
 public class GrammarSpec {
 
-    public static final String RULE_PH = "body";
+    private final String anyTokenName;
 
-    public static final String RULE_IF = "if";
+    private final String ifRuleName = "ifThen";
 
-    public static final String RULE_IF_ELSE = "ifElse";
+    private final String ifElseRuleName = "ifElse";
 
-    public static final String RULE_LOOP = "loop";
+    private final String loopRuleName = "loop";
 
     /** The name for the new grammar */
     private String newGrammarName;
@@ -112,22 +112,20 @@ public class GrammarSpec {
     }
 
     public String createIfLoopRuleContent(String body) {
-        return getParserRule(metaLangParserRulePrefix + RULE_IF).replace(ruleBodyPlaceholder, body) + " | "
-            + getParserRule(metaLangParserRulePrefix + RULE_LOOP).replace(ruleBodyPlaceholder, body);
+        return getParserRule(metaLangParserRulePrefix + ifRuleName).replace(ruleBodyPlaceholder, body) + " | "
+            + getParserRule(metaLangParserRulePrefix + loopRuleName).replace(ruleBodyPlaceholder, body);
     }
 
     public String createStarRuleContent(String body) {
-        return getParserRule(metaLangParserRulePrefix + RULE_IF).replace(ruleBodyPlaceholder, body) + " | "
-            + getParserRule(metaLangParserRulePrefix + RULE_IF_ELSE).replace(ruleBodyPlaceholder, body) + " | "
-            + getParserRule(metaLangParserRulePrefix + RULE_LOOP).replace(ruleBodyPlaceholder, body);
+        return getParserRule(metaLangParserRulePrefix + ifRuleName).replace(ruleBodyPlaceholder, body) + " | "
+            + getParserRule(metaLangParserRulePrefix + loopRuleName).replace(ruleBodyPlaceholder, body);
     }
 
     public String createOptRuleContent(String body) {
-        return getParserRule(metaLangParserRulePrefix + RULE_IF).replace(ruleBodyPlaceholder, body) + " | "
-            + getParserRule(metaLangParserRulePrefix + RULE_IF_ELSE).replace(ruleBodyPlaceholder, body);
+        return getParserRule(metaLangParserRulePrefix + ifRuleName).replace(ruleBodyPlaceholder, body);
     }
 
     public String createOneRuleContent(String body) {
-        return getParserRule(metaLangParserRulePrefix + RULE_IF_ELSE).replace(ruleBodyPlaceholder, body);
+        return getParserRule(metaLangParserRulePrefix + ifElseRuleName).replace(ruleBodyPlaceholder, body);
     }
 }
