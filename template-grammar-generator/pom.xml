@@ -51,15 +51,13 @@
         <groupId>org.antlr</groupId>
         <artifactId>antlr4-maven-plugin</artifactId>
         <version>${antlr4.version}</version>
-        <configuration>
-          <sourceDirectory>${basedir}/src/main/antlr4</sourceDirectory>
-        </configuration>
         <executions>
           <execution>
             <goals>
               <goal>antlr4</goal>
             </goals>
             <configuration>
+              <sourceDirectory>${basedir}/src/main/antlr4</sourceDirectory>
               <grammars>ANTLRv4Parser.g4</grammars>
               <includes>
                 <include>ANTLRv4Lexer.g4</include>
@@ -75,10 +73,12 @@
           </execution>
           <execution>
             <id>antlr4-java7-parser</id>
+            <phase>generate-test-sources</phase>
             <goals>
               <goal>antlr4</goal>
             </goals>
             <configuration>
+              <sourceDirectory>${basedir}/src/test/antlr4</sourceDirectory>
               <includes>
                 <include>Java7.g4</include>
               </includes>
@@ -87,15 +87,17 @@
                 <argument>-package</argument>
                 <argument>org.antlr.parser.java7</argument>
               </arguments>
-              <outputDirectory>${project.build.directory}/generated-sources/antlr4/org/antlr/parser/java7</outputDirectory>
+              <outputDirectory>${project.build.directory}/generated-test-sources/antlr4/org/antlr/parser/java7</outputDirectory>
             </configuration>
           </execution>
           <execution>
             <id>antlr4-java8-parser</id>
+            <phase>generate-test-sources</phase>
             <goals>
               <goal>antlr4</goal>
             </goals>
             <configuration>
+              <sourceDirectory>${basedir}/src/test/antlr4</sourceDirectory>
               <includes>
                 <include>Java8.g4</include>
               </includes>
@@ -104,7 +106,7 @@
                 <argument>-package</argument>
                 <argument>org.antlr.parser.java8</argument>
               </arguments>
-              <outputDirectory>${project.build.directory}/generated-sources/antlr4/org/antlr/parser/java8</outputDirectory>
+              <outputDirectory>${project.build.directory}/generated-test-sources/antlr4/org/antlr/parser/java8</outputDirectory>
             </configuration>
           </execution>
         </executions>
@@ -116,6 +118,7 @@
         <version>1.7</version>
         <executions>
           <execution>
+            <id>add-antlr4-source-folder</id>
             <phase>generate-sources</phase>
             <goals>
               <goal>add-source</goal>
@@ -124,6 +127,19 @@
               <sources>
                 <source>src/main/antlr4</source>
                 <source>target/generated-sources/antlr4</source>
+              </sources>
+            </configuration>
+          </execution>
+          <execution>
+            <id>add-antlr4-test-source-folder</id>
+            <phase>generate-test-sources</phase>
+            <goals>
+              <goal>add-test-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>src/test/antlr4</source>
+                <source>target/generated-test-sources/antlr4</source>
               </sources>
             </configuration>
           </execution>
