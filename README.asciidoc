@@ -1,0 +1,8 @@
+= phd-tooling
+Consolidated collection of tools 
+
+|===
+|Branch|Build
+
+|master|image:https://travis-ci.org/maybeec/phd-tooling.svg?branch=master["Build Status", link="https://travis-ci.org/maybeec/phd-tooling"]
+|===
