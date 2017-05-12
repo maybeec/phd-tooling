@@ -92,6 +92,13 @@ public class Java8TemplateParserTest extends AbstractTemplateParserTest {
         assertThat(trees).hasSize(1);
     }
 
+    @Test
+    public final void parserCompilationUnit_LL_EXACT_AMIG_parse_java_imports() throws Exception {
+        File template = new File("src/test/resources/templates/java8template_parse_java_imports.ftl");
+        List<ParserRuleContext> trees = parseAmbiguities(template, PredictionMode.LL_EXACT_AMBIG_DETECTION, false);
+        assertThat(trees).hasSize(1);
+    }
+
     /**
      * Test method for
      * {@link io.github.maybeec.antlr4.templateparser.java8.Java8TemplateParser#compilationUnit()}.

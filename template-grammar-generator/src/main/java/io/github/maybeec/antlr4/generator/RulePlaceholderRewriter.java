@@ -58,16 +58,18 @@ public class RulePlaceholderRewriter extends ANTLRv4ParserBaseListener {
     public void exitRuleref(RulerefContext ctx) {
         String referencedRuleName = ctx.getText();
 
-        if (!isRecursive(ctx) && selectedRules.contains(referencedRuleName)) {
-            if (countSiblings(ctx) > 1) {
-                EbnfSuffixContext ebnfSuffixContext = getElementParent(ctx).ebnfSuffix();
-                String ebnfSuffix = ebnfSuffixContext != null ? ebnfSuffixContext.getText() : "";
-                extendRuleRef(ctx, ebnfSuffix);
+        if (!isRecursive(ctx)) {
+            if (selectedRules.contains(referencedRuleName)) {
+                if (countSiblings(ctx) > 1) {
+                    EbnfSuffixContext ebnfSuffixContext = getElementParent(ctx).ebnfSuffix();
+                    String ebnfSuffix = ebnfSuffixContext != null ? ebnfSuffixContext.getText() : "";
+                    extendRuleRef(ctx, ebnfSuffix);
+                }
+            } else {
+                // add () to allow condition and loop extension
+                rewriter.insertBefore(ctx.start, "(");
+                rewriter.insertAfter(ctx.stop, ")");
             }
-        } else if (!isRecursive(ctx) && !selectedRules.contains(referencedRuleName)) {
-            // add () to allow condition and loop extension
-            rewriter.insertBefore(ctx.start, "(");
-            rewriter.insertAfter(ctx.stop, ")");
         }
     }
 
@@ -167,29 +169,29 @@ public class RulePlaceholderRewriter extends ANTLRv4ParserBaseListener {
 
     private void extendRuleRef(RulerefContext ctx, String cardinality) {
         String ruleName = ctx.getText();
-        rewriteRule(ctx, cardinality, ruleName);
+        rewriteRuleRef(ctx, cardinality, ruleName);
     }
 
-    private void rewriteRule(ParserRuleContext ctx, String cardinality, String ruleName) {
+    private void rewriteRuleRef(ParserRuleContext ctx, String cardinality, String ruleName) {
         String phRuleName;
         switch (cardinality) {
         case "":
             phRuleName = grammarSpec.getMetaLangParserRulePrefix() + ruleName;
             usedPlaceholderRules.add(phRuleName);
-            rewriter.insertBefore(ctx.start, "(" + phRuleName + " | ");
-            rewriter.insertAfter(ctx.stop, ")");
+            rewriter.insertBefore(ctx.start, "(");
+            rewriter.insertAfter(ctx.stop, " | " + phRuleName + ")");
             break;
         case "?":
             phRuleName = grammarSpec.getOptPhParserRuleName(ruleName);
             usedPlaceholderRules.add(phRuleName);
-            rewriter.insertBefore(ctx.start, "(" + phRuleName + " | ");
-            rewriter.insertAfter(ctx.stop, ")");
+            rewriter.insertBefore(ctx.start, "(");
+            rewriter.insertAfter(ctx.stop, " | " + phRuleName + ")");
             break;
         case "*":
             phRuleName = grammarSpec.getStarPhParserRuleName(ruleName);
             usedPlaceholderRules.add(phRuleName);
-            rewriter.insertBefore(ctx.start, "(" + phRuleName + " | ");
-            rewriter.insertAfter(ctx.stop, ")");
+            rewriter.insertBefore(ctx.start, "(");
+            rewriter.insertAfter(ctx.stop, " | " + phRuleName + ")");
             break;
         default:
             break;
@@ -199,13 +201,14 @@ public class RulePlaceholderRewriter extends ANTLRv4ParserBaseListener {
     private void extendTerminal(TerminalContext ctx, String tokenName) {
         EbnfSuffixContext ebnfSuffixContext = ((ElementContext) ctx.parent.parent).ebnfSuffix();
         String ebnfSuffix = ebnfSuffixContext != null ? ebnfSuffixContext.getText() : "";
-        rewriteRule(ctx, ebnfSuffix, tokenName);
+        rewriteRuleRef(ctx, ebnfSuffix, tokenName);
     }
 
     /**
      * Returns the field 'rewriter'
      * @return value of rewriter
      */
+
     public TokenStreamRewriter getRewriter() {
         return rewriter;
     }

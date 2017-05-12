@@ -5,6 +5,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
+import java.io.StringReader;
 import java.io.Writer;
 import java.util.HashSet;
 import java.util.List;
@@ -74,8 +75,21 @@ public class GrammarExtenderCore {
         RulePlaceholderRewriter ruleRewriter =
             new RulePlaceholderRewriter(objectTokens, tokenNames, selectedRules, multiLexerRules, grammarSpec);
         objectWalker.walk(ruleRewriter, objectTree); // walk parse tree
+        String step1Grammar = ruleRewriter.getRewriter().getText();
 
-        PlaceholderRulesCreator rulesCreator = new PlaceholderRulesCreator(ruleRewriter.getRewriter(), selectedRules,
+        // debug
+        String destinationFilePath2 = destinationPath + grammarSpec.getNewGrammarName() + ".g4";
+        printToFile(destinationFilePath2, step1Grammar);
+
+        objectLexer = new ANTLRv4Lexer(new ANTLRInputStream(new StringReader(step1Grammar)));
+        CommonTokenStream tokenStream = new CommonTokenStream(objectLexer);
+        objectParser = new ANTLRv4Parser(tokenStream);
+        objectTree = objectParser.grammarSpec();
+        LeftRecursiveRuleRewriter recRuleRewriter =
+            new LeftRecursiveRuleRewriter(tokenStream, ruleRewriter.getUsedPlaceholderRules(), grammarSpec);
+        objectWalker.walk(recRuleRewriter, objectTree); // walk parse tree
+
+        PlaceholderRulesCreator rulesCreator = new PlaceholderRulesCreator(recRuleRewriter.getRewriter(), selectedRules,
             grammarSpec, ruleRewriter.getCreatedLexerRuleList(), ruleRewriter.getUsedPlaceholderRules());
         objectWalker.walk(rulesCreator, objectTree); // walk parse tree
 
