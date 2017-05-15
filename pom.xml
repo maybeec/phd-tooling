@@ -11,6 +11,7 @@
     <module>template-grammar-generator</module>
     <module>antlr4/runtime/Java</module>
     <module>antlr4/tool</module>
+    <module>pattern-detection</module>
   </modules>
 
 </project>
