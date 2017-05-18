@@ -25,14 +25,27 @@ public class Java8ParserTest extends AbstractTemplateParserTest {
     @Test
     public void parseCompilationUnit_java8_parse_field_snippet() throws Exception {
         File file = new File("src/test/resources/templates/java8_parse_field_snippet.ftl");
-        parse(file, PredictionMode.LL, false);
+        parse("compilationUnit", file, PredictionMode.LL);
+        // do not fail
     }
 
     @Test
     public final void parserCompilationUnit_LL_EXACT_AMBIG_parse_java_methodinvocation() throws Exception {
         File template = new File("src/test/resources/templates/java8template_parse_java_methodinvokation.ftl");
-        List<ParserRuleContext> trees = parseAmbiguities(template, PredictionMode.LL, false);
+        List<ParserRuleContext> trees = parseAmbiguities("compilationUnit", template, PredictionMode.LL);
         assertThat(trees).hasSize(1);
     }
 
+    // @Test
+    // public void tokenizer() {
+    // String code = "String var; int i; i = 3; if(i>2) { var = \"more than 2\"; } else { var = \"less than
+    // 2\"; }";
+    // ANTLRInputStream in = new ANTLRInputStream(code);
+    // Java8Lexer lexer = new Java8Lexer(in);
+    // List<? extends Token> tokenList = new ArrayList<>();
+    // tokenList = lexer.getAllTokens();
+    // for (Token token : tokenList) {
+    // System.out.println(lexer.getVocabulary().getSymbolicName(token.getType()));
+    // }
+    // }
 }

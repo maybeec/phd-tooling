@@ -76,6 +76,24 @@ public class DetectorTest {
             "b.c", "e.f.g.h");
     }
 
+    @Ignore
+    @Test
+    public void testImportOrderDetection() throws Exception {
+
+        Path template = new File(testResourcesRootPath + "ImportOrderingTemplate.java").toPath();
+        List<Path> pattern = new ArrayList<>();
+        pattern.add(template);
+
+        Path file = new File(testResourcesRootPath + "ImportOrdering.java").toPath();
+        Set<Path> applicationFiles = new HashSet<>();
+        applicationFiles.add(file);
+
+        List<Map<String, String>> variableStubsitutions = new Detector().detect(pattern, applicationFiles, ".ftl");
+
+        assertThat(variableStubsitutions).hasSize(1);
+        assertThat(variableStubsitutions.get(0)).hasSize(1).extracting("${D}").containsExactly("D");
+    }
+
     @Test
     @Ignore
     public void complexTest() throws Exception {

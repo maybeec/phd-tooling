@@ -1,6 +1,7 @@
 package io.github.maybeec.patterndetection;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -10,6 +11,7 @@ import java.util.Stack;
 import java.util.stream.Collectors;
 
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.Vocabulary;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -22,6 +24,9 @@ import io.github.maybeec.patterndetection.exception.NotYetImplementedException;
  *
  */
 public class TreeMatcher {
+
+    private static final Set<String> nonOrderedNodes =
+        new HashSet<>(Arrays.asList(new String[] { "importDeclaration" }));
 
     private ParseTree templatePointer;
 
@@ -86,17 +91,19 @@ public class TreeMatcher {
 
                         // ####### normal placeholder rule
                         // goto next token as we are currently facing a the template language rule
+                        String templateRootProductionName = templatePointer.getClass().getSimpleName();
                         templatePointer = LA(templatePointer, 1, true);
                         ParseTree nextTemplateToken = LA(templatePointer, 1, true);
-                        Token token = ((TerminalNodeImpl) templatePointer).getSymbol();
-                        if ("FM_PLACEHOLDER".equals(lexerVocabulary.getSymbolicName(token.getType()))) {
+                        Token tpToken = ((TerminalNodeImpl) templatePointer).getSymbol();
+                        if ("FM_PLACEHOLDER".equals(lexerVocabulary.getSymbolicName(tpToken.getType()))) {
 
-                            if (selectedSubstitutions.containsKey(token.getText())) {
+                            if (selectedSubstitutions.containsKey(tpToken.getText())) {
                                 System.out.println(
                                     ">>> Take substitution from selection: template['" + templatePointer.getText()
-                                        + "'], app['" + selectedSubstitutions.get(token.getText()) + "'], count: "
-                                        + selectedSubstitutionTokenCount.get(token.getText()));
-                                appPointer = LA(appPointer, selectedSubstitutionTokenCount.get(token.getText()), true);
+                                        + "'], app['" + selectedSubstitutions.get(tpToken.getText()) + "'], count: "
+                                        + selectedSubstitutionTokenCount.get(tpToken.getText()));
+                                appPointer =
+                                    LA(appPointer, selectedSubstitutionTokenCount.get(tpToken.getText()), true);
                                 templatePointer = LA(templatePointer, 1, false);
                             } else {
                                 ParseTree placeholderSubstitutionPointer = appPointer;
@@ -110,17 +117,17 @@ public class TreeMatcher {
                                             .collect(Collectors.joining());
 
                                         // to not take decision twice after backtracking
-                                        if (tokenSubstituitions.get(token.getText()) != null && tokenSubstituitions
-                                            .get(token.getText()).contains(placeholderSubstitution)) {
+                                        if (tokenSubstituitions.get(tpToken.getText()) != null && tokenSubstituitions
+                                            .get(tpToken.getText()).contains(placeholderSubstitution)) {
                                             placeholderSubstitutionPointer =
                                                 LA(placeholderSubstitutionPointer, 1, true);
                                             continue;
-                                        } else if (tokenSubstituitions.get(token.getText()) == null) {
-                                            tokenSubstituitions.put(token.getText(), new HashSet<>());
+                                        } else if (tokenSubstituitions.get(tpToken.getText()) == null) {
+                                            tokenSubstituitions.put(tpToken.getText(), new HashSet<>());
                                         }
-                                        tokenSubstituitions.get(token.getText()).add(placeholderSubstitution);
-                                        selectedSubstitutions.put(token.getText(), placeholderSubstitution);
-                                        selectedSubstitutionTokenCount.put(token.getText(), path.size() - 1);
+                                        tokenSubstituitions.get(tpToken.getText()).add(placeholderSubstitution);
+                                        selectedSubstitutions.put(tpToken.getText(), placeholderSubstitution);
+                                        selectedSubstitutionTokenCount.put(tpToken.getText(), path.size() - 1);
 
                                         System.out.println("Consume template['" + templatePointer.getText()
                                             + "'] and app['" + placeholderSubstitution + "']");
@@ -130,6 +137,12 @@ public class TreeMatcher {
                                         appPointer = LA(placeholderSubstitutionPointer, 1, false);
                                         templatePointer = LA(nextTemplateToken, 1, false);
                                         break;
+                                    } else if (!isOfSameProduction(placeholderSubstitutionPointer,
+                                        templateRootProductionName)) {
+                                        throw new NoMatchException("Could not find valid substitution of placeholder. '"
+                                            + placeholderSubstitutionPointer.getClass().getSimpleName()
+                                            + "' is not part of placeholder production " + templateRootProductionName);
+
                                     }
                                     placeholderSubstitutionPointer = LA(placeholderSubstitutionPointer, 1, true);
                                 }
@@ -171,6 +184,42 @@ public class TreeMatcher {
 
         System.out.println("END");
         return selectedSubstitutions;
+
+    }
+
+    /**
+     * @param objectLangProductionName
+     * @param templateLangProductionName
+     * @return
+     */
+    private boolean isOfSameProduction(ParseTree objectLangProductionName, String templateLangProductionName) {
+        if (objectLangProductionName == null) {
+            return false;
+        }
+        if (objectLangProductionName instanceof RuleContext) {
+            if (templateLangProductionName
+                .matches("Fm_" + getRuleName(objectLangProductionName) + "(Opt|Star|Plus)?")) {
+                return true;
+            } else {
+                return isOfSameProduction(objectLangProductionName.getParent(), templateLangProductionName);
+            }
+        } else if (objectLangProductionName instanceof TerminalNodeImpl) {
+            if (templateLangProductionName.matches("Fm_"
+                + lexerVocabulary.getSymbolicName(((TerminalNodeImpl) objectLangProductionName).getSymbol().getType())
+                + "(Opt|Star|Plus)?Context")) {
+                return true;
+            } else {
+                return isOfSameProduction(objectLangProductionName.getParent(), templateLangProductionName);
+            }
+        } else {
+            // should not occur (ANTLR4 4.7)
+            return isOfSameProduction(objectLangProductionName.getParent(), templateLangProductionName);
+        }
+    }
+
+    private String getRuleName(ParseTree tree) {
+        return Character.toLowerCase(tree.getClass().getSimpleName().charAt(0))
+            + tree.getClass().getSimpleName().substring(1);
     }
 
     private ParseTree LA(ParseTree pointer, int la, boolean toNextToken) {
@@ -209,35 +258,6 @@ public class TreeMatcher {
         }
         return pointer;
     }
-
-    // private ParseTree LAToken(ParseTree pointer, int la) {
-    // // first lets try stepping down
-    // ParseTree stepDown = stepDownToNextToken(pointer);
-    // if (stepDown != null) {
-    // return stepDown;
-    // }
-    //
-    // // else try siblings, or step up
-    // if (pointer.getParent() != null) {
-    // List<ParseTree> siblings = ((ParserRuleContext) pointer.getParent()).children;
-    // int position = getIndex(pointer, siblings);
-    // while (la > 0) {
-    // if (position + 1 < siblings.size()) {
-    // ParseTree next = siblings.get(position + 1);
-    // if (next.getChildCount() == 0) {
-    // pointer = next;
-    // la--;
-    // } else {
-    // pointer = stepDownToNextToken(pointer);
-    // la--;
-    // }
-    // } else {
-    // return LAToken(pointer.getParent(), la);
-    // }
-    // }
-    // }
-    // return pointer;
-    // }
 
     private ParseTree stepDown(ParseTree pointer, boolean toNextToken) {
         if (pointer.getChildCount() == 0) {

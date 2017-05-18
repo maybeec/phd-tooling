@@ -215,8 +215,8 @@ fm_wildcardBoundsOpt: FM_PLACEHOLDER | FM_IF (fm_wildcardBoundsOpt | wildcardBou
 
 packageName
   : Identifier
-  | packageName DOT  (Identifier | fm_Identifier)
   | fm_packageName DOT ( Identifier | fm_Identifier ) 
+  | packageName DOT  (Identifier | fm_Identifier)
   ;
 fm_packageName: FM_PLACEHOLDER | FM_IF (fm_packageName | packageName) (FM_ELSE_IF (fm_packageName | packageName))* FM_ELSE (fm_packageName | packageName) FM_IF_CLOSE;
 
@@ -228,8 +228,8 @@ fm_typeName: FM_PLACEHOLDER | FM_IF (fm_typeName | typeName) (FM_ELSE_IF (fm_typ
 
 packageOrTypeName
   : Identifier
-  | packageOrTypeName DOT  (Identifier | fm_Identifier)
   | fm_packageOrTypeName DOT ( Identifier | fm_Identifier ) 
+  | packageOrTypeName DOT  (Identifier | fm_Identifier)
   ;
 fm_packageOrTypeName: FM_PLACEHOLDER | FM_IF (fm_packageOrTypeName | packageOrTypeName) (FM_ELSE_IF (fm_packageOrTypeName | packageOrTypeName))* FM_ELSE (fm_packageOrTypeName | packageOrTypeName) FM_IF_CLOSE;
 
@@ -246,8 +246,8 @@ fm_methodName: FM_PLACEHOLDER | FM_IF (fm_methodName | methodName) (FM_ELSE_IF (
 
 ambiguousName
   : Identifier
-  | ambiguousName DOT  (Identifier | fm_Identifier)
   | fm_ambiguousName DOT ( Identifier | fm_Identifier ) 
+  | ambiguousName DOT  (Identifier | fm_Identifier)
   ;
 fm_ambiguousName: FM_PLACEHOLDER | FM_IF (fm_ambiguousName | ambiguousName) (FM_ELSE_IF (fm_ambiguousName | ambiguousName))* FM_ELSE (fm_ambiguousName | ambiguousName) FM_IF_CLOSE;
 
@@ -260,9 +260,16 @@ compilationUnit
   ;
 
 packageDeclaration
-  : (packageModifier | fm_packageModifierStar)* PACKAGE  (Identifier | fm_Identifier) (DOT  (Identifier | fm_Identifier))* SEMI 
+  : (packageModifier | fm_packageModifierStar)* PACKAGE  (packageSegmentList | fm_packageSegmentList) SEMI 
   ;
 fm_packageDeclarationOpt: FM_PLACEHOLDER | FM_IF (fm_packageDeclarationOpt | packageDeclaration) (FM_ELSE_IF (fm_packageDeclarationOpt | packageDeclaration))* (FM_ELSE (fm_packageDeclarationOpt | packageDeclaration))? FM_IF_CLOSE;
+  
+packageSegmentList
+  : Identifier 
+  | fm_packageSegmentList DOT ( Identifier | fm_Identifier ) 
+  | packageSegmentList DOT  (Identifier | fm_Identifier)
+  ;
+fm_packageSegmentList: FM_PLACEHOLDER | FM_IF (fm_packageSegmentList | packageSegmentList) (FM_ELSE_IF (fm_packageSegmentList | packageSegmentList))* FM_ELSE (fm_packageSegmentList | packageSegmentList) FM_IF_CLOSE;
 
 packageModifier
   : annotation
@@ -1365,108 +1372,105 @@ fm_assignmentOperator: FM_PLACEHOLDER | FM_IF (fm_assignmentOperator | assignmen
 
 conditionalExpression
   : conditionalOrExpression
-  | (conditionalOrExpression | fm_conditionalOrExpression) QUESTION  (expression | fm_expression) COLON  conditionalExpression
-  | ( conditionalOrExpression | fm_conditionalOrExpression ) QUESTION ( expression | fm_expression ) COLON fm_conditionalExpression 
+  | (conditionalOrExpression | fm_conditionalOrExpression) QUESTION  (expression | fm_expression) COLON  (conditionalExpression | fm_conditionalExpression)
   ;
 fm_conditionalExpression: FM_PLACEHOLDER | FM_IF (fm_conditionalExpression | conditionalExpression) (FM_ELSE_IF (fm_conditionalExpression | conditionalExpression))* FM_ELSE (fm_conditionalExpression | conditionalExpression) FM_IF_CLOSE;
 
 conditionalOrExpression
   : conditionalAndExpression
-  | conditionalOrExpression OR  (conditionalAndExpression | fm_conditionalAndExpression)
   | fm_conditionalOrExpression OR ( conditionalAndExpression | fm_conditionalAndExpression ) 
+  | conditionalOrExpression OR  (conditionalAndExpression | fm_conditionalAndExpression)
   ;
 fm_conditionalOrExpression: FM_PLACEHOLDER | FM_IF (fm_conditionalOrExpression | conditionalOrExpression) (FM_ELSE_IF (fm_conditionalOrExpression | conditionalOrExpression))* FM_ELSE (fm_conditionalOrExpression | conditionalOrExpression) FM_IF_CLOSE;
 
 conditionalAndExpression
   : inclusiveOrExpression
-  | conditionalAndExpression AND  (inclusiveOrExpression | fm_inclusiveOrExpression)
   | fm_conditionalAndExpression AND ( inclusiveOrExpression | fm_inclusiveOrExpression ) 
+  | conditionalAndExpression AND  (inclusiveOrExpression | fm_inclusiveOrExpression)
   ;
 fm_conditionalAndExpression: FM_PLACEHOLDER | FM_IF (fm_conditionalAndExpression | conditionalAndExpression) (FM_ELSE_IF (fm_conditionalAndExpression | conditionalAndExpression))* FM_ELSE (fm_conditionalAndExpression | conditionalAndExpression) FM_IF_CLOSE;
 
 inclusiveOrExpression
   : exclusiveOrExpression
-  | inclusiveOrExpression BITOR  (exclusiveOrExpression | fm_exclusiveOrExpression)
   | fm_inclusiveOrExpression BITOR ( exclusiveOrExpression | fm_exclusiveOrExpression ) 
+  | inclusiveOrExpression BITOR  (exclusiveOrExpression | fm_exclusiveOrExpression)
   ;
 fm_inclusiveOrExpression: FM_PLACEHOLDER | FM_IF (fm_inclusiveOrExpression | inclusiveOrExpression) (FM_ELSE_IF (fm_inclusiveOrExpression | inclusiveOrExpression))* FM_ELSE (fm_inclusiveOrExpression | inclusiveOrExpression) FM_IF_CLOSE;
 
 exclusiveOrExpression
   : andExpression
-  | exclusiveOrExpression CARET  (andExpression | fm_andExpression)
   | fm_exclusiveOrExpression CARET ( andExpression | fm_andExpression ) 
+  | exclusiveOrExpression CARET  (andExpression | fm_andExpression)
   ;
 fm_exclusiveOrExpression: FM_PLACEHOLDER | FM_IF (fm_exclusiveOrExpression | exclusiveOrExpression) (FM_ELSE_IF (fm_exclusiveOrExpression | exclusiveOrExpression))* FM_ELSE (fm_exclusiveOrExpression | exclusiveOrExpression) FM_IF_CLOSE;
 
 andExpression
   : equalityExpression
-  | andExpression BITAND  (equalityExpression | fm_equalityExpression)
   | fm_andExpression BITAND ( equalityExpression | fm_equalityExpression ) 
+  | andExpression BITAND  (equalityExpression | fm_equalityExpression)
   ;
 fm_andExpression: FM_PLACEHOLDER | FM_IF (fm_andExpression | andExpression) (FM_ELSE_IF (fm_andExpression | andExpression))* FM_ELSE (fm_andExpression | andExpression) FM_IF_CLOSE;
 
 equalityExpression
   : relationalExpression
-  | equalityExpression EQUAL  (relationalExpression | fm_relationalExpression)
   | fm_equalityExpression EQUAL ( relationalExpression | fm_relationalExpression ) 
-  | equalityExpression NOTEQUAL  (relationalExpression | fm_relationalExpression)
+  | equalityExpression EQUAL  (relationalExpression | fm_relationalExpression)
   | fm_equalityExpression NOTEQUAL ( relationalExpression | fm_relationalExpression ) 
+  | equalityExpression NOTEQUAL  (relationalExpression | fm_relationalExpression)
   ;
 fm_equalityExpression: FM_PLACEHOLDER | FM_IF (fm_equalityExpression | equalityExpression) (FM_ELSE_IF (fm_equalityExpression | equalityExpression))* FM_ELSE (fm_equalityExpression | equalityExpression) FM_IF_CLOSE;
 
 relationalExpression
   : shiftExpression
-  | relationalExpression LT  (shiftExpression | fm_shiftExpression)
   | fm_relationalExpression LT ( shiftExpression | fm_shiftExpression ) 
-  | relationalExpression GT  (shiftExpression | fm_shiftExpression)
+  | relationalExpression LT  (shiftExpression | fm_shiftExpression)
   | fm_relationalExpression GT ( shiftExpression | fm_shiftExpression ) 
-  | relationalExpression LE  (shiftExpression | fm_shiftExpression)
+  | relationalExpression GT  (shiftExpression | fm_shiftExpression)
   | fm_relationalExpression LE ( shiftExpression | fm_shiftExpression ) 
-  | relationalExpression GE  (shiftExpression | fm_shiftExpression)
+  | relationalExpression LE  (shiftExpression | fm_shiftExpression)
   | fm_relationalExpression GE ( shiftExpression | fm_shiftExpression ) 
-  | relationalExpression INSTANCEOF  (referenceType | fm_referenceType)
+  | relationalExpression GE  (shiftExpression | fm_shiftExpression)
   | fm_relationalExpression INSTANCEOF ( referenceType | fm_referenceType ) 
+  | relationalExpression INSTANCEOF  (referenceType | fm_referenceType)
   ;
 fm_relationalExpression: FM_PLACEHOLDER | FM_IF (fm_relationalExpression | relationalExpression) (FM_ELSE_IF (fm_relationalExpression | relationalExpression))* FM_ELSE (fm_relationalExpression | relationalExpression) FM_IF_CLOSE;
 
 shiftExpression
   : additiveExpression
-  | shiftExpression LT  LT  (additiveExpression | fm_additiveExpression)
   | fm_shiftExpression LT LT ( additiveExpression | fm_additiveExpression ) 
-  | shiftExpression GT  GT  (additiveExpression | fm_additiveExpression)
+  | shiftExpression LT  LT  (additiveExpression | fm_additiveExpression)
   | fm_shiftExpression GT GT ( additiveExpression | fm_additiveExpression ) 
-  | shiftExpression GT  GT  GT  (additiveExpression | fm_additiveExpression)
+  | shiftExpression GT  GT  (additiveExpression | fm_additiveExpression)
   | fm_shiftExpression GT GT GT ( additiveExpression | fm_additiveExpression ) 
+  | shiftExpression GT  GT  GT  (additiveExpression | fm_additiveExpression)
   ;
 fm_shiftExpression: FM_PLACEHOLDER | FM_IF (fm_shiftExpression | shiftExpression) (FM_ELSE_IF (fm_shiftExpression | shiftExpression))* FM_ELSE (fm_shiftExpression | shiftExpression) FM_IF_CLOSE;
 
 additiveExpression
   : multiplicativeExpression
-  | additiveExpression ADD  (multiplicativeExpression | fm_multiplicativeExpression)
   | fm_additiveExpression ADD ( multiplicativeExpression | fm_multiplicativeExpression ) 
-  | additiveExpression SUB  (multiplicativeExpression | fm_multiplicativeExpression)
+  | additiveExpression ADD  (multiplicativeExpression | fm_multiplicativeExpression)
   | fm_additiveExpression SUB ( multiplicativeExpression | fm_multiplicativeExpression ) 
+  | additiveExpression SUB  (multiplicativeExpression | fm_multiplicativeExpression)
   ;
 fm_additiveExpression: FM_PLACEHOLDER | FM_IF (fm_additiveExpression | additiveExpression) (FM_ELSE_IF (fm_additiveExpression | additiveExpression))* FM_ELSE (fm_additiveExpression | additiveExpression) FM_IF_CLOSE;
 
 multiplicativeExpression
   : unaryExpression
-  | multiplicativeExpression MUL  (unaryExpression | fm_unaryExpression)
   | fm_multiplicativeExpression MUL ( unaryExpression | fm_unaryExpression ) 
-  | multiplicativeExpression DIV  (unaryExpression | fm_unaryExpression)
+  | multiplicativeExpression MUL  (unaryExpression | fm_unaryExpression)
   | fm_multiplicativeExpression DIV ( unaryExpression | fm_unaryExpression ) 
-  | multiplicativeExpression MOD  (unaryExpression | fm_unaryExpression)
+  | multiplicativeExpression DIV  (unaryExpression | fm_unaryExpression)
   | fm_multiplicativeExpression MOD ( unaryExpression | fm_unaryExpression ) 
+  | multiplicativeExpression MOD  (unaryExpression | fm_unaryExpression)
   ;
 fm_multiplicativeExpression: FM_PLACEHOLDER | FM_IF (fm_multiplicativeExpression | multiplicativeExpression) (FM_ELSE_IF (fm_multiplicativeExpression | multiplicativeExpression))* FM_ELSE (fm_multiplicativeExpression | multiplicativeExpression) FM_IF_CLOSE;
 
 unaryExpression
   : preIncrementExpression
   | preDecrementExpression
-  | ADD  unaryExpression
-  | ADD fm_unaryExpression 
-  | SUB  unaryExpression
-  | SUB fm_unaryExpression 
+  | ADD  (unaryExpression | fm_unaryExpression)
+  | SUB  (unaryExpression | fm_unaryExpression)
   | unaryExpressionNotPlusMinus
   ;
 fm_unaryExpression: FM_PLACEHOLDER | FM_IF (fm_unaryExpression | unaryExpression) (FM_ELSE_IF (fm_unaryExpression | unaryExpression))* FM_ELSE (fm_unaryExpression | unaryExpression) FM_IF_CLOSE;

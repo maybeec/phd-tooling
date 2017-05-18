@@ -40,7 +40,8 @@ public class Java7TemplateParserTest extends AbstractTemplateParserTest {
         PredictionMode.resetAmbiguityData();
 
         File template = new File("src/test/resources/templates/java7template.ftl");
-        List<ParserRuleContext> trees = parseAmbiguities(template, PredictionMode.LL_EXACT_AMBIG_DETECTION, false);
+        List<ParserRuleContext> trees =
+            parseAmbiguities("compilationUnit", template, PredictionMode.LL_EXACT_AMBIG_DETECTION);
 
         // input data analysis
         Map inputData = new HashMap();

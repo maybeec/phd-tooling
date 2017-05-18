@@ -20,7 +20,7 @@ public class GrammarExtenderCoreTest {
         customTactic.addTokens(tokenNames);
 
         // transform grammar
-        GrammarExtenderCore.extendGrammar("src/test/antlr4/Java8.g4",
+        GrammarExtenderCore.extendGrammarAndGenerateParser("src/test/antlr4/Java8.g4",
             "target/generated-test-sources/antlr4/" + targetPackage.replace(".", "/") + "/", customTactic,
             "src/test/antlr4/SimpleFreeMarker.g4", newGrammarName, metaLangPrefix, placeHolderName, targetPackage,
             "ANY");
@@ -40,7 +40,7 @@ public class GrammarExtenderCoreTest {
         customTactic.addTokens(tokenNames);
 
         // transform grammar
-        GrammarExtenderCore.extendGrammar("src/test/antlr4/Java7.g4",
+        GrammarExtenderCore.extendGrammarAndGenerateParser("src/test/antlr4/Java7.g4",
             "target/generated-test-sources/antlr4/" + targetPackage.replace(".", "/") + "/", customTactic,
             "src/test/antlr4/SimpleFreeMarker.g4", newGrammarName, metaLangPrefix, placeHolderName, targetPackage,
             "ANY");

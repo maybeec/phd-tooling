@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.Writer;
+import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -30,9 +31,24 @@ import freemarker.template.TemplateExceptionHandler;
  */
 public class GrammarExtenderCore {
 
-    public static void extendGrammar(String objectGrammarPath, String destinationPath, Tactics extensionTactic,
+    public static Path extendGrammarAndGenerateParser(String objectGrammarPath, String destinationPath,
+        Tactics extensionTactic, String metaGrammarPath, String newGrammarName, String metaLangPrefix,
+        String placeHolderName, String targetPackage, String anyTokenName) throws IOException, TemplateException {
+        return extendGrammarAndGenerateParser(objectGrammarPath, destinationPath, extensionTactic, metaGrammarPath,
+            newGrammarName, metaLangPrefix, placeHolderName, targetPackage, anyTokenName, true);
+    }
+
+    public static Path extendGrammar(String objectGrammarPath, String destinationPath, Tactics extensionTactic,
         String metaGrammarPath, String newGrammarName, String metaLangPrefix, String placeHolderName,
-        String targetPackage, String anyTokenName) throws IOException, TemplateException {
+        String anyTokenName) throws IOException, TemplateException {
+        return extendGrammarAndGenerateParser(objectGrammarPath, destinationPath, extensionTactic, metaGrammarPath,
+            newGrammarName, metaLangPrefix, placeHolderName, null, anyTokenName, false);
+    }
+
+    public static Path extendGrammarAndGenerateParser(String objectGrammarPath, String destinationPath,
+        Tactics extensionTactic, String metaGrammarPath, String newGrammarName, String metaLangPrefix,
+        String placeHolderName, String targetPackage, String anyTokenName, boolean generateParser)
+        throws IOException, TemplateException {
 
         // parse metalanguage
         File metaGrammar = new File(metaGrammarPath);
@@ -45,7 +61,7 @@ public class GrammarExtenderCore {
         // create a standard ANTLR parse tree walker
         ParseTreeWalker metaWalker = new ParseTreeWalker();
 
-        // collect information about metagrammar
+        // collect information about meta grammar
         MetaLanguageListener metaCollector = new MetaLanguageListener(metaTokens, metaLangPrefix, anyTokenName);
         metaWalker.walk(metaCollector, metaTree); // walk parse tree
 
@@ -61,7 +77,6 @@ public class GrammarExtenderCore {
         ANTLRv4Parser objectParser = new ANTLRv4Parser(objectTokens);
         GrammarSpecContext objectTree = objectParser.grammarSpec();
 
-        // create a standard ANTLR parse tree walker
         ParseTreeWalker objectWalker = new ParseTreeWalker();
 
         // collect information about object grammar
@@ -77,7 +92,7 @@ public class GrammarExtenderCore {
         objectWalker.walk(ruleRewriter, objectTree); // walk parse tree
         String step1Grammar = ruleRewriter.getRewriter().getText();
 
-        // debug
+        // write down to detect left recursions and unfold them if they are starting with an alt-block
         String destinationFilePath2 = destinationPath + grammarSpec.getNewGrammarName() + ".g4";
         printToFile(destinationFilePath2, step1Grammar);
 
@@ -97,6 +112,24 @@ public class GrammarExtenderCore {
         String destinationFilePath = destinationPath + grammarSpec.getNewGrammarName() + ".g4";
         printToFile(destinationFilePath, rulesCreator.getRewriter().getText());
 
+        if (generateParser) {
+            generateParser(destinationPath, metaLangPrefix, placeHolderName, targetPackage, grammarSpec,
+                destinationFilePath);
+        }
+        return new File(destinationFilePath).getAbsoluteFile().toPath();
+    }
+
+    /**
+     * @param destinationPath
+     * @param metaLangPrefix
+     * @param placeHolderName
+     * @param targetPackage
+     * @param grammarSpec
+     * @param destinationFilePath
+     * @throws IOException
+     */
+    private static void generateParser(String destinationPath, String metaLangPrefix, String placeHolderName,
+        String targetPackage, GrammarSpec grammarSpec, String destinationFilePath) throws IOException {
         // generate parser based on new grammar
         File newGrammarFile = new File(destinationFilePath);
         generateParserWithANTLR(newGrammarFile, targetPackage, metaLangPrefix.toUpperCase() + placeHolderName);

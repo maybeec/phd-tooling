@@ -233,7 +233,12 @@ compilationUnit
   ;
 
 packageDeclaration
-  : packageModifier* 'package' Identifier ('.' Identifier)* ';'
+  : packageModifier* 'package' packageSegmentList ';'
+  ;
+  
+packageSegmentList
+  : Identifier 
+  | packageSegmentList '.' Identifier
   ;
 
 packageModifier

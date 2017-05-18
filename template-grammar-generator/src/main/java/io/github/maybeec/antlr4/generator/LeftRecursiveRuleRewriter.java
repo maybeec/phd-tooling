@@ -3,7 +3,6 @@ package io.github.maybeec.antlr4.generator;
 import java.util.Set;
 
 import org.antlr.parser.antlr4.ANTLRv4Parser.LabeledAltContext;
-import org.antlr.parser.antlr4.ANTLRv4Parser.ParserRuleSpecContext;
 import org.antlr.parser.antlr4.ANTLRv4Parser.RulerefContext;
 import org.antlr.parser.antlr4.ANTLRv4ParserBaseListener;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -38,11 +37,12 @@ public class LeftRecursiveRuleRewriter extends ANTLRv4ParserBaseListener {
     public void exitRuleref(RulerefContext ctx) {
         String referencedRuleName = ctx.getText();
 
-        if (isRecursive(ctx)) {
+        if (GrammarUtil.isLeftRecursive(ctx)) {
             LabeledAltContext parent = getParent(ctx, LabeledAltContext.class);
             String phRuleName = grammarSpec.getMetaLangParserRulePrefix() + referencedRuleName;
             // replace first as we will just take left recursive occurrences into account
-            rewriter.insertAfter(parent.stop, "\n  | " + toString(parent).replaceFirst(referencedRuleName, phRuleName));
+            rewriter.insertBefore(parent.start,
+                toString(parent).replaceFirst(referencedRuleName, phRuleName) + "\n  | ");
             usedPlaceholderRules.add(phRuleName);
         }
     }
@@ -81,21 +81,4 @@ public class LeftRecursiveRuleRewriter extends ANTLRv4ParserBaseListener {
         return rewriter;
     }
 
-    private boolean isRecursive(RulerefContext ctx) {
-        String ruleName = ctx.getText();
-        ParserRuleContext currentParent = ctx.getParent();
-        boolean isRecursive = false;
-        while (currentParent != null) {
-            if (currentParent instanceof ParserRuleSpecContext) {
-                ParserRuleSpecContext parentRule = (ParserRuleSpecContext) currentParent;
-                if (ruleName.equals(parentRule.RULE_REF().getText())) {
-                    isRecursive = true;
-                }
-                break;
-            } else {
-                currentParent = currentParent.getParent();
-            }
-        }
-        return isRecursive;
-    }
 }

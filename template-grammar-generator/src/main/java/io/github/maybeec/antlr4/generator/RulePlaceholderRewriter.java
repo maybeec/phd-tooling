@@ -58,18 +58,19 @@ public class RulePlaceholderRewriter extends ANTLRv4ParserBaseListener {
     public void exitRuleref(RulerefContext ctx) {
         String referencedRuleName = ctx.getText();
 
-        if (!isRecursive(ctx)) {
+        if (!GrammarUtil.isLeftRecursive(ctx)) {
             if (selectedRules.contains(referencedRuleName)) {
                 if (countSiblings(ctx) > 1) {
                     EbnfSuffixContext ebnfSuffixContext = getElementParent(ctx).ebnfSuffix();
                     String ebnfSuffix = ebnfSuffixContext != null ? ebnfSuffixContext.getText() : "";
                     extendRuleRef(ctx, ebnfSuffix);
                 }
-            } else {
-                // add () to allow condition and loop extension
-                rewriter.insertBefore(ctx.start, "(");
-                rewriter.insertAfter(ctx.stop, ")");
             }
+            // else {
+            // // add () to allow condition and loop extension
+            // rewriter.insertBefore(ctx.start, "(");
+            // rewriter.insertAfter(ctx.stop, ")");
+            // }
         }
     }
 
@@ -176,10 +177,16 @@ public class RulePlaceholderRewriter extends ANTLRv4ParserBaseListener {
         String phRuleName;
         switch (cardinality) {
         case "":
+            rewriter.insertBefore(ctx.start, "(");
+            // if (GrammarUtil.isElementInListPattern(ctx)) {
+            // phRuleName = grammarSpec.getMetaLangParserRulePrefix() + ruleName;
+            // usedPlaceholderRules.add(phRuleName);
+            // rewriter.insertAfter(ctx.stop, " | " + phRuleName + ")");
+            // } else {
             phRuleName = grammarSpec.getMetaLangParserRulePrefix() + ruleName;
             usedPlaceholderRules.add(phRuleName);
-            rewriter.insertBefore(ctx.start, "(");
             rewriter.insertAfter(ctx.stop, " | " + phRuleName + ")");
+            // }
             break;
         case "?":
             phRuleName = grammarSpec.getOptPhParserRuleName(ruleName);
@@ -221,21 +228,4 @@ public class RulePlaceholderRewriter extends ANTLRv4ParserBaseListener {
         return createdLexerRuleList;
     }
 
-    private boolean isRecursive(RulerefContext ctx) {
-        String ruleName = ctx.getText();
-        ParserRuleContext currentParent = ctx.getParent();
-        boolean isRecursive = false;
-        while (currentParent != null) {
-            if (currentParent instanceof ParserRuleSpecContext) {
-                ParserRuleSpecContext parentRule = (ParserRuleSpecContext) currentParent;
-                if (ruleName.equals(parentRule.RULE_REF().getText())) {
-                    isRecursive = true;
-                }
-                break;
-            } else {
-                currentParent = currentParent.getParent();
-            }
-        }
-        return isRecursive;
-    }
 }
