@@ -25,8 +25,9 @@ import javax.tools.JavaFileObject;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
 
-import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CodePointCharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.Parser;
@@ -52,7 +53,7 @@ public abstract class AbstractTemplateParserTest {
 
     protected static Class<? extends ParseTreeListener> listenerClass;
 
-    private static Path underlyingGrammar;
+    protected static Path parserGrammar;
 
     /**
      * Generates and loads the parser
@@ -69,7 +70,7 @@ public abstract class AbstractTemplateParserTest {
 
         // transform grammar
         String parserSourcesPath = "target/generated-test-sources/antlr4/" + targetPackage.replace(".", "/") + "/";
-        underlyingGrammar = GrammarExtenderCore.extendGrammarAndGenerateParser("src/test/antlr4/" + language + ".g4",
+        parserGrammar = GrammarExtenderCore.extendGrammarAndGenerateParser("src/test/antlr4/" + language + ".g4",
             parserSourcesPath, tactic, "src/test/antlr4/SimpleFreeMarker.g4", newGrammarName, metaLangPrefix,
             placeHolderName, targetPackage, "ANY");
 
@@ -148,7 +149,7 @@ public abstract class AbstractTemplateParserTest {
      * @throws Exception
      *             if anything fails
      */
-    protected Lexer newLexer(ANTLRInputStream antlrInputStream) throws Exception {
+    protected Lexer newLexer(CodePointCharStream antlrInputStream) throws Exception {
         Constructor<? extends Lexer> lexerConstructor = lexerClass.getConstructor(CharStream.class);
         return lexerConstructor.newInstance(antlrInputStream);
     }
@@ -231,9 +232,9 @@ public abstract class AbstractTemplateParserTest {
         boolean parseAmbiguities) throws Exception {
         // template parsing
         Reader reader = new FileReader(file);
-        Lexer lexer = newLexer(new ANTLRInputStream(reader));
+        Lexer lexer = newLexer(CharStreams.fromReader(reader));
         Parser parser = newParser(new CommonTokenStream(lexer));
-        try (InputStream grammarStream = Files.newInputStream(underlyingGrammar)) {
+        try (InputStream grammarStream = Files.newInputStream(parserGrammar)) {
             return new TemplateParser(parser, parserClass.getMethod(parseRule), grammarStream).parse(predictionMode,
                 parseAmbiguities);
         }

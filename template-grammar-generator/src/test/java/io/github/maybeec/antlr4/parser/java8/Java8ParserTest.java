@@ -3,6 +3,7 @@ package io.github.maybeec.antlr4.parser.java8;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.File;
+import java.nio.file.Paths;
 import java.util.List;
 
 import org.antlr.parser.java8.Java8Lexer;
@@ -20,6 +21,7 @@ public class Java8ParserTest extends AbstractTemplateParserTest {
     public static void setJava8Parser() {
         parserClass = Java8Parser.class;
         lexerClass = Java8Lexer.class;
+        parserGrammar = Paths.get("src/test/antlr4/Java8.g4");
     }
 
     @Test
@@ -36,16 +38,4 @@ public class Java8ParserTest extends AbstractTemplateParserTest {
         assertThat(trees).hasSize(1);
     }
 
-    // @Test
-    // public void tokenizer() {
-    // String code = "String var; int i; i = 3; if(i>2) { var = \"more than 2\"; } else { var = \"less than
-    // 2\"; }";
-    // ANTLRInputStream in = new ANTLRInputStream(code);
-    // Java8Lexer lexer = new Java8Lexer(in);
-    // List<? extends Token> tokenList = new ArrayList<>();
-    // tokenList = lexer.getAllTokens();
-    // for (Token token : tokenList) {
-    // System.out.println(lexer.getVocabulary().getSymbolicName(token.getType()));
-    // }
-    // }
 }
