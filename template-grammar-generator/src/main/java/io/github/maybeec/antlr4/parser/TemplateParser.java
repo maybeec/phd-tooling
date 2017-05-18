@@ -1,7 +1,5 @@
 package io.github.maybeec.antlr4.parser;
 
-import static org.junit.Assert.fail;
-
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
@@ -109,8 +107,7 @@ public class TemplateParser<P extends Parser> {
                 System.out.println("parsing not successfull!");
                 System.err.println(e.getMsg());
                 e.printStackTrace();
-                fail(e.getMsg());
-                break;
+                throw e;
             }
             System.out.println("parsing complete");
 
