@@ -12,6 +12,7 @@ import java.util.Map;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.atn.PredictionMode;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import io.github.maybeec.antlr4.generator.Tactics;
@@ -51,6 +52,15 @@ public class Java8TemplateParserTest extends AbstractTemplateParserTest {
         List<ParserRuleContext> trees =
             parseAmbiguities("compilationUnit", template, PredictionMode.LL_EXACT_AMBIG_DETECTION);
         assertThat(trees).hasSize(2);
+    }
+
+    @Ignore
+    @Test
+    public void testCompilationUnit_parse_java_ambig_typedecl() throws Exception {
+        File template = new File("src/test/resources/templates/java8template_parse_java_ambig_typedecl.ftl");
+        List<ParserRuleContext> trees =
+            parseAmbiguities("compilationUnit", template, PredictionMode.LL_EXACT_AMBIG_DETECTION);
+        assertThat(trees).hasSize(1);
     }
 
     @Test

@@ -60,11 +60,11 @@ public class PlaceholderRulesCreator extends ANTLRv4ParserBaseListener {
         }
         if (usedPlaceholderRules.contains(optPhRuleName)) {
             rulesToBeAdded += "\n" + optPhRuleName + ": " + phTokenName + " | "
-                + grammarSpec.createOptRuleContent("(" + optPhRuleName + " | " + placeholderType + ")") + ";";
+                + grammarSpec.createOptRuleContent("(" + optPhRuleName + " | " + placeholderType + ")?") + ";";
         }
         if (usedPlaceholderRules.contains(starPhRuleName)) {
             rulesToBeAdded += "\n" + starPhRuleName + ": " + phTokenName + " | "
-                + grammarSpec.createStarRuleContent("(" + starPhRuleName + " | " + placeholderType + ")") + ";";
+                + grammarSpec.createStarRuleContent("(" + starPhRuleName + " | " + placeholderType + ")*") + ";";
         }
 
         if (!rulesToBeAdded.isEmpty()) {

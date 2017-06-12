@@ -60,7 +60,7 @@ public class RulePlaceholderRewriter extends ANTLRv4ParserBaseListener {
 
         if (!GrammarUtil.isLeftRecursive(ctx)) {
             if (selectedRules.contains(referencedRuleName)) {
-                if (countSiblings(ctx) > 1) {
+                if (countSiblings(ctx) > 1) { // ignore chain productions
                     EbnfSuffixContext ebnfSuffixContext = getElementParent(ctx).ebnfSuffix();
                     String ebnfSuffix = ebnfSuffixContext != null ? ebnfSuffixContext.getText() : "";
                     extendRuleRef(ctx, ebnfSuffix);
@@ -177,31 +177,27 @@ public class RulePlaceholderRewriter extends ANTLRv4ParserBaseListener {
         String phRuleName;
         switch (cardinality) {
         case "":
-            rewriter.insertBefore(ctx.start, "(");
-            // if (GrammarUtil.isElementInListPattern(ctx)) {
-            // phRuleName = grammarSpec.getMetaLangParserRulePrefix() + ruleName;
-            // usedPlaceholderRules.add(phRuleName);
-            // rewriter.insertAfter(ctx.stop, " | " + phRuleName + ")");
-            // } else {
             phRuleName = grammarSpec.getMetaLangParserRulePrefix() + ruleName;
+            rewriter.insertBefore(ctx.start, "( " + phRuleName + " | ");
             usedPlaceholderRules.add(phRuleName);
-            rewriter.insertAfter(ctx.stop, " | " + phRuleName + ")");
-            // }
+            rewriter.insertAfter(ctx.stop, /* " | " + phRuleName + */ ")");
             break;
         case "?":
             phRuleName = grammarSpec.getOptPhParserRuleName(ruleName);
             usedPlaceholderRules.add(phRuleName);
-            rewriter.insertBefore(ctx.start, "(");
-            rewriter.insertAfter(ctx.stop, " | " + phRuleName + ")");
+            rewriter.insertBefore(ctx.start, "(" + phRuleName + " | ");
+            rewriter.insertAfter(ctx.stop, /* " | " + phRuleName + */ ")");
             break;
         case "*":
             phRuleName = grammarSpec.getStarPhParserRuleName(ruleName);
             usedPlaceholderRules.add(phRuleName);
-            rewriter.insertBefore(ctx.start, "(");
-            rewriter.insertAfter(ctx.stop, " | " + phRuleName + ")");
+            rewriter.insertBefore(ctx.start, "(" + phRuleName + " | ");
+            rewriter.insertAfter(ctx.stop, /* " | " + phRuleName + */ ")");
             break;
+        case "+":
+            // TODO
         default:
-            break;
+            throw new IllegalArgumentException("Unkown EBNF cardinality");
         }
     }
 

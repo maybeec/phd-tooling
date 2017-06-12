@@ -17,7 +17,7 @@ import io.github.maybeec.antlr4.generator.Tactics;
 /**
  *
  */
-public class ListElementPlaceholderTransformerTest /* extends AbstractTemplateParserTest */ {
+public class ListElementPlaceholderTransformerTest {
 
     @Rule
     public TemporaryFolder tmpFolderFactory = new TemporaryFolder();
