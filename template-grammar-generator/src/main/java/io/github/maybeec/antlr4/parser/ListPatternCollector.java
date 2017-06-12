@@ -155,13 +155,13 @@ public class ListPatternCollector implements ParseTreeListener {
                             currChild = currChild.getChild(1); // bracket children around
                             if (currChild instanceof AltListContext && currChild.getChildCount() == 3) {
                                 ParseTree alt3 = currChild;
-                                currChild = alt3.getChild(0);
-                                if (!representsTerminal(currChild) || !currChild.getText().equals(elementName)) {
+                                currChild = alt3.getChild(0); // first alt = list element
+                                if (!representsTerminal(currChild) || !currChild.getText().endsWith(elementName)) {
                                     return false;
                                 }
 
-                                currChild = alt3.getChild(2);
-                                if (!representsTerminal(currChild) || !currChild.getText().endsWith(elementName)) {
+                                currChild = alt3.getChild(2); // second alt = list element placeholder
+                                if (!representsTerminal(currChild) || !currChild.getText().equals(elementName)) {
                                     return false;
                                 }
                                 return true;

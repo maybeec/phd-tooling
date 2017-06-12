@@ -31,11 +31,11 @@ public class ListPatternTransformer implements ParseTreeListener {
     }
 
     public void transform(ParseTree tree) {
-        System.out.println("start transformation ");
+        System.out.println("start list pattern transformation");
         long start = System.currentTimeMillis();
         new ParseTreeWalker().walk(this, tree);
         long stop = System.currentTimeMillis();
-        System.out.println("transformation finished in " + (stop - start) + "ms");
+        System.out.println("list pattern transformation finished in " + (stop - start) + "ms");
     }
 
     @Override

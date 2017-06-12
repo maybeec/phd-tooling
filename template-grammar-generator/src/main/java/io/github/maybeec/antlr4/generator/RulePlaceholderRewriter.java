@@ -178,26 +178,30 @@ public class RulePlaceholderRewriter extends ANTLRv4ParserBaseListener {
         switch (cardinality) {
         case "":
             phRuleName = grammarSpec.getMetaLangParserRulePrefix() + ruleName;
-            rewriter.insertBefore(ctx.start, "( " + phRuleName + " | ");
+
             usedPlaceholderRules.add(phRuleName);
-            rewriter.insertAfter(ctx.stop, /* " | " + phRuleName + */ ")");
+            rewriter.insertBefore(ctx.start, "(" + phRuleName + " | ");
+            rewriter.insertAfter(ctx.stop, ")");
             break;
         case "?":
             phRuleName = grammarSpec.getOptPhParserRuleName(ruleName);
+
             usedPlaceholderRules.add(phRuleName);
             rewriter.insertBefore(ctx.start, "(" + phRuleName + " | ");
-            rewriter.insertAfter(ctx.stop, /* " | " + phRuleName + */ ")");
+            rewriter.insertAfter(ctx.stop, ")");
             break;
         case "*":
             phRuleName = grammarSpec.getStarPhParserRuleName(ruleName);
+
             usedPlaceholderRules.add(phRuleName);
             rewriter.insertBefore(ctx.start, "(" + phRuleName + " | ");
-            rewriter.insertAfter(ctx.stop, /* " | " + phRuleName + */ ")");
+            rewriter.insertAfter(ctx.stop, ")");
             break;
         case "+":
-            // TODO
+            // TODO plus rule
+            break;
         default:
-            throw new IllegalArgumentException("Unkown EBNF cardinality");
+            throw new IllegalArgumentException("Unkown EBNF cardinality '" + cardinality + "'");
         }
     }
 

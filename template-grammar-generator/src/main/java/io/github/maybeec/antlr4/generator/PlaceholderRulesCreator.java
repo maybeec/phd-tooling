@@ -66,6 +66,7 @@ public class PlaceholderRulesCreator extends ANTLRv4ParserBaseListener {
             rulesToBeAdded += "\n" + starPhRuleName + ": " + phTokenName + " | "
                 + grammarSpec.createStarRuleContent("(" + starPhRuleName + " | " + placeholderType + ")*") + ";";
         }
+        // TODO plus rule
 
         if (!rulesToBeAdded.isEmpty()) {
             rewriter.insertAfter(originalRule.stop, rulesToBeAdded);

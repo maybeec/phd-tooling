@@ -3,7 +3,6 @@ package io.github.maybeec.antlr4.parser.java8;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -12,7 +11,6 @@ import java.util.Map;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.atn.PredictionMode;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import io.github.maybeec.antlr4.generator.Tactics;
@@ -54,7 +52,6 @@ public class Java8TemplateParserTest extends AbstractTemplateParserTest {
         assertThat(trees).hasSize(2);
     }
 
-    @Ignore
     @Test
     public void testCompilationUnit_parse_java_ambig_typedecl() throws Exception {
         File template = new File("src/test/resources/templates/java8template_parse_java_ambig_typedecl.ftl");
@@ -138,7 +135,7 @@ public class Java8TemplateParserTest extends AbstractTemplateParserTest {
     /**
      * Test method for
      * {@link io.github.maybeec.antlr4.templateparser.java8.Java8TemplateParser#compilationUnit()}.
-     * @throws IOException
+     * @throws Exception
      *             test fails
      */
     @Test
@@ -148,7 +145,7 @@ public class Java8TemplateParserTest extends AbstractTemplateParserTest {
         List<ParserRuleContext> trees =
             parseAmbiguities("compilationUnit", template, PredictionMode.LL_EXACT_AMBIG_DETECTION);
 
-        Map inputData = new HashMap();
+        Map<String, String> inputData = new HashMap<>();
         inputData.put("c", "a.b.c");
         inputData.put("b", "e");
 
@@ -159,7 +156,7 @@ public class Java8TemplateParserTest extends AbstractTemplateParserTest {
     /**
      * Test method for
      * {@link io.github.maybeec.antlr4.templateparser.java8.Java8TemplateParser#compilationUnit()}.
-     * @throws IOException
+     * @throws Exception
      *             test fails
      */
     @Test
@@ -169,7 +166,7 @@ public class Java8TemplateParserTest extends AbstractTemplateParserTest {
         List<ParserRuleContext> trees =
             parseAmbiguities("compilationUnit", template, PredictionMode.LL_EXACT_AMBIG_DETECTION);
 
-        Map inputData = new HashMap();
+        Map<String, String> inputData = new HashMap<>();
         inputData.put("mod", "public");
         inputData.put("fieldname", "iField");
 
