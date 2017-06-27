@@ -13,6 +13,8 @@ public class GrammarSpec {
 
     private final String loopRuleName = "loop";
 
+    private final String loopElseName = "loopElse";
+
     /** The name for the new grammar */
     private String newGrammarName;
 
@@ -99,6 +101,10 @@ public class GrammarSpec {
         return metaLangParserRulePrefix + atomName + "Star";
     }
 
+    public String getPlusPhParserRuleName(String atomName) {
+        return metaLangParserRulePrefix + atomName + "Plus";
+    }
+
     public String getParserRule(String label) {
         return metaLangParserRules.get(label);
     }
@@ -111,9 +117,20 @@ public class GrammarSpec {
         return metaLangLexerRules.get(placeHolderLabel);
     }
 
-    public String createIfLoopRuleContent(String body) {
-        return getParserRule(metaLangParserRulePrefix + ifRuleName).replace(ruleBodyPlaceholder, body) + " | "
-            + getParserRule(metaLangParserRulePrefix + loopRuleName).replace(ruleBodyPlaceholder, body);
+    public String createPlusRuleContent(String body) {
+        String bodyStar = body.substring(0, body.length() - 1) + "*";
+
+        return "(" + getParserRule(metaLangParserRulePrefix + ifRuleName).replace(ruleBodyPlaceholder, bodyStar) + " | "
+            + getParserRule(metaLangParserRulePrefix + loopRuleName).replace(ruleBodyPlaceholder, bodyStar) + " | "
+            + getParserRule(metaLangParserRulePrefix + ifRuleName).replace(ruleBodyPlaceholder, bodyStar) + ")*"
+
+            + createOneRuleContent(body) +
+
+            "(" + getParserRule(metaLangParserRulePrefix + ifRuleName).replace(ruleBodyPlaceholder, bodyStar) + " | "
+            + getParserRule(metaLangParserRulePrefix + loopRuleName).replace(ruleBodyPlaceholder, bodyStar) + " | "
+            + getParserRule(metaLangParserRulePrefix + ifRuleName).replace(ruleBodyPlaceholder, bodyStar) + ")*  | "
+
+            + getParserRule(metaLangParserRulePrefix + loopElseName).replace(ruleBodyPlaceholder, body);
     }
 
     public String createStarRuleContent(String body) {

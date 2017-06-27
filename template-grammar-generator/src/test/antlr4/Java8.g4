@@ -233,14 +233,9 @@ compilationUnit
   ;
 
 packageDeclaration
-  : packageModifier* 'package' packageSegmentList ';'
+  : packageModifier* 'package' packageName ';'
   ;
   
-packageSegmentList
-  : Identifier 
-  | packageSegmentList '.' Identifier
-  ;
-
 packageModifier
   : annotation
   ;

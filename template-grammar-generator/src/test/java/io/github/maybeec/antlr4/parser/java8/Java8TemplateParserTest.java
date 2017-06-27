@@ -29,6 +29,14 @@ public class Java8TemplateParserTest extends AbstractTemplateParserTest {
     }
 
     @Test
+    public void testCompilationUnit_parse_leftRecursionWithFirstElementAsPH() throws Exception {
+        File template = new File("src/test/resources/templates/java8template_parseLeftRecWithPHs.ftl");
+        List<ParserRuleContext> trees =
+            parseAmbiguities("packageDeclaration", template, PredictionMode.LL_EXACT_AMBIG_DETECTION);
+        assertThat(trees).hasSize(1);
+    }
+
+    @Test
     public void testCompilationUnit_parse_ifthenelse() throws Exception {
         File template = new File("src/test/resources/templates/java8template_parse_ifthenelse.ftl");
         List<ParserRuleContext> trees =

@@ -198,7 +198,11 @@ public class RulePlaceholderRewriter extends ANTLRv4ParserBaseListener {
             rewriter.insertAfter(ctx.stop, ")");
             break;
         case "+":
-            // TODO plus rule
+            phRuleName = grammarSpec.getPlusPhParserRuleName(ruleName);
+
+            usedPlaceholderRules.add(phRuleName);
+            rewriter.insertBefore(ctx.start, "(" + phRuleName + " | ");
+            rewriter.insertAfter(ctx.stop, ")");
             break;
         default:
             throw new IllegalArgumentException("Unkown EBNF cardinality '" + cardinality + "'");

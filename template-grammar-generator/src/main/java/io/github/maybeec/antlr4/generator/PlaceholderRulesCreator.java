@@ -52,6 +52,7 @@ public class PlaceholderRulesCreator extends ANTLRv4ParserBaseListener {
         String phRuleName = grammarSpec.getMetaLangParserRulePrefix() + placeholderType;
         String optPhRuleName = grammarSpec.getOptPhParserRuleName(placeholderType);
         String starPhRuleName = grammarSpec.getStarPhParserRuleName(placeholderType);
+        String plusPhRuleName = grammarSpec.getPlusPhParserRuleName(placeholderType);
 
         String rulesToBeAdded = "";
         if (usedPlaceholderRules.contains(phRuleName)) {
@@ -66,7 +67,10 @@ public class PlaceholderRulesCreator extends ANTLRv4ParserBaseListener {
             rulesToBeAdded += "\n" + starPhRuleName + ": " + phTokenName + " | "
                 + grammarSpec.createStarRuleContent("(" + starPhRuleName + " | " + placeholderType + ")*") + ";";
         }
-        // TODO plus rule
+        if (usedPlaceholderRules.contains(plusPhRuleName)) {
+            rulesToBeAdded += "\n" + plusPhRuleName + ": " + phTokenName + " | "
+                + grammarSpec.createPlusRuleContent("(" + plusPhRuleName + " | " + placeholderType + ")*") + ";";
+        }
 
         if (!rulesToBeAdded.isEmpty()) {
             rewriter.insertAfter(originalRule.stop, rulesToBeAdded);
