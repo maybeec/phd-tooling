@@ -60,8 +60,10 @@ public class RulePlaceholderRewriter extends ANTLRv4ParserBaseListener {
 
         if (!GrammarUtil.isLeftRecursive(ctx)) {
             if (selectedRules.contains(referencedRuleName)) {
-                if (countSiblings(ctx) > 1) { // ignore chain productions
-                    EbnfSuffixContext ebnfSuffixContext = getElementParent(ctx).ebnfSuffix();
+                EbnfSuffixContext ebnfSuffixContext = getElementParent(ctx).ebnfSuffix();
+                // ignore chain productions of max occurrence 1
+                if (countSiblings(ctx) > 1
+                    || (ebnfSuffixContext != null && ebnfSuffixContext.getText().matches("(\\?|\\+)"))) {
                     String ebnfSuffix = ebnfSuffixContext != null ? ebnfSuffixContext.getText() : "";
                     extendRuleRef(ctx, ebnfSuffix);
                 }

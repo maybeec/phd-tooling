@@ -69,7 +69,8 @@ public class PlaceholderRulesCreator extends ANTLRv4ParserBaseListener {
         }
         if (usedPlaceholderRules.contains(plusPhRuleName)) {
             rulesToBeAdded += "\n" + plusPhRuleName + ": " + phTokenName + " | "
-                + grammarSpec.createPlusRuleContent("(" + plusPhRuleName + " | " + placeholderType + ")*") + ";";
+                + grammarSpec.createPlusRuleContent(phTokenName, "(" + plusPhRuleName + " | " + placeholderType + ")*")
+                + ";";
         }
 
         if (!rulesToBeAdded.isEmpty()) {

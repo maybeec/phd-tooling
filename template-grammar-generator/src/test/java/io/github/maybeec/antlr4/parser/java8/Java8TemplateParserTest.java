@@ -29,11 +29,43 @@ public class Java8TemplateParserTest extends AbstractTemplateParserTest {
     }
 
     @Test
+    public void testCompilationUnit_parse_blockStatements() throws Exception {
+        File template = new File("src/test/resources/templates/java8template_parse_blockStatements.ftl");
+        List<ParserRuleContext> trees =
+            parseAmbiguities("compilationUnit", template, PredictionMode.LL_EXACT_AMBIG_DETECTION);
+        assertThat(trees).hasSize(1);
+    }
+
+    @Test
     public void testCompilationUnit_parse_leftRecursionWithFirstElementAsPH() throws Exception {
         File template = new File("src/test/resources/templates/java8template_parseLeftRecWithPHs.ftl");
         List<ParserRuleContext> trees =
             parseAmbiguities("packageDeclaration", template, PredictionMode.LL_EXACT_AMBIG_DETECTION);
         assertThat(trees).hasSize(1);
+    }
+
+    @Test
+    public void testCompilationUnit_parse_variableInitializer() throws Exception {
+        File template = new File("src/test/resources/templates/java8template_parse_variable_initializer.ftl");
+        List<ParserRuleContext> trees =
+            parseAmbiguities("compilationUnit", template, PredictionMode.LL_EXACT_AMBIG_DETECTION);
+        assertThat(trees).hasSize(1);
+    }
+
+    @Test
+    public void testCompilationUnit_parse_methodCall() throws Exception {
+        File template = new File("src/test/resources/templates/java8template_parse_method_call.ftl");
+        List<ParserRuleContext> trees =
+            parseAmbiguities("compilationUnit", template, PredictionMode.LL_EXACT_AMBIG_DETECTION);
+        assertThat(trees).hasSize(1);
+    }
+
+    @Test
+    public void testCompilationUnit_parse_concatenatedMethodCall() throws Exception {
+        File template = new File("src/test/resources/templates/java8template_parse_concat_method_call.ftl");
+        List<ParserRuleContext> trees =
+            parseAmbiguities("compilationUnit", template, PredictionMode.LL_EXACT_AMBIG_DETECTION);
+        assertThat(trees).hasSize(4);
     }
 
     @Test

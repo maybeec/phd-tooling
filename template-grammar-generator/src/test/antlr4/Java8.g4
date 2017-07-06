@@ -348,7 +348,8 @@ fieldModifier
   ;
 
 variableDeclaratorList
-  : variableDeclarator (',' variableDeclarator)*
+  : variableDeclarator
+  | variableDeclaratorList ',' variableDeclarator
   ;
 
 variableDeclarator
@@ -529,7 +530,7 @@ simpleTypeName
   ;
 
 constructorBody
-  : '{' explicitConstructorInvocation? blockStatements? '}'
+  : '{' explicitConstructorInvocation? blockStatement* '}'
   ;
 
 explicitConstructorInvocation
@@ -705,7 +706,8 @@ arrayInitializer
   ;
 
 variableInitializerList
-  : variableInitializer (',' variableInitializer)*
+  : variableInitializer 
+  | variableInitializerList ',' variableInitializer
   ;
 
 /*
@@ -713,11 +715,7 @@ variableInitializerList
  */
 
 block
-  : '{' blockStatements? '}'
-  ;
-
-blockStatements
-  : blockStatement blockStatement*
+  : '{' blockStatement* '}'
   ;
 
 blockStatement
@@ -818,7 +816,7 @@ switchBlock
   ;
 
 switchBlockStatementGroup
-  : switchLabels blockStatements
+  : switchLabels blockStatement+
   ;
 
 switchLabels

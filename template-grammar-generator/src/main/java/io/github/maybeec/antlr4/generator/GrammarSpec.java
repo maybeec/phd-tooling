@@ -117,20 +117,17 @@ public class GrammarSpec {
         return metaLangLexerRules.get(placeHolderLabel);
     }
 
-    public String createPlusRuleContent(String body) {
+    public String createPlusRuleContent(String phTokenName, String body) {
         String bodyStar = body.substring(0, body.length() - 1) + "*";
 
         return "(" + getParserRule(metaLangParserRulePrefix + ifRuleName).replace(ruleBodyPlaceholder, bodyStar) + " | "
-            + getParserRule(metaLangParserRulePrefix + loopRuleName).replace(ruleBodyPlaceholder, bodyStar) + " | "
-            + getParserRule(metaLangParserRulePrefix + ifRuleName).replace(ruleBodyPlaceholder, bodyStar) + ")*"
+            + getParserRule(metaLangParserRulePrefix + loopRuleName).replace(ruleBodyPlaceholder, bodyStar) + ")* "
 
-            + createOneRuleContent(body) +
+            + "(" + phTokenName + " | " + createOneRuleContent(body) + " | "
+            + getParserRule(metaLangParserRulePrefix + loopElseName).replace(ruleBodyPlaceholder, body) + ") " +
 
             "(" + getParserRule(metaLangParserRulePrefix + ifRuleName).replace(ruleBodyPlaceholder, bodyStar) + " | "
-            + getParserRule(metaLangParserRulePrefix + loopRuleName).replace(ruleBodyPlaceholder, bodyStar) + " | "
-            + getParserRule(metaLangParserRulePrefix + ifRuleName).replace(ruleBodyPlaceholder, bodyStar) + ")*  | "
-
-            + getParserRule(metaLangParserRulePrefix + loopElseName).replace(ruleBodyPlaceholder, body);
+            + getParserRule(metaLangParserRulePrefix + loopRuleName).replace(ruleBodyPlaceholder, bodyStar) + ")*";
     }
 
     public String createStarRuleContent(String body) {

@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -96,6 +97,7 @@ public class TemplateParser<P extends Parser> {
         do {
             ParserRuleContext tree;
             System.out.println("start parsing");
+            boolean errorneous = false;
             try {
                 tree = (ParserRuleContext) parseRule.invoke(parser);
                 // System.out.println(tree.toStringTree(parser));
@@ -103,32 +105,40 @@ public class TemplateParser<P extends Parser> {
                 // System.out.println("after transformation:");
                 // System.out.println(tree.toStringTree(parser));
                 trees.add(tree);
-            } catch (ANTLRParseException e) {
-                System.out.println("parsing not successfull!");
-                System.err.println(e.getMsg());
-                e.printStackTrace();
-                throw e;
-            }
-            System.out.println("parsing complete");
 
+                System.out.println("parsing complete");
+                count++;
+
+                printToFile(parser, count, tree);
+
+                // Generates the GUI
+                if (DEBUG_SHOW_BLOCKING_UI) {
+                    Future<JFrame> future = Trees.inspect(tree, parser);
+                    while (future.get().isVisible()) {
+                        try {
+                            Thread.sleep(100);
+                        } catch (InterruptedException e) {
+                        }
+                    }
+                }
+
+            } catch (InvocationTargetException e) {
+                if (e.getCause() instanceof ANTLRParseException) {
+                    System.out.println("!!! parsing not successfull!");
+                    System.err.println(((ANTLRParseException) e.getCause()).getMsg());
+                    throw (ANTLRParseException) e.getCause();
+                } else {
+                    System.out.println("!!! undefined parsing error");
+                    throw e;
+                }
+                // errorneous = true;
+                // e.printStackTrace();
+                // throw e;
+            }
             if (parseAmbiguities) {
                 parser.reset();
                 System.out.println("Number of ambiguities detected: " + PredictionMode.getAmbiguityCounter());
-                PredictionMode.updateAmbiguityDataForNextRun();
-            }
-            count++;
-
-            printToFile(parser, count, tree);
-
-            // Generates the GUI
-            if (DEBUG_SHOW_BLOCKING_UI) {
-                Future<JFrame> future = Trees.inspect(tree, parser);
-                while (future.get().isVisible()) {
-                    try {
-                        Thread.sleep(100);
-                    } catch (InterruptedException e) {
-                    }
-                }
+                PredictionMode.updateAmbiguityDataForNextRun(true);
             }
         } while (parseAmbiguities && PredictionMode.hasNextRun());
 
