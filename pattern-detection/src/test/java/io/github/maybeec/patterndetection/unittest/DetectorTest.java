@@ -76,7 +76,6 @@ public class DetectorTest {
             "b.c", "e.f.g.h");
     }
 
-    @Ignore
     @Test
     public void testImportOrderDetection() throws Exception {
 

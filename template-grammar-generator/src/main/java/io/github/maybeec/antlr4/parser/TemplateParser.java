@@ -46,13 +46,20 @@ public class TemplateParser<P extends Parser> {
 
     private String grammar;
 
+    private Map<String, String> listPatterns;
+
     public TemplateParser(P target, Method parseRule, InputStream grammar) throws IOException {
         parser = target;
         this.parseRule = parseRule;
         try (InputStreamReader inputStreamReader = new InputStreamReader(grammar);
             BufferedReader buffer = new BufferedReader(inputStreamReader)) {
             this.grammar = buffer.lines().collect(Collectors.joining("\n"));
+            listPatterns = new ListPatternCollector(this.grammar).detectListPatternInstantiations();
         }
+    }
+
+    public Map<String, String> getListPatterns() {
+        return this.listPatterns;
     }
 
     /**
@@ -92,7 +99,6 @@ public class TemplateParser<P extends Parser> {
 
         List<ParserRuleContext> trees = new ArrayList<>();
         int count = 0;
-        Map<String, String> listPatterns = new ListPatternCollector(grammar).detectListPatternInstantiations();
         ListPatternTransformer transformer = new ListPatternTransformer(listPatterns);
         do {
             ParserRuleContext tree;

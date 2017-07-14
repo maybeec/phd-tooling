@@ -72,13 +72,6 @@ public class ListPatternCollector implements ParseTreeListener {
         }
     }
 
-    public ListPatternCollector(InputStream grammar) throws IOException {
-        try (InputStreamReader inputStreamReader = new InputStreamReader(grammar);
-            BufferedReader buffer = new BufferedReader(inputStreamReader)) {
-            this.grammar = buffer.lines().collect(Collectors.joining("\n"));
-        }
-    }
-
     public Map<String, String> detectListPatternInstantiations() throws IOException {
         try (StringReader reader = new StringReader(grammar)) {
             ANTLRv4Lexer lexer = new ANTLRv4Lexer(CharStreams.fromString(grammar));

@@ -76,8 +76,8 @@ type
   ;
 
 primitiveType
-  : (annotation | fm_annotationStar)* (numericType | fm_numericType)
-  | (annotation | fm_annotationStar)* BOOLEAN 
+  : (fm_annotationStar | annotation)* (fm_numericType | numericType)
+  | (fm_annotationStar | annotation)* BOOLEAN 
   ;
 fm_primitiveType: FM_PLACEHOLDER | FM_IF (fm_primitiveType | primitiveType) (FM_ELSE_IF (fm_primitiveType | primitiveType))* FM_ELSE (fm_primitiveType | primitiveType) FM_IF_CLOSE;
 
@@ -118,17 +118,17 @@ classOrInterfaceType
 fm_classOrInterfaceType: FM_PLACEHOLDER | FM_IF (fm_classOrInterfaceType | classOrInterfaceType) (FM_ELSE_IF (fm_classOrInterfaceType | classOrInterfaceType))* FM_ELSE (fm_classOrInterfaceType | classOrInterfaceType) FM_IF_CLOSE;
 
 classType
-  : (annotation | fm_annotationStar)* (Identifier | fm_Identifier) (typeArguments | fm_typeArgumentsOpt)?
-  | (classOrInterfaceType | fm_classOrInterfaceType) DOT  (annotation | fm_annotationStar)* (Identifier | fm_Identifier) (typeArguments | fm_typeArgumentsOpt)?
+  : (fm_annotationStar | annotation)* (fm_Identifier | Identifier) (fm_typeArgumentsOpt | typeArguments)?
+  | (fm_classOrInterfaceType | classOrInterfaceType) DOT  (fm_annotationStar | annotation)* (fm_Identifier | Identifier) (fm_typeArgumentsOpt | typeArguments)?
   ;
 fm_classType: FM_PLACEHOLDER | FM_IF (fm_classType | classType) (FM_ELSE_IF (fm_classType | classType))* FM_ELSE (fm_classType | classType) FM_IF_CLOSE;
 
 classType_lf_classOrInterfaceType
-  : DOT  (annotation | fm_annotationStar)* (Identifier | fm_Identifier) (typeArguments | fm_typeArgumentsOpt)?
+  : DOT  (fm_annotationStar | annotation)* (fm_Identifier | Identifier) (fm_typeArgumentsOpt | typeArguments)?
   ;
 
 classType_lfno_classOrInterfaceType
-  : (annotation | fm_annotationStar)* (Identifier | fm_Identifier) (typeArguments | fm_typeArgumentsOpt)?
+  : (fm_annotationStar | annotation)* (fm_Identifier | Identifier) (fm_typeArgumentsOpt | typeArguments)?
   ;
 
 interfaceType
@@ -145,51 +145,51 @@ interfaceType_lfno_classOrInterfaceType
   ;
 
 typeVariable
-  : (annotation | fm_annotationStar)* (Identifier | fm_Identifier)
+  : (fm_annotationStar | annotation)* (fm_Identifier | Identifier)
   ;
 fm_typeVariable: FM_PLACEHOLDER | FM_IF (fm_typeVariable | typeVariable) (FM_ELSE_IF (fm_typeVariable | typeVariable))* FM_ELSE (fm_typeVariable | typeVariable) FM_IF_CLOSE;
 
 arrayType
-  : (primitiveType | fm_primitiveType) (dims | fm_dims)
-  | (classOrInterfaceType | fm_classOrInterfaceType) (dims | fm_dims)
-  | (typeVariable | fm_typeVariable) (dims | fm_dims)
+  : (fm_primitiveType | primitiveType) (fm_dims | dims)
+  | (fm_classOrInterfaceType | classOrInterfaceType) (fm_dims | dims)
+  | (fm_typeVariable | typeVariable) (fm_dims | dims)
   ;
 fm_arrayType: FM_PLACEHOLDER | FM_IF (fm_arrayType | arrayType) (FM_ELSE_IF (fm_arrayType | arrayType))* FM_ELSE (fm_arrayType | arrayType) FM_IF_CLOSE;
 
 dims
-  : (annotation | fm_annotationStar)* LBRACK  RBRACK  ((annotation | fm_annotationStar)* LBRACK  RBRACK )*
+  : (fm_annotationStar | annotation)* LBRACK  RBRACK  ((fm_annotationStar | annotation)* LBRACK  RBRACK )*
   ;
 fm_dims: FM_PLACEHOLDER | FM_IF (fm_dims | dims) (FM_ELSE_IF (fm_dims | dims))* FM_ELSE (fm_dims | dims) FM_IF_CLOSE;
-fm_dimsOpt: FM_PLACEHOLDER | FM_IF (fm_dimsOpt | dims) (FM_ELSE_IF (fm_dimsOpt | dims))* (FM_ELSE (fm_dimsOpt | dims))? FM_IF_CLOSE;
+fm_dimsOpt: FM_PLACEHOLDER | FM_IF (fm_dimsOpt | dims)? (FM_ELSE_IF (fm_dimsOpt | dims)?)* (FM_ELSE (fm_dimsOpt | dims)?)? FM_IF_CLOSE;
 
 typeParameter
-  : (typeParameterModifier | fm_typeParameterModifierStar)* (Identifier | fm_Identifier) (typeBound | fm_typeBoundOpt)?
+  : (fm_typeParameterModifierStar | typeParameterModifier)* (fm_Identifier | Identifier) (fm_typeBoundOpt | typeBound)?
   ;
 fm_typeParameter: FM_PLACEHOLDER | FM_IF (fm_typeParameter | typeParameter) (FM_ELSE_IF (fm_typeParameter | typeParameter))* FM_ELSE (fm_typeParameter | typeParameter) FM_IF_CLOSE;
 
 typeParameterModifier
   : annotation
   ;
-fm_typeParameterModifierStar: FM_PLACEHOLDER | FM_IF (fm_typeParameterModifierStar | typeParameterModifier) (FM_ELSE_IF (fm_typeParameterModifierStar | typeParameterModifier))* (FM_ELSE (fm_typeParameterModifierStar | typeParameterModifier))? FM_IF_CLOSE | FM_LIST (fm_typeParameterModifierStar | typeParameterModifier) FM_LIST_CLOSE;
+fm_typeParameterModifierStar: FM_PLACEHOLDER | FM_IF (fm_typeParameterModifierStar | typeParameterModifier)* (FM_ELSE_IF (fm_typeParameterModifierStar | typeParameterModifier)*)* (FM_ELSE (fm_typeParameterModifierStar | typeParameterModifier)*)? FM_IF_CLOSE | FM_LIST (fm_typeParameterModifierStar | typeParameterModifier)* FM_LIST_CLOSE;
 
 typeBound
-  : EXTENDS  (typeVariable | fm_typeVariable)
-  | EXTENDS  (classOrInterfaceType | fm_classOrInterfaceType) (additionalBound | fm_additionalBoundStar)*
+  : EXTENDS  (fm_typeVariable | typeVariable)
+  | EXTENDS  (fm_classOrInterfaceType | classOrInterfaceType) (fm_additionalBoundStar | additionalBound)*
   ;
-fm_typeBoundOpt: FM_PLACEHOLDER | FM_IF (fm_typeBoundOpt | typeBound) (FM_ELSE_IF (fm_typeBoundOpt | typeBound))* (FM_ELSE (fm_typeBoundOpt | typeBound))? FM_IF_CLOSE;
+fm_typeBoundOpt: FM_PLACEHOLDER | FM_IF (fm_typeBoundOpt | typeBound)? (FM_ELSE_IF (fm_typeBoundOpt | typeBound)?)* (FM_ELSE (fm_typeBoundOpt | typeBound)?)? FM_IF_CLOSE;
 
 additionalBound
-  : BITAND  (interfaceType | fm_interfaceType)
+  : BITAND  (fm_interfaceType | interfaceType)
   ;
-fm_additionalBoundStar: FM_PLACEHOLDER | FM_IF (fm_additionalBoundStar | additionalBound) (FM_ELSE_IF (fm_additionalBoundStar | additionalBound))* (FM_ELSE (fm_additionalBoundStar | additionalBound))? FM_IF_CLOSE | FM_LIST (fm_additionalBoundStar | additionalBound) FM_LIST_CLOSE;
+fm_additionalBoundStar: FM_PLACEHOLDER | FM_IF (fm_additionalBoundStar | additionalBound)* (FM_ELSE_IF (fm_additionalBoundStar | additionalBound)*)* (FM_ELSE (fm_additionalBoundStar | additionalBound)*)? FM_IF_CLOSE | FM_LIST (fm_additionalBoundStar | additionalBound)* FM_LIST_CLOSE;
 
 typeArguments
-  : LT  (typeArgumentList | fm_typeArgumentList) GT 
+  : LT  (fm_typeArgumentList | typeArgumentList) GT 
   ;
-fm_typeArgumentsOpt: FM_PLACEHOLDER | FM_IF (fm_typeArgumentsOpt | typeArguments) (FM_ELSE_IF (fm_typeArgumentsOpt | typeArguments))* (FM_ELSE (fm_typeArgumentsOpt | typeArguments))? FM_IF_CLOSE;
+fm_typeArgumentsOpt: FM_PLACEHOLDER | FM_IF (fm_typeArgumentsOpt | typeArguments)? (FM_ELSE_IF (fm_typeArgumentsOpt | typeArguments)?)* (FM_ELSE (fm_typeArgumentsOpt | typeArguments)?)? FM_IF_CLOSE;
 
 typeArgumentList
-  : (typeArgument | fm_typeArgument) (COMMA  (typeArgument | fm_typeArgument))*
+  : (fm_typeArgument | typeArgument) (COMMA  (fm_typeArgument | typeArgument))*
   ;
 fm_typeArgumentList: FM_PLACEHOLDER | FM_IF (fm_typeArgumentList | typeArgumentList) (FM_ELSE_IF (fm_typeArgumentList | typeArgumentList))* FM_ELSE (fm_typeArgumentList | typeArgumentList) FM_IF_CLOSE;
 
@@ -200,14 +200,14 @@ typeArgument
 fm_typeArgument: FM_PLACEHOLDER | FM_IF (fm_typeArgument | typeArgument) (FM_ELSE_IF (fm_typeArgument | typeArgument))* FM_ELSE (fm_typeArgument | typeArgument) FM_IF_CLOSE;
 
 wildcard
-  : (annotation | fm_annotationStar)* QUESTION  (wildcardBounds | fm_wildcardBoundsOpt)?
+  : (fm_annotationStar | annotation)* QUESTION  (fm_wildcardBoundsOpt | wildcardBounds)?
   ;
 
 wildcardBounds
-  : EXTENDS  (referenceType | fm_referenceType)
-  | SUPER  (referenceType | fm_referenceType)
+  : EXTENDS  (fm_referenceType | referenceType)
+  | SUPER  (fm_referenceType | referenceType)
   ;
-fm_wildcardBoundsOpt: FM_PLACEHOLDER | FM_IF (fm_wildcardBoundsOpt | wildcardBounds) (FM_ELSE_IF (fm_wildcardBoundsOpt | wildcardBounds))* (FM_ELSE (fm_wildcardBoundsOpt | wildcardBounds))? FM_IF_CLOSE;
+fm_wildcardBoundsOpt: FM_PLACEHOLDER | FM_IF (fm_wildcardBoundsOpt | wildcardBounds)? (FM_ELSE_IF (fm_wildcardBoundsOpt | wildcardBounds)?)* (FM_ELSE (fm_wildcardBoundsOpt | wildcardBounds)?)? FM_IF_CLOSE;
 
 /*
  * Productions from §6 (Names)
@@ -215,27 +215,27 @@ fm_wildcardBoundsOpt: FM_PLACEHOLDER | FM_IF (fm_wildcardBoundsOpt | wildcardBou
 
 packageName
   : Identifier
-  | fm_packageName DOT ( Identifier | fm_Identifier ) 
-  | packageName DOT  (Identifier | fm_Identifier)
+  | fm_packageName DOT ( fm_Identifier | Identifier ) 
+  | packageName DOT  (fm_Identifier | Identifier)
   ;
 fm_packageName: FM_PLACEHOLDER | FM_IF (fm_packageName | packageName) (FM_ELSE_IF (fm_packageName | packageName))* FM_ELSE (fm_packageName | packageName) FM_IF_CLOSE;
 
 typeName
   : Identifier
-  | (packageOrTypeName | fm_packageOrTypeName) DOT  (Identifier | fm_Identifier)
+  | (fm_packageOrTypeName | packageOrTypeName) DOT  (fm_Identifier | Identifier)
   ;
 fm_typeName: FM_PLACEHOLDER | FM_IF (fm_typeName | typeName) (FM_ELSE_IF (fm_typeName | typeName))* FM_ELSE (fm_typeName | typeName) FM_IF_CLOSE;
 
 packageOrTypeName
   : Identifier
-  | fm_packageOrTypeName DOT ( Identifier | fm_Identifier ) 
-  | packageOrTypeName DOT  (Identifier | fm_Identifier)
+  | fm_packageOrTypeName DOT ( fm_Identifier | Identifier ) 
+  | packageOrTypeName DOT  (fm_Identifier | Identifier)
   ;
 fm_packageOrTypeName: FM_PLACEHOLDER | FM_IF (fm_packageOrTypeName | packageOrTypeName) (FM_ELSE_IF (fm_packageOrTypeName | packageOrTypeName))* FM_ELSE (fm_packageOrTypeName | packageOrTypeName) FM_IF_CLOSE;
 
 expressionName
   : Identifier
-  | (ambiguousName | fm_ambiguousName) DOT  (Identifier | fm_Identifier)
+  | (fm_ambiguousName | ambiguousName) DOT  (fm_Identifier | Identifier)
   ;
 fm_expressionName: FM_PLACEHOLDER | FM_IF (fm_expressionName | expressionName) (FM_ELSE_IF (fm_expressionName | expressionName))* FM_ELSE (fm_expressionName | expressionName) FM_IF_CLOSE;
 
@@ -246,8 +246,8 @@ fm_methodName: FM_PLACEHOLDER | FM_IF (fm_methodName | methodName) (FM_ELSE_IF (
 
 ambiguousName
   : Identifier
-  | fm_ambiguousName DOT ( Identifier | fm_Identifier ) 
-  | ambiguousName DOT  (Identifier | fm_Identifier)
+  | fm_ambiguousName DOT ( fm_Identifier | Identifier ) 
+  | ambiguousName DOT  (fm_Identifier | Identifier)
   ;
 fm_ambiguousName: FM_PLACEHOLDER | FM_IF (fm_ambiguousName | ambiguousName) (FM_ELSE_IF (fm_ambiguousName | ambiguousName))* FM_ELSE (fm_ambiguousName | ambiguousName) FM_IF_CLOSE;
 
@@ -256,25 +256,18 @@ fm_ambiguousName: FM_PLACEHOLDER | FM_IF (fm_ambiguousName | ambiguousName) (FM_
  */
 
 compilationUnit
-  : (packageDeclaration | fm_packageDeclarationOpt)? (importDeclaration | fm_importDeclarationStar)* (typeDeclaration | fm_typeDeclarationStar)* EOF
+  : (fm_packageDeclarationOpt | packageDeclaration)? (fm_importDeclarationStar | importDeclaration)* (fm_typeDeclarationStar | typeDeclaration)* EOF
   ;
 
 packageDeclaration
-  : (packageModifier | fm_packageModifierStar)* PACKAGE  (packageSegmentList | fm_packageSegmentList) SEMI 
+  : (fm_packageModifierStar | packageModifier)* PACKAGE  (fm_packageName | packageName) SEMI 
   ;
-fm_packageDeclarationOpt: FM_PLACEHOLDER | FM_IF (fm_packageDeclarationOpt | packageDeclaration) (FM_ELSE_IF (fm_packageDeclarationOpt | packageDeclaration))* (FM_ELSE (fm_packageDeclarationOpt | packageDeclaration))? FM_IF_CLOSE;
+fm_packageDeclarationOpt: FM_PLACEHOLDER | FM_IF (fm_packageDeclarationOpt | packageDeclaration)? (FM_ELSE_IF (fm_packageDeclarationOpt | packageDeclaration)?)* (FM_ELSE (fm_packageDeclarationOpt | packageDeclaration)?)? FM_IF_CLOSE;
   
-packageSegmentList
-  : Identifier 
-  | fm_packageSegmentList DOT ( Identifier | fm_Identifier ) 
-  | packageSegmentList DOT  (Identifier | fm_Identifier)
-  ;
-fm_packageSegmentList: FM_PLACEHOLDER | FM_IF (fm_packageSegmentList | packageSegmentList) (FM_ELSE_IF (fm_packageSegmentList | packageSegmentList))* FM_ELSE (fm_packageSegmentList | packageSegmentList) FM_IF_CLOSE;
-
 packageModifier
   : annotation
   ;
-fm_packageModifierStar: FM_PLACEHOLDER | FM_IF (fm_packageModifierStar | packageModifier) (FM_ELSE_IF (fm_packageModifierStar | packageModifier))* (FM_ELSE (fm_packageModifierStar | packageModifier))? FM_IF_CLOSE | FM_LIST (fm_packageModifierStar | packageModifier) FM_LIST_CLOSE;
+fm_packageModifierStar: FM_PLACEHOLDER | FM_IF (fm_packageModifierStar | packageModifier)* (FM_ELSE_IF (fm_packageModifierStar | packageModifier)*)* (FM_ELSE (fm_packageModifierStar | packageModifier)*)? FM_IF_CLOSE | FM_LIST (fm_packageModifierStar | packageModifier)* FM_LIST_CLOSE;
 
 importDeclaration
   : singleTypeImportDeclaration
@@ -282,22 +275,22 @@ importDeclaration
   | singleStaticImportDeclaration
   | staticImportOnDemandDeclaration
   ;
-fm_importDeclarationStar: FM_PLACEHOLDER | FM_IF (fm_importDeclarationStar | importDeclaration) (FM_ELSE_IF (fm_importDeclarationStar | importDeclaration))* (FM_ELSE (fm_importDeclarationStar | importDeclaration))? FM_IF_CLOSE | FM_LIST (fm_importDeclarationStar | importDeclaration) FM_LIST_CLOSE;
+fm_importDeclarationStar: FM_PLACEHOLDER | FM_IF (fm_importDeclarationStar | importDeclaration)* (FM_ELSE_IF (fm_importDeclarationStar | importDeclaration)*)* (FM_ELSE (fm_importDeclarationStar | importDeclaration)*)? FM_IF_CLOSE | FM_LIST (fm_importDeclarationStar | importDeclaration)* FM_LIST_CLOSE;
 
 singleTypeImportDeclaration
-  : IMPORT  (typeName | fm_typeName) SEMI 
+  : IMPORT  (fm_typeName | typeName) SEMI 
   ;
 
 typeImportOnDemandDeclaration
-  : IMPORT  (packageOrTypeName | fm_packageOrTypeName) DOT  MUL  SEMI 
+  : IMPORT  (fm_packageOrTypeName | packageOrTypeName) DOT  MUL  SEMI 
   ;
 
 singleStaticImportDeclaration
-  : IMPORT  STATIC  (typeName | fm_typeName) DOT  (Identifier | fm_Identifier) SEMI 
+  : IMPORT  STATIC  (fm_typeName | typeName) DOT  (fm_Identifier | Identifier) SEMI 
   ;
 
 staticImportOnDemandDeclaration
-  : IMPORT  STATIC  (typeName | fm_typeName) DOT  MUL  SEMI 
+  : IMPORT  STATIC  (fm_typeName | typeName) DOT  MUL  SEMI 
   ;
 
 typeDeclaration
@@ -305,7 +298,7 @@ typeDeclaration
   | interfaceDeclaration
   | SEMI 
   ;
-fm_typeDeclarationStar: FM_PLACEHOLDER | FM_IF (fm_typeDeclarationStar | typeDeclaration) (FM_ELSE_IF (fm_typeDeclarationStar | typeDeclaration))* (FM_ELSE (fm_typeDeclarationStar | typeDeclaration))? FM_IF_CLOSE | FM_LIST (fm_typeDeclarationStar | typeDeclaration) FM_LIST_CLOSE;
+fm_typeDeclarationStar: FM_PLACEHOLDER | FM_IF (fm_typeDeclarationStar | typeDeclaration)* (FM_ELSE_IF (fm_typeDeclarationStar | typeDeclaration)*)* (FM_ELSE (fm_typeDeclarationStar | typeDeclaration)*)? FM_IF_CLOSE | FM_LIST (fm_typeDeclarationStar | typeDeclaration)* FM_LIST_CLOSE;
 
 /*
  * Productions from §8 (Classes)
@@ -317,7 +310,7 @@ classDeclaration
   ;
 
 normalClassDeclaration
-  : (classModifier | fm_classModifierStar)* CLASS  (Identifier | fm_Identifier) (typeParameters | fm_typeParametersOpt)? (superclass | fm_superclassOpt)? (superinterfaces | fm_superinterfacesOpt)? (classBody | fm_classBody)
+  : (fm_classModifierStar | classModifier)* CLASS  (fm_Identifier | Identifier) (fm_typeParametersOpt | typeParameters)? (fm_superclassOpt | superclass)? (fm_superinterfacesOpt | superinterfaces)? (fm_classBody | classBody)
   ;
 
 classModifier
@@ -330,39 +323,39 @@ classModifier
   | FINAL 
   | STRICTFP 
   ;
-fm_classModifierStar: FM_PLACEHOLDER | FM_IF (fm_classModifierStar | classModifier) (FM_ELSE_IF (fm_classModifierStar | classModifier))* (FM_ELSE (fm_classModifierStar | classModifier))? FM_IF_CLOSE | FM_LIST (fm_classModifierStar | classModifier) FM_LIST_CLOSE;
+fm_classModifierStar: FM_PLACEHOLDER | FM_IF (fm_classModifierStar | classModifier)* (FM_ELSE_IF (fm_classModifierStar | classModifier)*)* (FM_ELSE (fm_classModifierStar | classModifier)*)? FM_IF_CLOSE | FM_LIST (fm_classModifierStar | classModifier)* FM_LIST_CLOSE;
 
 typeParameters
-  : LT  (typeParameterList | fm_typeParameterList) GT 
+  : LT  (fm_typeParameterList | typeParameterList) GT 
   ;
 fm_typeParameters: FM_PLACEHOLDER | FM_IF (fm_typeParameters | typeParameters) (FM_ELSE_IF (fm_typeParameters | typeParameters))* FM_ELSE (fm_typeParameters | typeParameters) FM_IF_CLOSE;
-fm_typeParametersOpt: FM_PLACEHOLDER | FM_IF (fm_typeParametersOpt | typeParameters) (FM_ELSE_IF (fm_typeParametersOpt | typeParameters))* (FM_ELSE (fm_typeParametersOpt | typeParameters))? FM_IF_CLOSE;
+fm_typeParametersOpt: FM_PLACEHOLDER | FM_IF (fm_typeParametersOpt | typeParameters)? (FM_ELSE_IF (fm_typeParametersOpt | typeParameters)?)* (FM_ELSE (fm_typeParametersOpt | typeParameters)?)? FM_IF_CLOSE;
 
 typeParameterList
-  : (typeParameter | fm_typeParameter) (COMMA  (typeParameter | fm_typeParameter))*
+  : (fm_typeParameter | typeParameter) (COMMA  (fm_typeParameter | typeParameter))*
   ;
 fm_typeParameterList: FM_PLACEHOLDER | FM_IF (fm_typeParameterList | typeParameterList) (FM_ELSE_IF (fm_typeParameterList | typeParameterList))* FM_ELSE (fm_typeParameterList | typeParameterList) FM_IF_CLOSE;
 
 superclass
-  : EXTENDS  (classType | fm_classType)
+  : EXTENDS  (fm_classType | classType)
   ;
-fm_superclassOpt: FM_PLACEHOLDER | FM_IF (fm_superclassOpt | superclass) (FM_ELSE_IF (fm_superclassOpt | superclass))* (FM_ELSE (fm_superclassOpt | superclass))? FM_IF_CLOSE;
+fm_superclassOpt: FM_PLACEHOLDER | FM_IF (fm_superclassOpt | superclass)? (FM_ELSE_IF (fm_superclassOpt | superclass)?)* (FM_ELSE (fm_superclassOpt | superclass)?)? FM_IF_CLOSE;
 
 superinterfaces
-  : IMPLEMENTS  (interfaceTypeList | fm_interfaceTypeList)
+  : IMPLEMENTS  (fm_interfaceTypeList | interfaceTypeList)
   ;
-fm_superinterfacesOpt: FM_PLACEHOLDER | FM_IF (fm_superinterfacesOpt | superinterfaces) (FM_ELSE_IF (fm_superinterfacesOpt | superinterfaces))* (FM_ELSE (fm_superinterfacesOpt | superinterfaces))? FM_IF_CLOSE;
+fm_superinterfacesOpt: FM_PLACEHOLDER | FM_IF (fm_superinterfacesOpt | superinterfaces)? (FM_ELSE_IF (fm_superinterfacesOpt | superinterfaces)?)* (FM_ELSE (fm_superinterfacesOpt | superinterfaces)?)? FM_IF_CLOSE;
 
 interfaceTypeList
-  : (interfaceType | fm_interfaceType) (COMMA  (interfaceType | fm_interfaceType))*
+  : (fm_interfaceType | interfaceType) (COMMA  (fm_interfaceType | interfaceType))*
   ;
 fm_interfaceTypeList: FM_PLACEHOLDER | FM_IF (fm_interfaceTypeList | interfaceTypeList) (FM_ELSE_IF (fm_interfaceTypeList | interfaceTypeList))* FM_ELSE (fm_interfaceTypeList | interfaceTypeList) FM_IF_CLOSE;
 
 classBody
-  : LBRACE  (classBodyDeclaration | fm_classBodyDeclarationStar)* RBRACE 
+  : LBRACE  (fm_classBodyDeclarationStar | classBodyDeclaration)* RBRACE 
   ;
 fm_classBody: FM_PLACEHOLDER | FM_IF (fm_classBody | classBody) (FM_ELSE_IF (fm_classBody | classBody))* FM_ELSE (fm_classBody | classBody) FM_IF_CLOSE;
-fm_classBodyOpt: FM_PLACEHOLDER | FM_IF (fm_classBodyOpt | classBody) (FM_ELSE_IF (fm_classBodyOpt | classBody))* (FM_ELSE (fm_classBodyOpt | classBody))? FM_IF_CLOSE;
+fm_classBodyOpt: FM_PLACEHOLDER | FM_IF (fm_classBodyOpt | classBody)? (FM_ELSE_IF (fm_classBodyOpt | classBody)?)* (FM_ELSE (fm_classBodyOpt | classBody)?)? FM_IF_CLOSE;
 
 classBodyDeclaration
   : classMemberDeclaration
@@ -370,7 +363,7 @@ classBodyDeclaration
   | staticInitializer
   | constructorDeclaration
   ;
-fm_classBodyDeclarationStar: FM_PLACEHOLDER | FM_IF (fm_classBodyDeclarationStar | classBodyDeclaration) (FM_ELSE_IF (fm_classBodyDeclarationStar | classBodyDeclaration))* (FM_ELSE (fm_classBodyDeclarationStar | classBodyDeclaration))? FM_IF_CLOSE | FM_LIST (fm_classBodyDeclarationStar | classBodyDeclaration) FM_LIST_CLOSE;
+fm_classBodyDeclarationStar: FM_PLACEHOLDER | FM_IF (fm_classBodyDeclarationStar | classBodyDeclaration)* (FM_ELSE_IF (fm_classBodyDeclarationStar | classBodyDeclaration)*)* (FM_ELSE (fm_classBodyDeclarationStar | classBodyDeclaration)*)? FM_IF_CLOSE | FM_LIST (fm_classBodyDeclarationStar | classBodyDeclaration)* FM_LIST_CLOSE;
 
 classMemberDeclaration
   : fieldDeclaration
@@ -381,7 +374,7 @@ classMemberDeclaration
   ;
 
 fieldDeclaration
-  : (fieldModifier | fm_fieldModifierStar)* (unannType | fm_unannType) (variableDeclaratorList | fm_variableDeclaratorList) SEMI 
+  : (fm_fieldModifierStar | fieldModifier)* (fm_unannType | unannType) (fm_variableDeclaratorList | variableDeclaratorList) SEMI 
   ;
 
 fieldModifier
@@ -394,20 +387,22 @@ fieldModifier
   | TRANSIENT 
   | VOLATILE 
   ;
-fm_fieldModifierStar: FM_PLACEHOLDER | FM_IF (fm_fieldModifierStar | fieldModifier) (FM_ELSE_IF (fm_fieldModifierStar | fieldModifier))* (FM_ELSE (fm_fieldModifierStar | fieldModifier))? FM_IF_CLOSE | FM_LIST (fm_fieldModifierStar | fieldModifier) FM_LIST_CLOSE;
+fm_fieldModifierStar: FM_PLACEHOLDER | FM_IF (fm_fieldModifierStar | fieldModifier)* (FM_ELSE_IF (fm_fieldModifierStar | fieldModifier)*)* (FM_ELSE (fm_fieldModifierStar | fieldModifier)*)? FM_IF_CLOSE | FM_LIST (fm_fieldModifierStar | fieldModifier)* FM_LIST_CLOSE;
 
 variableDeclaratorList
-  : (variableDeclarator | fm_variableDeclarator) (COMMA  (variableDeclarator | fm_variableDeclarator))*
+  : variableDeclarator
+  | fm_variableDeclaratorList COMMA ( fm_variableDeclarator | variableDeclarator ) 
+  | variableDeclaratorList COMMA  (fm_variableDeclarator | variableDeclarator)
   ;
 fm_variableDeclaratorList: FM_PLACEHOLDER | FM_IF (fm_variableDeclaratorList | variableDeclaratorList) (FM_ELSE_IF (fm_variableDeclaratorList | variableDeclaratorList))* FM_ELSE (fm_variableDeclaratorList | variableDeclaratorList) FM_IF_CLOSE;
 
 variableDeclarator
-  : (variableDeclaratorId | fm_variableDeclaratorId) (ASSIGN  (variableInitializer | fm_variableInitializer))?
+  : (fm_variableDeclaratorId | variableDeclaratorId) (ASSIGN  (fm_variableInitializer | variableInitializer))?
   ;
 fm_variableDeclarator: FM_PLACEHOLDER | FM_IF (fm_variableDeclarator | variableDeclarator) (FM_ELSE_IF (fm_variableDeclarator | variableDeclarator))* FM_ELSE (fm_variableDeclarator | variableDeclarator) FM_IF_CLOSE;
 
 variableDeclaratorId
-  : (Identifier | fm_Identifier) (dims | fm_dimsOpt)?
+  : (fm_Identifier | Identifier) (fm_dimsOpt | dims)?
   ;
 fm_variableDeclaratorId: FM_PLACEHOLDER | FM_IF (fm_variableDeclaratorId | variableDeclaratorId) (FM_ELSE_IF (fm_variableDeclaratorId | variableDeclaratorId))* FM_ELSE (fm_variableDeclaratorId | variableDeclaratorId) FM_IF_CLOSE;
 
@@ -446,17 +441,17 @@ unannClassOrInterfaceType
 fm_unannClassOrInterfaceType: FM_PLACEHOLDER | FM_IF (fm_unannClassOrInterfaceType | unannClassOrInterfaceType) (FM_ELSE_IF (fm_unannClassOrInterfaceType | unannClassOrInterfaceType))* FM_ELSE (fm_unannClassOrInterfaceType | unannClassOrInterfaceType) FM_IF_CLOSE;
 
 unannClassType
-  : (Identifier | fm_Identifier) (typeArguments | fm_typeArgumentsOpt)?
-  | (unannClassOrInterfaceType | fm_unannClassOrInterfaceType) DOT  (annotation | fm_annotationStar)* (Identifier | fm_Identifier) (typeArguments | fm_typeArgumentsOpt)?
+  : (fm_Identifier | Identifier) (fm_typeArgumentsOpt | typeArguments)?
+  | (fm_unannClassOrInterfaceType | unannClassOrInterfaceType) DOT  (fm_annotationStar | annotation)* (fm_Identifier | Identifier) (fm_typeArgumentsOpt | typeArguments)?
   ;
 fm_unannClassType: FM_PLACEHOLDER | FM_IF (fm_unannClassType | unannClassType) (FM_ELSE_IF (fm_unannClassType | unannClassType))* FM_ELSE (fm_unannClassType | unannClassType) FM_IF_CLOSE;
 
 unannClassType_lf_unannClassOrInterfaceType
-  : DOT  (annotation | fm_annotationStar)* (Identifier | fm_Identifier) (typeArguments | fm_typeArgumentsOpt)?
+  : DOT  (fm_annotationStar | annotation)* (fm_Identifier | Identifier) (fm_typeArgumentsOpt | typeArguments)?
   ;
 
 unannClassType_lfno_unannClassOrInterfaceType
-  : (Identifier | fm_Identifier) (typeArguments | fm_typeArgumentsOpt)?
+  : (fm_Identifier | Identifier) (fm_typeArgumentsOpt | typeArguments)?
   ;
 
 unannInterfaceType
@@ -477,13 +472,13 @@ unannTypeVariable
 fm_unannTypeVariable: FM_PLACEHOLDER | FM_IF (fm_unannTypeVariable | unannTypeVariable) (FM_ELSE_IF (fm_unannTypeVariable | unannTypeVariable))* FM_ELSE (fm_unannTypeVariable | unannTypeVariable) FM_IF_CLOSE;
 
 unannArrayType
-  : (unannPrimitiveType | fm_unannPrimitiveType) (dims | fm_dims)
-  | (unannClassOrInterfaceType | fm_unannClassOrInterfaceType) (dims | fm_dims)
-  | (unannTypeVariable | fm_unannTypeVariable) (dims | fm_dims)
+  : (fm_unannPrimitiveType | unannPrimitiveType) (fm_dims | dims)
+  | (fm_unannClassOrInterfaceType | unannClassOrInterfaceType) (fm_dims | dims)
+  | (fm_unannTypeVariable | unannTypeVariable) (fm_dims | dims)
   ;
 
 methodDeclaration
-  : (methodModifier | fm_methodModifierStar)* (methodHeader | fm_methodHeader) (methodBody | fm_methodBody)
+  : (fm_methodModifierStar | methodModifier)* (fm_methodHeader | methodHeader) (fm_methodBody | methodBody)
   ;
 
 methodModifier
@@ -498,11 +493,11 @@ methodModifier
   | NATIVE 
   | STRICTFP 
   ;
-fm_methodModifierStar: FM_PLACEHOLDER | FM_IF (fm_methodModifierStar | methodModifier) (FM_ELSE_IF (fm_methodModifierStar | methodModifier))* (FM_ELSE (fm_methodModifierStar | methodModifier))? FM_IF_CLOSE | FM_LIST (fm_methodModifierStar | methodModifier) FM_LIST_CLOSE;
+fm_methodModifierStar: FM_PLACEHOLDER | FM_IF (fm_methodModifierStar | methodModifier)* (FM_ELSE_IF (fm_methodModifierStar | methodModifier)*)* (FM_ELSE (fm_methodModifierStar | methodModifier)*)? FM_IF_CLOSE | FM_LIST (fm_methodModifierStar | methodModifier)* FM_LIST_CLOSE;
 
 methodHeader
-  : (result | fm_result) (methodDeclarator | fm_methodDeclarator) (throws_ | fm_throws_Opt)?
-  | (typeParameters | fm_typeParameters) (annotation | fm_annotationStar)* (result | fm_result) (methodDeclarator | fm_methodDeclarator) (throws_ | fm_throws_Opt)?
+  : (fm_result | result) (fm_methodDeclarator | methodDeclarator) (fm_throws_Opt | throws_)?
+  | (fm_typeParameters | typeParameters) (fm_annotationStar | annotation)* (fm_result | result) (fm_methodDeclarator | methodDeclarator) (fm_throws_Opt | throws_)?
   ;
 fm_methodHeader: FM_PLACEHOLDER | FM_IF (fm_methodHeader | methodHeader) (FM_ELSE_IF (fm_methodHeader | methodHeader))* FM_ELSE (fm_methodHeader | methodHeader) FM_IF_CLOSE;
 
@@ -513,24 +508,24 @@ result
 fm_result: FM_PLACEHOLDER | FM_IF (fm_result | result) (FM_ELSE_IF (fm_result | result))* FM_ELSE (fm_result | result) FM_IF_CLOSE;
 
 methodDeclarator
-  : (Identifier | fm_Identifier) LPAREN  (formalParameterList | fm_formalParameterListOpt)? RPAREN  (dims | fm_dimsOpt)?
+  : (fm_Identifier | Identifier) LPAREN  (fm_formalParameterListOpt | formalParameterList)? RPAREN  (fm_dimsOpt | dims)?
   ;
 fm_methodDeclarator: FM_PLACEHOLDER | FM_IF (fm_methodDeclarator | methodDeclarator) (FM_ELSE_IF (fm_methodDeclarator | methodDeclarator))* FM_ELSE (fm_methodDeclarator | methodDeclarator) FM_IF_CLOSE;
 
 formalParameterList
-  : (formalParameters | fm_formalParameters) COMMA  (lastFormalParameter | fm_lastFormalParameter)
+  : (fm_formalParameters | formalParameters) COMMA  (fm_lastFormalParameter | lastFormalParameter)
   | lastFormalParameter
   ;
-fm_formalParameterListOpt: FM_PLACEHOLDER | FM_IF (fm_formalParameterListOpt | formalParameterList) (FM_ELSE_IF (fm_formalParameterListOpt | formalParameterList))* (FM_ELSE (fm_formalParameterListOpt | formalParameterList))? FM_IF_CLOSE;
+fm_formalParameterListOpt: FM_PLACEHOLDER | FM_IF (fm_formalParameterListOpt | formalParameterList)? (FM_ELSE_IF (fm_formalParameterListOpt | formalParameterList)?)* (FM_ELSE (fm_formalParameterListOpt | formalParameterList)?)? FM_IF_CLOSE;
 
 formalParameters
-  : (formalParameter | fm_formalParameter) (COMMA  (formalParameter | fm_formalParameter))*
-  | (receiverParameter | fm_receiverParameter) (COMMA  (formalParameter | fm_formalParameter))*
+  : (fm_formalParameter | formalParameter) (COMMA  (fm_formalParameter | formalParameter))*
+  | (fm_receiverParameter | receiverParameter) (COMMA  (fm_formalParameter | formalParameter))*
   ;
 fm_formalParameters: FM_PLACEHOLDER | FM_IF (fm_formalParameters | formalParameters) (FM_ELSE_IF (fm_formalParameters | formalParameters))* FM_ELSE (fm_formalParameters | formalParameters) FM_IF_CLOSE;
 
 formalParameter
-  : (variableModifier | fm_variableModifierStar)* (unannType | fm_unannType) (variableDeclaratorId | fm_variableDeclaratorId)
+  : (fm_variableModifierStar | variableModifier)* (fm_unannType | unannType) (fm_variableDeclaratorId | variableDeclaratorId)
   ;
 fm_formalParameter: FM_PLACEHOLDER | FM_IF (fm_formalParameter | formalParameter) (FM_ELSE_IF (fm_formalParameter | formalParameter))* FM_ELSE (fm_formalParameter | formalParameter) FM_IF_CLOSE;
 
@@ -538,26 +533,26 @@ variableModifier
   : annotation
   | FINAL 
   ;
-fm_variableModifierStar: FM_PLACEHOLDER | FM_IF (fm_variableModifierStar | variableModifier) (FM_ELSE_IF (fm_variableModifierStar | variableModifier))* (FM_ELSE (fm_variableModifierStar | variableModifier))? FM_IF_CLOSE | FM_LIST (fm_variableModifierStar | variableModifier) FM_LIST_CLOSE;
+fm_variableModifierStar: FM_PLACEHOLDER | FM_IF (fm_variableModifierStar | variableModifier)* (FM_ELSE_IF (fm_variableModifierStar | variableModifier)*)* (FM_ELSE (fm_variableModifierStar | variableModifier)*)? FM_IF_CLOSE | FM_LIST (fm_variableModifierStar | variableModifier)* FM_LIST_CLOSE;
 
 lastFormalParameter
-  : (variableModifier | fm_variableModifierStar)* (unannType | fm_unannType) (annotation | fm_annotationStar)* ELLIPSIS  (variableDeclaratorId | fm_variableDeclaratorId)
+  : (fm_variableModifierStar | variableModifier)* (fm_unannType | unannType) (fm_annotationStar | annotation)* ELLIPSIS  (fm_variableDeclaratorId | variableDeclaratorId)
   | formalParameter
   ;
 fm_lastFormalParameter: FM_PLACEHOLDER | FM_IF (fm_lastFormalParameter | lastFormalParameter) (FM_ELSE_IF (fm_lastFormalParameter | lastFormalParameter))* FM_ELSE (fm_lastFormalParameter | lastFormalParameter) FM_IF_CLOSE;
 
 receiverParameter
-  : (annotation | fm_annotationStar)* (unannType | fm_unannType) ((Identifier | fm_Identifier) DOT )? THIS 
+  : (fm_annotationStar | annotation)* (fm_unannType | unannType) ((fm_Identifier | Identifier) DOT )? THIS 
   ;
 fm_receiverParameter: FM_PLACEHOLDER | FM_IF (fm_receiverParameter | receiverParameter) (FM_ELSE_IF (fm_receiverParameter | receiverParameter))* FM_ELSE (fm_receiverParameter | receiverParameter) FM_IF_CLOSE;
 
 throws_
-  : THROWS  (exceptionTypeList | fm_exceptionTypeList)
+  : THROWS  (fm_exceptionTypeList | exceptionTypeList)
   ;
-fm_throws_Opt: FM_PLACEHOLDER | FM_IF (fm_throws_Opt | throws_) (FM_ELSE_IF (fm_throws_Opt | throws_))* (FM_ELSE (fm_throws_Opt | throws_))? FM_IF_CLOSE;
+fm_throws_Opt: FM_PLACEHOLDER | FM_IF (fm_throws_Opt | throws_)? (FM_ELSE_IF (fm_throws_Opt | throws_)?)* (FM_ELSE (fm_throws_Opt | throws_)?)? FM_IF_CLOSE;
 
 exceptionTypeList
-  : (exceptionType | fm_exceptionType) (COMMA  (exceptionType | fm_exceptionType))*
+  : (fm_exceptionType | exceptionType) (COMMA  (fm_exceptionType | exceptionType))*
   ;
 fm_exceptionTypeList: FM_PLACEHOLDER | FM_IF (fm_exceptionTypeList | exceptionTypeList) (FM_ELSE_IF (fm_exceptionTypeList | exceptionTypeList))* FM_ELSE (fm_exceptionTypeList | exceptionTypeList) FM_IF_CLOSE;
 
@@ -578,11 +573,11 @@ instanceInitializer
   ;
 
 staticInitializer
-  : STATIC  (block | fm_block)
+  : STATIC  (fm_block | block)
   ;
 
 constructorDeclaration
-  : (constructorModifier | fm_constructorModifierStar)* (constructorDeclarator | fm_constructorDeclarator) (throws_ | fm_throws_Opt)? (constructorBody | fm_constructorBody)
+  : (fm_constructorModifierStar | constructorModifier)* (fm_constructorDeclarator | constructorDeclarator) (fm_throws_Opt | throws_)? (fm_constructorBody | constructorBody)
   ;
 
 constructorModifier
@@ -591,10 +586,10 @@ constructorModifier
   | PROTECTED 
   | PRIVATE 
   ;
-fm_constructorModifierStar: FM_PLACEHOLDER | FM_IF (fm_constructorModifierStar | constructorModifier) (FM_ELSE_IF (fm_constructorModifierStar | constructorModifier))* (FM_ELSE (fm_constructorModifierStar | constructorModifier))? FM_IF_CLOSE | FM_LIST (fm_constructorModifierStar | constructorModifier) FM_LIST_CLOSE;
+fm_constructorModifierStar: FM_PLACEHOLDER | FM_IF (fm_constructorModifierStar | constructorModifier)* (FM_ELSE_IF (fm_constructorModifierStar | constructorModifier)*)* (FM_ELSE (fm_constructorModifierStar | constructorModifier)*)? FM_IF_CLOSE | FM_LIST (fm_constructorModifierStar | constructorModifier)* FM_LIST_CLOSE;
 
 constructorDeclarator
-  : (typeParameters | fm_typeParametersOpt)? (simpleTypeName | fm_simpleTypeName) LPAREN  (formalParameterList | fm_formalParameterListOpt)? RPAREN 
+  : (fm_typeParametersOpt | typeParameters)? (fm_simpleTypeName | simpleTypeName) LPAREN  (fm_formalParameterListOpt | formalParameterList)? RPAREN 
   ;
 fm_constructorDeclarator: FM_PLACEHOLDER | FM_IF (fm_constructorDeclarator | constructorDeclarator) (FM_ELSE_IF (fm_constructorDeclarator | constructorDeclarator))* FM_ELSE (fm_constructorDeclarator | constructorDeclarator) FM_IF_CLOSE;
 
@@ -604,46 +599,46 @@ simpleTypeName
 fm_simpleTypeName: FM_PLACEHOLDER | FM_IF (fm_simpleTypeName | simpleTypeName) (FM_ELSE_IF (fm_simpleTypeName | simpleTypeName))* FM_ELSE (fm_simpleTypeName | simpleTypeName) FM_IF_CLOSE;
 
 constructorBody
-  : LBRACE  (explicitConstructorInvocation | fm_explicitConstructorInvocationOpt)? (blockStatements | fm_blockStatementsOpt)? RBRACE 
+  : LBRACE  (fm_explicitConstructorInvocationOpt | explicitConstructorInvocation)? (fm_blockStatementStar | blockStatement)* RBRACE 
   ;
 fm_constructorBody: FM_PLACEHOLDER | FM_IF (fm_constructorBody | constructorBody) (FM_ELSE_IF (fm_constructorBody | constructorBody))* FM_ELSE (fm_constructorBody | constructorBody) FM_IF_CLOSE;
 
 explicitConstructorInvocation
-  : (typeArguments | fm_typeArgumentsOpt)? THIS  LPAREN  (argumentList | fm_argumentListOpt)? RPAREN  SEMI 
-  | (typeArguments | fm_typeArgumentsOpt)? SUPER  LPAREN  (argumentList | fm_argumentListOpt)? RPAREN  SEMI 
-  | (expressionName | fm_expressionName) DOT  (typeArguments | fm_typeArgumentsOpt)? SUPER  LPAREN  (argumentList | fm_argumentListOpt)? RPAREN  SEMI 
-  | (primary | fm_primary) DOT  (typeArguments | fm_typeArgumentsOpt)? SUPER  LPAREN  (argumentList | fm_argumentListOpt)? RPAREN  SEMI 
+  : (fm_typeArgumentsOpt | typeArguments)? THIS  LPAREN  (fm_argumentListOpt | argumentList)? RPAREN  SEMI 
+  | (fm_typeArgumentsOpt | typeArguments)? SUPER  LPAREN  (fm_argumentListOpt | argumentList)? RPAREN  SEMI 
+  | (fm_expressionName | expressionName) DOT  (fm_typeArgumentsOpt | typeArguments)? SUPER  LPAREN  (fm_argumentListOpt | argumentList)? RPAREN  SEMI 
+  | (fm_primary | primary) DOT  (fm_typeArgumentsOpt | typeArguments)? SUPER  LPAREN  (fm_argumentListOpt | argumentList)? RPAREN  SEMI 
   ;
-fm_explicitConstructorInvocationOpt: FM_PLACEHOLDER | FM_IF (fm_explicitConstructorInvocationOpt | explicitConstructorInvocation) (FM_ELSE_IF (fm_explicitConstructorInvocationOpt | explicitConstructorInvocation))* (FM_ELSE (fm_explicitConstructorInvocationOpt | explicitConstructorInvocation))? FM_IF_CLOSE;
+fm_explicitConstructorInvocationOpt: FM_PLACEHOLDER | FM_IF (fm_explicitConstructorInvocationOpt | explicitConstructorInvocation)? (FM_ELSE_IF (fm_explicitConstructorInvocationOpt | explicitConstructorInvocation)?)* (FM_ELSE (fm_explicitConstructorInvocationOpt | explicitConstructorInvocation)?)? FM_IF_CLOSE;
 
 enumDeclaration
-  : (classModifier | fm_classModifierStar)* ENUM  (Identifier | fm_Identifier) (superinterfaces | fm_superinterfacesOpt)? (enumBody | fm_enumBody)
+  : (fm_classModifierStar | classModifier)* ENUM  (fm_Identifier | Identifier) (fm_superinterfacesOpt | superinterfaces)? (fm_enumBody | enumBody)
   ;
 
 enumBody
-  : LBRACE  (enumConstantList | fm_enumConstantListOpt)? COMMA ? (enumBodyDeclarations | fm_enumBodyDeclarationsOpt)? RBRACE 
+  : LBRACE  (fm_enumConstantListOpt | enumConstantList)? COMMA ? (fm_enumBodyDeclarationsOpt | enumBodyDeclarations)? RBRACE 
   ;
 fm_enumBody: FM_PLACEHOLDER | FM_IF (fm_enumBody | enumBody) (FM_ELSE_IF (fm_enumBody | enumBody))* FM_ELSE (fm_enumBody | enumBody) FM_IF_CLOSE;
 
 enumConstantList
-  : (enumConstant | fm_enumConstant) (COMMA  (enumConstant | fm_enumConstant))*
+  : (fm_enumConstant | enumConstant) (COMMA  (fm_enumConstant | enumConstant))*
   ;
-fm_enumConstantListOpt: FM_PLACEHOLDER | FM_IF (fm_enumConstantListOpt | enumConstantList) (FM_ELSE_IF (fm_enumConstantListOpt | enumConstantList))* (FM_ELSE (fm_enumConstantListOpt | enumConstantList))? FM_IF_CLOSE;
+fm_enumConstantListOpt: FM_PLACEHOLDER | FM_IF (fm_enumConstantListOpt | enumConstantList)? (FM_ELSE_IF (fm_enumConstantListOpt | enumConstantList)?)* (FM_ELSE (fm_enumConstantListOpt | enumConstantList)?)? FM_IF_CLOSE;
 
 enumConstant
-  : (enumConstantModifier | fm_enumConstantModifierStar)* (Identifier | fm_Identifier) (LPAREN  (argumentList | fm_argumentListOpt)? RPAREN )? (classBody | fm_classBodyOpt)?
+  : (fm_enumConstantModifierStar | enumConstantModifier)* (fm_Identifier | Identifier) (LPAREN  (fm_argumentListOpt | argumentList)? RPAREN )? (fm_classBodyOpt | classBody)?
   ;
 fm_enumConstant: FM_PLACEHOLDER | FM_IF (fm_enumConstant | enumConstant) (FM_ELSE_IF (fm_enumConstant | enumConstant))* FM_ELSE (fm_enumConstant | enumConstant) FM_IF_CLOSE;
 
 enumConstantModifier
   : annotation
   ;
-fm_enumConstantModifierStar: FM_PLACEHOLDER | FM_IF (fm_enumConstantModifierStar | enumConstantModifier) (FM_ELSE_IF (fm_enumConstantModifierStar | enumConstantModifier))* (FM_ELSE (fm_enumConstantModifierStar | enumConstantModifier))? FM_IF_CLOSE | FM_LIST (fm_enumConstantModifierStar | enumConstantModifier) FM_LIST_CLOSE;
+fm_enumConstantModifierStar: FM_PLACEHOLDER | FM_IF (fm_enumConstantModifierStar | enumConstantModifier)* (FM_ELSE_IF (fm_enumConstantModifierStar | enumConstantModifier)*)* (FM_ELSE (fm_enumConstantModifierStar | enumConstantModifier)*)? FM_IF_CLOSE | FM_LIST (fm_enumConstantModifierStar | enumConstantModifier)* FM_LIST_CLOSE;
 
 enumBodyDeclarations
-  : SEMI  (classBodyDeclaration | fm_classBodyDeclarationStar)*
+  : SEMI  (fm_classBodyDeclarationStar | classBodyDeclaration)*
   ;
-fm_enumBodyDeclarationsOpt: FM_PLACEHOLDER | FM_IF (fm_enumBodyDeclarationsOpt | enumBodyDeclarations) (FM_ELSE_IF (fm_enumBodyDeclarationsOpt | enumBodyDeclarations))* (FM_ELSE (fm_enumBodyDeclarationsOpt | enumBodyDeclarations))? FM_IF_CLOSE;
+fm_enumBodyDeclarationsOpt: FM_PLACEHOLDER | FM_IF (fm_enumBodyDeclarationsOpt | enumBodyDeclarations)? (FM_ELSE_IF (fm_enumBodyDeclarationsOpt | enumBodyDeclarations)?)* (FM_ELSE (fm_enumBodyDeclarationsOpt | enumBodyDeclarations)?)? FM_IF_CLOSE;
 
 /*
  * Productions from §9 (Interfaces)
@@ -655,7 +650,7 @@ interfaceDeclaration
   ;
 
 normalInterfaceDeclaration
-  : (interfaceModifier | fm_interfaceModifierStar)* INTERFACE  (Identifier | fm_Identifier) (typeParameters | fm_typeParametersOpt)? (extendsInterfaces | fm_extendsInterfacesOpt)? (interfaceBody | fm_interfaceBody)
+  : (fm_interfaceModifierStar | interfaceModifier)* INTERFACE  (fm_Identifier | Identifier) (fm_typeParametersOpt | typeParameters)? (fm_extendsInterfacesOpt | extendsInterfaces)? (fm_interfaceBody | interfaceBody)
   ;
 
 interfaceModifier
@@ -667,15 +662,15 @@ interfaceModifier
   | STATIC 
   | STRICTFP 
   ;
-fm_interfaceModifierStar: FM_PLACEHOLDER | FM_IF (fm_interfaceModifierStar | interfaceModifier) (FM_ELSE_IF (fm_interfaceModifierStar | interfaceModifier))* (FM_ELSE (fm_interfaceModifierStar | interfaceModifier))? FM_IF_CLOSE | FM_LIST (fm_interfaceModifierStar | interfaceModifier) FM_LIST_CLOSE;
+fm_interfaceModifierStar: FM_PLACEHOLDER | FM_IF (fm_interfaceModifierStar | interfaceModifier)* (FM_ELSE_IF (fm_interfaceModifierStar | interfaceModifier)*)* (FM_ELSE (fm_interfaceModifierStar | interfaceModifier)*)? FM_IF_CLOSE | FM_LIST (fm_interfaceModifierStar | interfaceModifier)* FM_LIST_CLOSE;
 
 extendsInterfaces
-  : EXTENDS  (interfaceTypeList | fm_interfaceTypeList)
+  : EXTENDS  (fm_interfaceTypeList | interfaceTypeList)
   ;
-fm_extendsInterfacesOpt: FM_PLACEHOLDER | FM_IF (fm_extendsInterfacesOpt | extendsInterfaces) (FM_ELSE_IF (fm_extendsInterfacesOpt | extendsInterfaces))* (FM_ELSE (fm_extendsInterfacesOpt | extendsInterfaces))? FM_IF_CLOSE;
+fm_extendsInterfacesOpt: FM_PLACEHOLDER | FM_IF (fm_extendsInterfacesOpt | extendsInterfaces)? (FM_ELSE_IF (fm_extendsInterfacesOpt | extendsInterfaces)?)* (FM_ELSE (fm_extendsInterfacesOpt | extendsInterfaces)?)? FM_IF_CLOSE;
 
 interfaceBody
-  : LBRACE  (interfaceMemberDeclaration | fm_interfaceMemberDeclarationStar)* RBRACE 
+  : LBRACE  (fm_interfaceMemberDeclarationStar | interfaceMemberDeclaration)* RBRACE 
   ;
 fm_interfaceBody: FM_PLACEHOLDER | FM_IF (fm_interfaceBody | interfaceBody) (FM_ELSE_IF (fm_interfaceBody | interfaceBody))* FM_ELSE (fm_interfaceBody | interfaceBody) FM_IF_CLOSE;
 
@@ -686,10 +681,10 @@ interfaceMemberDeclaration
   | interfaceDeclaration
   | SEMI 
   ;
-fm_interfaceMemberDeclarationStar: FM_PLACEHOLDER | FM_IF (fm_interfaceMemberDeclarationStar | interfaceMemberDeclaration) (FM_ELSE_IF (fm_interfaceMemberDeclarationStar | interfaceMemberDeclaration))* (FM_ELSE (fm_interfaceMemberDeclarationStar | interfaceMemberDeclaration))? FM_IF_CLOSE | FM_LIST (fm_interfaceMemberDeclarationStar | interfaceMemberDeclaration) FM_LIST_CLOSE;
+fm_interfaceMemberDeclarationStar: FM_PLACEHOLDER | FM_IF (fm_interfaceMemberDeclarationStar | interfaceMemberDeclaration)* (FM_ELSE_IF (fm_interfaceMemberDeclarationStar | interfaceMemberDeclaration)*)* (FM_ELSE (fm_interfaceMemberDeclarationStar | interfaceMemberDeclaration)*)? FM_IF_CLOSE | FM_LIST (fm_interfaceMemberDeclarationStar | interfaceMemberDeclaration)* FM_LIST_CLOSE;
 
 constantDeclaration
-  : (constantModifier | fm_constantModifierStar)* (unannType | fm_unannType) (variableDeclaratorList | fm_variableDeclaratorList) SEMI 
+  : (fm_constantModifierStar | constantModifier)* (fm_unannType | unannType) (fm_variableDeclaratorList | variableDeclaratorList) SEMI 
   ;
 
 constantModifier
@@ -698,10 +693,10 @@ constantModifier
   | STATIC 
   | FINAL 
   ;
-fm_constantModifierStar: FM_PLACEHOLDER | FM_IF (fm_constantModifierStar | constantModifier) (FM_ELSE_IF (fm_constantModifierStar | constantModifier))* (FM_ELSE (fm_constantModifierStar | constantModifier))? FM_IF_CLOSE | FM_LIST (fm_constantModifierStar | constantModifier) FM_LIST_CLOSE;
+fm_constantModifierStar: FM_PLACEHOLDER | FM_IF (fm_constantModifierStar | constantModifier)* (FM_ELSE_IF (fm_constantModifierStar | constantModifier)*)* (FM_ELSE (fm_constantModifierStar | constantModifier)*)? FM_IF_CLOSE | FM_LIST (fm_constantModifierStar | constantModifier)* FM_LIST_CLOSE;
 
 interfaceMethodDeclaration
-  : (interfaceMethodModifier | fm_interfaceMethodModifierStar)* (methodHeader | fm_methodHeader) (methodBody | fm_methodBody)
+  : (fm_interfaceMethodModifierStar | interfaceMethodModifier)* (fm_methodHeader | methodHeader) (fm_methodBody | methodBody)
   ;
 
 interfaceMethodModifier
@@ -712,14 +707,14 @@ interfaceMethodModifier
   | STATIC 
   | STRICTFP 
   ;
-fm_interfaceMethodModifierStar: FM_PLACEHOLDER | FM_IF (fm_interfaceMethodModifierStar | interfaceMethodModifier) (FM_ELSE_IF (fm_interfaceMethodModifierStar | interfaceMethodModifier))* (FM_ELSE (fm_interfaceMethodModifierStar | interfaceMethodModifier))? FM_IF_CLOSE | FM_LIST (fm_interfaceMethodModifierStar | interfaceMethodModifier) FM_LIST_CLOSE;
+fm_interfaceMethodModifierStar: FM_PLACEHOLDER | FM_IF (fm_interfaceMethodModifierStar | interfaceMethodModifier)* (FM_ELSE_IF (fm_interfaceMethodModifierStar | interfaceMethodModifier)*)* (FM_ELSE (fm_interfaceMethodModifierStar | interfaceMethodModifier)*)? FM_IF_CLOSE | FM_LIST (fm_interfaceMethodModifierStar | interfaceMethodModifier)* FM_LIST_CLOSE;
 
 annotationTypeDeclaration
-  : (interfaceModifier | fm_interfaceModifierStar)* AT  INTERFACE  (Identifier | fm_Identifier) (annotationTypeBody | fm_annotationTypeBody)
+  : (fm_interfaceModifierStar | interfaceModifier)* AT  INTERFACE  (fm_Identifier | Identifier) (fm_annotationTypeBody | annotationTypeBody)
   ;
 
 annotationTypeBody
-  : LBRACE  (annotationTypeMemberDeclaration | fm_annotationTypeMemberDeclarationStar)* RBRACE 
+  : LBRACE  (fm_annotationTypeMemberDeclarationStar | annotationTypeMemberDeclaration)* RBRACE 
   ;
 fm_annotationTypeBody: FM_PLACEHOLDER | FM_IF (fm_annotationTypeBody | annotationTypeBody) (FM_ELSE_IF (fm_annotationTypeBody | annotationTypeBody))* FM_ELSE (fm_annotationTypeBody | annotationTypeBody) FM_IF_CLOSE;
 
@@ -730,10 +725,10 @@ annotationTypeMemberDeclaration
   | interfaceDeclaration
   | SEMI 
   ;
-fm_annotationTypeMemberDeclarationStar: FM_PLACEHOLDER | FM_IF (fm_annotationTypeMemberDeclarationStar | annotationTypeMemberDeclaration) (FM_ELSE_IF (fm_annotationTypeMemberDeclarationStar | annotationTypeMemberDeclaration))* (FM_ELSE (fm_annotationTypeMemberDeclarationStar | annotationTypeMemberDeclaration))? FM_IF_CLOSE | FM_LIST (fm_annotationTypeMemberDeclarationStar | annotationTypeMemberDeclaration) FM_LIST_CLOSE;
+fm_annotationTypeMemberDeclarationStar: FM_PLACEHOLDER | FM_IF (fm_annotationTypeMemberDeclarationStar | annotationTypeMemberDeclaration)* (FM_ELSE_IF (fm_annotationTypeMemberDeclarationStar | annotationTypeMemberDeclaration)*)* (FM_ELSE (fm_annotationTypeMemberDeclarationStar | annotationTypeMemberDeclaration)*)? FM_IF_CLOSE | FM_LIST (fm_annotationTypeMemberDeclarationStar | annotationTypeMemberDeclaration)* FM_LIST_CLOSE;
 
 annotationTypeElementDeclaration
-  : (annotationTypeElementModifier | fm_annotationTypeElementModifierStar)* (unannType | fm_unannType) (Identifier | fm_Identifier) LPAREN  RPAREN  (dims | fm_dimsOpt)? (defaultValue | fm_defaultValueOpt)? SEMI 
+  : (fm_annotationTypeElementModifierStar | annotationTypeElementModifier)* (fm_unannType | unannType) (fm_Identifier | Identifier) LPAREN  RPAREN  (fm_dimsOpt | dims)? (fm_defaultValueOpt | defaultValue)? SEMI 
   ;
 
 annotationTypeElementModifier
@@ -741,31 +736,31 @@ annotationTypeElementModifier
   | PUBLIC 
   | ABSTRACT 
   ;
-fm_annotationTypeElementModifierStar: FM_PLACEHOLDER | FM_IF (fm_annotationTypeElementModifierStar | annotationTypeElementModifier) (FM_ELSE_IF (fm_annotationTypeElementModifierStar | annotationTypeElementModifier))* (FM_ELSE (fm_annotationTypeElementModifierStar | annotationTypeElementModifier))? FM_IF_CLOSE | FM_LIST (fm_annotationTypeElementModifierStar | annotationTypeElementModifier) FM_LIST_CLOSE;
+fm_annotationTypeElementModifierStar: FM_PLACEHOLDER | FM_IF (fm_annotationTypeElementModifierStar | annotationTypeElementModifier)* (FM_ELSE_IF (fm_annotationTypeElementModifierStar | annotationTypeElementModifier)*)* (FM_ELSE (fm_annotationTypeElementModifierStar | annotationTypeElementModifier)*)? FM_IF_CLOSE | FM_LIST (fm_annotationTypeElementModifierStar | annotationTypeElementModifier)* FM_LIST_CLOSE;
 
 defaultValue
-  : DEFAULT  (elementValue | fm_elementValue)
+  : DEFAULT  (fm_elementValue | elementValue)
   ;
-fm_defaultValueOpt: FM_PLACEHOLDER | FM_IF (fm_defaultValueOpt | defaultValue) (FM_ELSE_IF (fm_defaultValueOpt | defaultValue))* (FM_ELSE (fm_defaultValueOpt | defaultValue))? FM_IF_CLOSE;
+fm_defaultValueOpt: FM_PLACEHOLDER | FM_IF (fm_defaultValueOpt | defaultValue)? (FM_ELSE_IF (fm_defaultValueOpt | defaultValue)?)* (FM_ELSE (fm_defaultValueOpt | defaultValue)?)? FM_IF_CLOSE;
 
 annotation
   : normalAnnotation
   | markerAnnotation
   | singleElementAnnotation
   ;
-fm_annotationStar: FM_PLACEHOLDER | FM_IF (fm_annotationStar | annotation) (FM_ELSE_IF (fm_annotationStar | annotation))* (FM_ELSE (fm_annotationStar | annotation))? FM_IF_CLOSE | FM_LIST (fm_annotationStar | annotation) FM_LIST_CLOSE;
+fm_annotationStar: FM_PLACEHOLDER | FM_IF (fm_annotationStar | annotation)* (FM_ELSE_IF (fm_annotationStar | annotation)*)* (FM_ELSE (fm_annotationStar | annotation)*)? FM_IF_CLOSE | FM_LIST (fm_annotationStar | annotation)* FM_LIST_CLOSE;
 
 normalAnnotation
-  : AT  (typeName | fm_typeName) LPAREN  (elementValuePairList | fm_elementValuePairListOpt)? RPAREN 
+  : AT  (fm_typeName | typeName) LPAREN  (fm_elementValuePairListOpt | elementValuePairList)? RPAREN 
   ;
 
 elementValuePairList
-  : (elementValuePair | fm_elementValuePair) (COMMA  (elementValuePair | fm_elementValuePair))*
+  : (fm_elementValuePair | elementValuePair) (COMMA  (fm_elementValuePair | elementValuePair))*
   ;
-fm_elementValuePairListOpt: FM_PLACEHOLDER | FM_IF (fm_elementValuePairListOpt | elementValuePairList) (FM_ELSE_IF (fm_elementValuePairListOpt | elementValuePairList))* (FM_ELSE (fm_elementValuePairListOpt | elementValuePairList))? FM_IF_CLOSE;
+fm_elementValuePairListOpt: FM_PLACEHOLDER | FM_IF (fm_elementValuePairListOpt | elementValuePairList)? (FM_ELSE_IF (fm_elementValuePairListOpt | elementValuePairList)?)* (FM_ELSE (fm_elementValuePairListOpt | elementValuePairList)?)? FM_IF_CLOSE;
 
 elementValuePair
-  : (Identifier | fm_Identifier) ASSIGN  (elementValue | fm_elementValue)
+  : (fm_Identifier | Identifier) ASSIGN  (fm_elementValue | elementValue)
   ;
 fm_elementValuePair: FM_PLACEHOLDER | FM_IF (fm_elementValuePair | elementValuePair) (FM_ELSE_IF (fm_elementValuePair | elementValuePair))* FM_ELSE (fm_elementValuePair | elementValuePair) FM_IF_CLOSE;
 
@@ -777,20 +772,20 @@ elementValue
 fm_elementValue: FM_PLACEHOLDER | FM_IF (fm_elementValue | elementValue) (FM_ELSE_IF (fm_elementValue | elementValue))* FM_ELSE (fm_elementValue | elementValue) FM_IF_CLOSE;
 
 elementValueArrayInitializer
-  : LBRACE  (elementValueList | fm_elementValueListOpt)? COMMA ? RBRACE 
+  : LBRACE  (fm_elementValueListOpt | elementValueList)? COMMA ? RBRACE 
   ;
 
 elementValueList
-  : (elementValue | fm_elementValue) (COMMA  (elementValue | fm_elementValue))*
+  : (fm_elementValue | elementValue) (COMMA  (fm_elementValue | elementValue))*
   ;
-fm_elementValueListOpt: FM_PLACEHOLDER | FM_IF (fm_elementValueListOpt | elementValueList) (FM_ELSE_IF (fm_elementValueListOpt | elementValueList))* (FM_ELSE (fm_elementValueListOpt | elementValueList))? FM_IF_CLOSE;
+fm_elementValueListOpt: FM_PLACEHOLDER | FM_IF (fm_elementValueListOpt | elementValueList)? (FM_ELSE_IF (fm_elementValueListOpt | elementValueList)?)* (FM_ELSE (fm_elementValueListOpt | elementValueList)?)? FM_IF_CLOSE;
 
 markerAnnotation
-  : AT  (typeName | fm_typeName)
+  : AT  (fm_typeName | typeName)
   ;
 
 singleElementAnnotation
-  : AT  (typeName | fm_typeName) LPAREN  (elementValue | fm_elementValue) RPAREN 
+  : AT  (fm_typeName | typeName) LPAREN  (fm_elementValue | elementValue) RPAREN 
   ;
 
 /*
@@ -798,44 +793,41 @@ singleElementAnnotation
  */
 
 arrayInitializer
-  : LBRACE  (variableInitializerList | fm_variableInitializerListOpt)? COMMA ? RBRACE 
+  : LBRACE  (fm_variableInitializerListOpt | variableInitializerList)? COMMA ? RBRACE 
   ;
 fm_arrayInitializer: FM_PLACEHOLDER | FM_IF (fm_arrayInitializer | arrayInitializer) (FM_ELSE_IF (fm_arrayInitializer | arrayInitializer))* FM_ELSE (fm_arrayInitializer | arrayInitializer) FM_IF_CLOSE;
 
 variableInitializerList
-  : (variableInitializer | fm_variableInitializer) (COMMA  (variableInitializer | fm_variableInitializer))*
+  : variableInitializer 
+  | fm_variableInitializerList COMMA ( fm_variableInitializer | variableInitializer ) 
+  | variableInitializerList COMMA  (fm_variableInitializer | variableInitializer)
   ;
-fm_variableInitializerListOpt: FM_PLACEHOLDER | FM_IF (fm_variableInitializerListOpt | variableInitializerList) (FM_ELSE_IF (fm_variableInitializerListOpt | variableInitializerList))* (FM_ELSE (fm_variableInitializerListOpt | variableInitializerList))? FM_IF_CLOSE;
+fm_variableInitializerList: FM_PLACEHOLDER | FM_IF (fm_variableInitializerList | variableInitializerList) (FM_ELSE_IF (fm_variableInitializerList | variableInitializerList))* FM_ELSE (fm_variableInitializerList | variableInitializerList) FM_IF_CLOSE;
+fm_variableInitializerListOpt: FM_PLACEHOLDER | FM_IF (fm_variableInitializerListOpt | variableInitializerList)? (FM_ELSE_IF (fm_variableInitializerListOpt | variableInitializerList)?)* (FM_ELSE (fm_variableInitializerListOpt | variableInitializerList)?)? FM_IF_CLOSE;
 
 /*
  * Productions from §14 (Blocks and Statements)
  */
 
 block
-  : LBRACE  (blockStatements | fm_blockStatementsOpt)? RBRACE 
+  : LBRACE  (fm_blockStatementStar | blockStatement)* RBRACE 
   ;
 fm_block: FM_PLACEHOLDER | FM_IF (fm_block | block) (FM_ELSE_IF (fm_block | block))* FM_ELSE (fm_block | block) FM_IF_CLOSE;
-
-blockStatements
-  : (blockStatement | fm_blockStatement) (blockStatement | fm_blockStatementStar)*
-  ;
-fm_blockStatements: FM_PLACEHOLDER | FM_IF (fm_blockStatements | blockStatements) (FM_ELSE_IF (fm_blockStatements | blockStatements))* FM_ELSE (fm_blockStatements | blockStatements) FM_IF_CLOSE;
-fm_blockStatementsOpt: FM_PLACEHOLDER | FM_IF (fm_blockStatementsOpt | blockStatements) (FM_ELSE_IF (fm_blockStatementsOpt | blockStatements))* (FM_ELSE (fm_blockStatementsOpt | blockStatements))? FM_IF_CLOSE;
 
 blockStatement
   : localVariableDeclarationStatement
   | classDeclaration
   | statement
   ;
-fm_blockStatement: FM_PLACEHOLDER | FM_IF (fm_blockStatement | blockStatement) (FM_ELSE_IF (fm_blockStatement | blockStatement))* FM_ELSE (fm_blockStatement | blockStatement) FM_IF_CLOSE;
-fm_blockStatementStar: FM_PLACEHOLDER | FM_IF (fm_blockStatementStar | blockStatement) (FM_ELSE_IF (fm_blockStatementStar | blockStatement))* (FM_ELSE (fm_blockStatementStar | blockStatement))? FM_IF_CLOSE | FM_LIST (fm_blockStatementStar | blockStatement) FM_LIST_CLOSE;
+fm_blockStatementStar: FM_PLACEHOLDER | FM_IF (fm_blockStatementStar | blockStatement)* (FM_ELSE_IF (fm_blockStatementStar | blockStatement)*)* (FM_ELSE (fm_blockStatementStar | blockStatement)*)? FM_IF_CLOSE | FM_LIST (fm_blockStatementStar | blockStatement)* FM_LIST_CLOSE;
+fm_blockStatementPlus: FM_PLACEHOLDER | (FM_IF (fm_blockStatementPlus | blockStatement)* (FM_ELSE_IF (fm_blockStatementPlus | blockStatement)*)* (FM_ELSE (fm_blockStatementPlus | blockStatement)*)? FM_IF_CLOSE | FM_LIST (fm_blockStatementPlus | blockStatement)* FM_LIST_CLOSE)* (FM_PLACEHOLDER | FM_IF (fm_blockStatementPlus | blockStatement)* (FM_ELSE_IF (fm_blockStatementPlus | blockStatement)*)* FM_ELSE (fm_blockStatementPlus | blockStatement)* FM_IF_CLOSE | FM_LIST (fm_blockStatementPlus | blockStatement)* FM_ELSE (fm_blockStatementPlus | blockStatement)* FM_LIST_CLOSE) (FM_IF (fm_blockStatementPlus | blockStatement)* (FM_ELSE_IF (fm_blockStatementPlus | blockStatement)*)* (FM_ELSE (fm_blockStatementPlus | blockStatement)*)? FM_IF_CLOSE | FM_LIST (fm_blockStatementPlus | blockStatement)* FM_LIST_CLOSE)*;
 
 localVariableDeclarationStatement
-  : (localVariableDeclaration | fm_localVariableDeclaration) SEMI 
+  : (fm_localVariableDeclaration | localVariableDeclaration) SEMI 
   ;
 
 localVariableDeclaration
-  : (variableModifier | fm_variableModifierStar)* (unannType | fm_unannType) (variableDeclaratorList | fm_variableDeclaratorList)
+  : (fm_variableModifierStar | variableModifier)* (fm_unannType | unannType) (fm_variableDeclaratorList | variableDeclaratorList)
   ;
 fm_localVariableDeclaration: FM_PLACEHOLDER | FM_IF (fm_localVariableDeclaration | localVariableDeclaration) (FM_ELSE_IF (fm_localVariableDeclaration | localVariableDeclaration))* FM_ELSE (fm_localVariableDeclaration | localVariableDeclaration) FM_IF_CLOSE;
 
@@ -878,15 +870,15 @@ emptyStatement
   ;
 
 labeledStatement
-  : (Identifier | fm_Identifier) COLON  (statement | fm_statement)
+  : (fm_Identifier | Identifier) COLON  (fm_statement | statement)
   ;
 
 labeledStatementNoShortIf
-  : (Identifier | fm_Identifier) COLON  (statementNoShortIf | fm_statementNoShortIf)
+  : (fm_Identifier | Identifier) COLON  (fm_statementNoShortIf | statementNoShortIf)
   ;
 
 expressionStatement
-  : (statementExpression | fm_statementExpression) SEMI 
+  : (fm_statementExpression | statementExpression) SEMI 
   ;
 
 statementExpression
@@ -901,48 +893,48 @@ statementExpression
 fm_statementExpression: FM_PLACEHOLDER | FM_IF (fm_statementExpression | statementExpression) (FM_ELSE_IF (fm_statementExpression | statementExpression))* FM_ELSE (fm_statementExpression | statementExpression) FM_IF_CLOSE;
 
 ifThenStatement
-  : IF  LPAREN  (expression | fm_expression) RPAREN  (statement | fm_statement)
+  : IF  LPAREN  (fm_expression | expression) RPAREN  (fm_statement | statement)
   ;
 
 ifThenElseStatement
-  : IF  LPAREN  (expression | fm_expression) RPAREN  (statementNoShortIf | fm_statementNoShortIf) ELSE  (statement | fm_statement)
+  : IF  LPAREN  (fm_expression | expression) RPAREN  (fm_statementNoShortIf | statementNoShortIf) ELSE  (fm_statement | statement)
   ;
 
 ifThenElseStatementNoShortIf
-  : IF  LPAREN  (expression | fm_expression) RPAREN  (statementNoShortIf | fm_statementNoShortIf) ELSE  (statementNoShortIf | fm_statementNoShortIf)
+  : IF  LPAREN  (fm_expression | expression) RPAREN  (fm_statementNoShortIf | statementNoShortIf) ELSE  (fm_statementNoShortIf | statementNoShortIf)
   ;
 
 assertStatement
-  : ASSERT  (expression | fm_expression) SEMI 
-  | ASSERT  (expression | fm_expression) COLON  (expression | fm_expression) SEMI 
+  : ASSERT  (fm_expression | expression) SEMI 
+  | ASSERT  (fm_expression | expression) COLON  (fm_expression | expression) SEMI 
   ;
 
 switchStatement
-  : SWITCH  LPAREN  (expression | fm_expression) RPAREN  (switchBlock | fm_switchBlock)
+  : SWITCH  LPAREN  (fm_expression | expression) RPAREN  (fm_switchBlock | switchBlock)
   ;
 
 switchBlock
-  : LBRACE  (switchBlockStatementGroup | fm_switchBlockStatementGroupStar)* (switchLabel | fm_switchLabelStar)* RBRACE 
+  : LBRACE  (fm_switchBlockStatementGroupStar | switchBlockStatementGroup)* (fm_switchLabelStar | switchLabel)* RBRACE 
   ;
 fm_switchBlock: FM_PLACEHOLDER | FM_IF (fm_switchBlock | switchBlock) (FM_ELSE_IF (fm_switchBlock | switchBlock))* FM_ELSE (fm_switchBlock | switchBlock) FM_IF_CLOSE;
 
 switchBlockStatementGroup
-  : (switchLabels | fm_switchLabels) (blockStatements | fm_blockStatements)
+  : (fm_switchLabels | switchLabels) (fm_blockStatementPlus | blockStatement)+
   ;
-fm_switchBlockStatementGroupStar: FM_PLACEHOLDER | FM_IF (fm_switchBlockStatementGroupStar | switchBlockStatementGroup) (FM_ELSE_IF (fm_switchBlockStatementGroupStar | switchBlockStatementGroup))* (FM_ELSE (fm_switchBlockStatementGroupStar | switchBlockStatementGroup))? FM_IF_CLOSE | FM_LIST (fm_switchBlockStatementGroupStar | switchBlockStatementGroup) FM_LIST_CLOSE;
+fm_switchBlockStatementGroupStar: FM_PLACEHOLDER | FM_IF (fm_switchBlockStatementGroupStar | switchBlockStatementGroup)* (FM_ELSE_IF (fm_switchBlockStatementGroupStar | switchBlockStatementGroup)*)* (FM_ELSE (fm_switchBlockStatementGroupStar | switchBlockStatementGroup)*)? FM_IF_CLOSE | FM_LIST (fm_switchBlockStatementGroupStar | switchBlockStatementGroup)* FM_LIST_CLOSE;
 
 switchLabels
-  : (switchLabel | fm_switchLabel) (switchLabel | fm_switchLabelStar)*
+  : (fm_switchLabel | switchLabel) (fm_switchLabelStar | switchLabel)*
   ;
 fm_switchLabels: FM_PLACEHOLDER | FM_IF (fm_switchLabels | switchLabels) (FM_ELSE_IF (fm_switchLabels | switchLabels))* FM_ELSE (fm_switchLabels | switchLabels) FM_IF_CLOSE;
 
 switchLabel
-  : CASE  (constantExpression | fm_constantExpression) COLON 
-  | CASE  (enumConstantName | fm_enumConstantName) COLON 
+  : CASE  (fm_constantExpression | constantExpression) COLON 
+  | CASE  (fm_enumConstantName | enumConstantName) COLON 
   | DEFAULT  COLON 
   ;
 fm_switchLabel: FM_PLACEHOLDER | FM_IF (fm_switchLabel | switchLabel) (FM_ELSE_IF (fm_switchLabel | switchLabel))* FM_ELSE (fm_switchLabel | switchLabel) FM_IF_CLOSE;
-fm_switchLabelStar: FM_PLACEHOLDER | FM_IF (fm_switchLabelStar | switchLabel) (FM_ELSE_IF (fm_switchLabelStar | switchLabel))* (FM_ELSE (fm_switchLabelStar | switchLabel))? FM_IF_CLOSE | FM_LIST (fm_switchLabelStar | switchLabel) FM_LIST_CLOSE;
+fm_switchLabelStar: FM_PLACEHOLDER | FM_IF (fm_switchLabelStar | switchLabel)* (FM_ELSE_IF (fm_switchLabelStar | switchLabel)*)* (FM_ELSE (fm_switchLabelStar | switchLabel)*)? FM_IF_CLOSE | FM_LIST (fm_switchLabelStar | switchLabel)* FM_LIST_CLOSE;
 
 enumConstantName
   : Identifier
@@ -950,15 +942,15 @@ enumConstantName
 fm_enumConstantName: FM_PLACEHOLDER | FM_IF (fm_enumConstantName | enumConstantName) (FM_ELSE_IF (fm_enumConstantName | enumConstantName))* FM_ELSE (fm_enumConstantName | enumConstantName) FM_IF_CLOSE;
 
 whileStatement
-  : WHILE  LPAREN  (expression | fm_expression) RPAREN  (statement | fm_statement)
+  : WHILE  LPAREN  (fm_expression | expression) RPAREN  (fm_statement | statement)
   ;
 
 whileStatementNoShortIf
-  : WHILE  LPAREN  (expression | fm_expression) RPAREN  (statementNoShortIf | fm_statementNoShortIf)
+  : WHILE  LPAREN  (fm_expression | expression) RPAREN  (fm_statementNoShortIf | statementNoShortIf)
   ;
 
 doStatement
-  : DO  (statement | fm_statement) WHILE  LPAREN  (expression | fm_expression) RPAREN  SEMI 
+  : DO  (fm_statement | statement) WHILE  LPAREN  (fm_expression | expression) RPAREN  SEMI 
   ;
 
 forStatement
@@ -972,106 +964,106 @@ forStatementNoShortIf
   ;
 
 basicForStatement
-  : FOR  LPAREN  (forInit | fm_forInitOpt)? SEMI  (expression | fm_expressionOpt)? SEMI  (forUpdate | fm_forUpdateOpt)? RPAREN  (statement | fm_statement)
+  : FOR  LPAREN  (fm_forInitOpt | forInit)? SEMI  (fm_expressionOpt | expression)? SEMI  (fm_forUpdateOpt | forUpdate)? RPAREN  (fm_statement | statement)
   ;
 
 basicForStatementNoShortIf
-  : FOR  LPAREN  (forInit | fm_forInitOpt)? SEMI  (expression | fm_expressionOpt)? SEMI  (forUpdate | fm_forUpdateOpt)? RPAREN  (statementNoShortIf | fm_statementNoShortIf)
+  : FOR  LPAREN  (fm_forInitOpt | forInit)? SEMI  (fm_expressionOpt | expression)? SEMI  (fm_forUpdateOpt | forUpdate)? RPAREN  (fm_statementNoShortIf | statementNoShortIf)
   ;
 
 forInit
   : statementExpressionList
   | localVariableDeclaration
   ;
-fm_forInitOpt: FM_PLACEHOLDER | FM_IF (fm_forInitOpt | forInit) (FM_ELSE_IF (fm_forInitOpt | forInit))* (FM_ELSE (fm_forInitOpt | forInit))? FM_IF_CLOSE;
+fm_forInitOpt: FM_PLACEHOLDER | FM_IF (fm_forInitOpt | forInit)? (FM_ELSE_IF (fm_forInitOpt | forInit)?)* (FM_ELSE (fm_forInitOpt | forInit)?)? FM_IF_CLOSE;
 
 forUpdate
   : statementExpressionList
   ;
-fm_forUpdateOpt: FM_PLACEHOLDER | FM_IF (fm_forUpdateOpt | forUpdate) (FM_ELSE_IF (fm_forUpdateOpt | forUpdate))* (FM_ELSE (fm_forUpdateOpt | forUpdate))? FM_IF_CLOSE;
+fm_forUpdateOpt: FM_PLACEHOLDER | FM_IF (fm_forUpdateOpt | forUpdate)? (FM_ELSE_IF (fm_forUpdateOpt | forUpdate)?)* (FM_ELSE (fm_forUpdateOpt | forUpdate)?)? FM_IF_CLOSE;
 
 statementExpressionList
-  : (statementExpression | fm_statementExpression) (COMMA  (statementExpression | fm_statementExpression))*
+  : (fm_statementExpression | statementExpression) (COMMA  (fm_statementExpression | statementExpression))*
   ;
 
 enhancedForStatement
-  : FOR  LPAREN  (variableModifier | fm_variableModifierStar)* (unannType | fm_unannType) (variableDeclaratorId | fm_variableDeclaratorId) COLON  (expression | fm_expression) RPAREN  (statement | fm_statement)
+  : FOR  LPAREN  (fm_variableModifierStar | variableModifier)* (fm_unannType | unannType) (fm_variableDeclaratorId | variableDeclaratorId) COLON  (fm_expression | expression) RPAREN  (fm_statement | statement)
   ;
 
 enhancedForStatementNoShortIf
-  : FOR  LPAREN  (variableModifier | fm_variableModifierStar)* (unannType | fm_unannType) (variableDeclaratorId | fm_variableDeclaratorId) COLON  (expression | fm_expression) RPAREN  (statementNoShortIf | fm_statementNoShortIf)
+  : FOR  LPAREN  (fm_variableModifierStar | variableModifier)* (fm_unannType | unannType) (fm_variableDeclaratorId | variableDeclaratorId) COLON  (fm_expression | expression) RPAREN  (fm_statementNoShortIf | statementNoShortIf)
   ;
 
 breakStatement
-  : BREAK  (Identifier | fm_IdentifierOpt)? SEMI 
+  : BREAK  (fm_IdentifierOpt | Identifier)? SEMI 
   ;
 
 continueStatement
-  : CONTINUE  (Identifier | fm_IdentifierOpt)? SEMI 
+  : CONTINUE  (fm_IdentifierOpt | Identifier)? SEMI 
   ;
 
 returnStatement
-  : RETURN  (expression | fm_expressionOpt)? SEMI 
+  : RETURN  (fm_expressionOpt | expression)? SEMI 
   ;
 
 throwStatement
-  : THROW  (expression | fm_expression) SEMI 
+  : THROW  (fm_expression | expression) SEMI 
   ;
 
 synchronizedStatement
-  : SYNCHRONIZED  LPAREN  (expression | fm_expression) RPAREN  (block | fm_block)
+  : SYNCHRONIZED  LPAREN  (fm_expression | expression) RPAREN  (fm_block | block)
   ;
 
 tryStatement
-  : TRY  (block | fm_block) (catches | fm_catches)
-  | TRY  (block | fm_block) (catches | fm_catchesOpt)? (finally_ | fm_finally_)
+  : TRY  (fm_block | block) (fm_catches | catches)
+  | TRY  (fm_block | block) (fm_catchesOpt | catches)? (fm_finally_ | finally_)
   | tryWithResourcesStatement
   ;
 
 catches
-  : (catchClause | fm_catchClause) (catchClause | fm_catchClauseStar)*
+  : (fm_catchClause | catchClause) (fm_catchClauseStar | catchClause)*
   ;
 fm_catches: FM_PLACEHOLDER | FM_IF (fm_catches | catches) (FM_ELSE_IF (fm_catches | catches))* FM_ELSE (fm_catches | catches) FM_IF_CLOSE;
-fm_catchesOpt: FM_PLACEHOLDER | FM_IF (fm_catchesOpt | catches) (FM_ELSE_IF (fm_catchesOpt | catches))* (FM_ELSE (fm_catchesOpt | catches))? FM_IF_CLOSE;
+fm_catchesOpt: FM_PLACEHOLDER | FM_IF (fm_catchesOpt | catches)? (FM_ELSE_IF (fm_catchesOpt | catches)?)* (FM_ELSE (fm_catchesOpt | catches)?)? FM_IF_CLOSE;
 
 catchClause
-  : CATCH  LPAREN  (catchFormalParameter | fm_catchFormalParameter) RPAREN  (block | fm_block)
+  : CATCH  LPAREN  (fm_catchFormalParameter | catchFormalParameter) RPAREN  (fm_block | block)
   ;
 fm_catchClause: FM_PLACEHOLDER | FM_IF (fm_catchClause | catchClause) (FM_ELSE_IF (fm_catchClause | catchClause))* FM_ELSE (fm_catchClause | catchClause) FM_IF_CLOSE;
-fm_catchClauseStar: FM_PLACEHOLDER | FM_IF (fm_catchClauseStar | catchClause) (FM_ELSE_IF (fm_catchClauseStar | catchClause))* (FM_ELSE (fm_catchClauseStar | catchClause))? FM_IF_CLOSE | FM_LIST (fm_catchClauseStar | catchClause) FM_LIST_CLOSE;
+fm_catchClauseStar: FM_PLACEHOLDER | FM_IF (fm_catchClauseStar | catchClause)* (FM_ELSE_IF (fm_catchClauseStar | catchClause)*)* (FM_ELSE (fm_catchClauseStar | catchClause)*)? FM_IF_CLOSE | FM_LIST (fm_catchClauseStar | catchClause)* FM_LIST_CLOSE;
 
 catchFormalParameter
-  : (variableModifier | fm_variableModifierStar)* (catchType | fm_catchType) (variableDeclaratorId | fm_variableDeclaratorId)
+  : (fm_variableModifierStar | variableModifier)* (fm_catchType | catchType) (fm_variableDeclaratorId | variableDeclaratorId)
   ;
 fm_catchFormalParameter: FM_PLACEHOLDER | FM_IF (fm_catchFormalParameter | catchFormalParameter) (FM_ELSE_IF (fm_catchFormalParameter | catchFormalParameter))* FM_ELSE (fm_catchFormalParameter | catchFormalParameter) FM_IF_CLOSE;
 
 catchType
-  : (unannClassType | fm_unannClassType) (BITOR  (classType | fm_classType))*
+  : (fm_unannClassType | unannClassType) (BITOR  (fm_classType | classType))*
   ;
 fm_catchType: FM_PLACEHOLDER | FM_IF (fm_catchType | catchType) (FM_ELSE_IF (fm_catchType | catchType))* FM_ELSE (fm_catchType | catchType) FM_IF_CLOSE;
 
 finally_
-  : FINALLY  (block | fm_block)
+  : FINALLY  (fm_block | block)
   ;
 fm_finally_: FM_PLACEHOLDER | FM_IF (fm_finally_ | finally_) (FM_ELSE_IF (fm_finally_ | finally_))* FM_ELSE (fm_finally_ | finally_) FM_IF_CLOSE;
-fm_finally_Opt: FM_PLACEHOLDER | FM_IF (fm_finally_Opt | finally_) (FM_ELSE_IF (fm_finally_Opt | finally_))* (FM_ELSE (fm_finally_Opt | finally_))? FM_IF_CLOSE;
+fm_finally_Opt: FM_PLACEHOLDER | FM_IF (fm_finally_Opt | finally_)? (FM_ELSE_IF (fm_finally_Opt | finally_)?)* (FM_ELSE (fm_finally_Opt | finally_)?)? FM_IF_CLOSE;
 
 tryWithResourcesStatement
-  : TRY  (resourceSpecification | fm_resourceSpecification) (block | fm_block) (catches | fm_catchesOpt)? (finally_ | fm_finally_Opt)?
+  : TRY  (fm_resourceSpecification | resourceSpecification) (fm_block | block) (fm_catchesOpt | catches)? (fm_finally_Opt | finally_)?
   ;
 
 resourceSpecification
-  : LPAREN  (resourceList | fm_resourceList) SEMI ? RPAREN 
+  : LPAREN  (fm_resourceList | resourceList) SEMI ? RPAREN 
   ;
 fm_resourceSpecification: FM_PLACEHOLDER | FM_IF (fm_resourceSpecification | resourceSpecification) (FM_ELSE_IF (fm_resourceSpecification | resourceSpecification))* FM_ELSE (fm_resourceSpecification | resourceSpecification) FM_IF_CLOSE;
 
 resourceList
-  : (resource | fm_resource) (SEMI  (resource | fm_resource))*
+  : (fm_resource | resource) (SEMI  (fm_resource | resource))*
   ;
 fm_resourceList: FM_PLACEHOLDER | FM_IF (fm_resourceList | resourceList) (FM_ELSE_IF (fm_resourceList | resourceList))* FM_ELSE (fm_resourceList | resourceList) FM_IF_CLOSE;
 
 resource
-  : (variableModifier | fm_variableModifierStar)* (unannType | fm_unannType) (variableDeclaratorId | fm_variableDeclaratorId) ASSIGN  (expression | fm_expression)
+  : (fm_variableModifierStar | variableModifier)* (fm_unannType | unannType) (fm_variableDeclaratorId | variableDeclaratorId) ASSIGN  (fm_expression | expression)
   ;
 fm_resource: FM_PLACEHOLDER | FM_IF (fm_resource | resource) (FM_ELSE_IF (fm_resource | resource))* FM_ELSE (fm_resource | resource) FM_IF_CLOSE;
 
@@ -1090,11 +1082,11 @@ fm_primary: FM_PLACEHOLDER | FM_IF (fm_primary | primary) (FM_ELSE_IF (fm_primar
 
 primaryNoNewArray
   : literal
-  | (typeName | fm_typeName) (LBRACK  RBRACK )* DOT  CLASS 
+  | (fm_typeName | typeName) (LBRACK  RBRACK )* DOT  CLASS 
   | VOID  DOT  CLASS 
   | THIS 
-  | (typeName | fm_typeName) DOT  THIS 
-  | LPAREN  (expression | fm_expression) RPAREN 
+  | (fm_typeName | typeName) DOT  THIS 
+  | LPAREN  (fm_expression | expression) RPAREN 
   | classInstanceCreationExpression
   | fieldAccess
   | arrayAccess
@@ -1109,11 +1101,11 @@ fm_primaryNoNewArray_lf_arrayAccess: FM_PLACEHOLDER | FM_IF (fm_primaryNoNewArra
 
 primaryNoNewArray_lfno_arrayAccess
   : literal
-  | (typeName | fm_typeName) (LBRACK  RBRACK )* DOT  CLASS 
+  | (fm_typeName | typeName) (LBRACK  RBRACK )* DOT  CLASS 
   | VOID  DOT  CLASS 
   | THIS 
-  | (typeName | fm_typeName) DOT  THIS 
-  | LPAREN  (expression | fm_expression) RPAREN 
+  | (fm_typeName | typeName) DOT  THIS 
+  | LPAREN  (fm_expression | expression) RPAREN 
   | classInstanceCreationExpression
   | fieldAccess
   | methodInvocation
@@ -1144,12 +1136,12 @@ fm_primaryNoNewArray_lf_primary_lfno_arrayAccess_lf_primary: FM_PLACEHOLDER | FM
 
 primaryNoNewArray_lfno_primary
   : literal
-  | (typeName | fm_typeName) (LBRACK  RBRACK )* DOT  CLASS 
-  | (unannPrimitiveType | fm_unannPrimitiveType) (LBRACK  RBRACK )* DOT  CLASS 
+  | (fm_typeName | typeName) (LBRACK  RBRACK )* DOT  CLASS 
+  | (fm_unannPrimitiveType | unannPrimitiveType) (LBRACK  RBRACK )* DOT  CLASS 
   | VOID  DOT  CLASS 
   | THIS 
-  | (typeName | fm_typeName) DOT  THIS 
-  | LPAREN  (expression | fm_expression) RPAREN 
+  | (fm_typeName | typeName) DOT  THIS 
+  | LPAREN  (fm_expression | expression) RPAREN 
   | classInstanceCreationExpression_lfno_primary
   | fieldAccess_lfno_primary
   | arrayAccess_lfno_primary
@@ -1164,12 +1156,12 @@ fm_primaryNoNewArray_lfno_primary_lf_arrayAccess_lfno_primary: FM_PLACEHOLDER | 
 
 primaryNoNewArray_lfno_primary_lfno_arrayAccess_lfno_primary
   : literal
-  | (typeName | fm_typeName) (LBRACK  RBRACK )* DOT  CLASS 
-  | (unannPrimitiveType | fm_unannPrimitiveType) (LBRACK  RBRACK )* DOT  CLASS 
+  | (fm_typeName | typeName) (LBRACK  RBRACK )* DOT  CLASS 
+  | (fm_unannPrimitiveType | unannPrimitiveType) (LBRACK  RBRACK )* DOT  CLASS 
   | VOID  DOT  CLASS 
   | THIS 
-  | (typeName | fm_typeName) DOT  THIS 
-  | LPAREN  (expression | fm_expression) RPAREN 
+  | (fm_typeName | typeName) DOT  THIS 
+  | LPAREN  (fm_expression | expression) RPAREN 
   | classInstanceCreationExpression_lfno_primary
   | fieldAccess_lfno_primary
   | methodInvocation_lfno_primary
@@ -1178,130 +1170,130 @@ primaryNoNewArray_lfno_primary_lfno_arrayAccess_lfno_primary
 fm_primaryNoNewArray_lfno_primary_lfno_arrayAccess_lfno_primary: FM_PLACEHOLDER | FM_IF (fm_primaryNoNewArray_lfno_primary_lfno_arrayAccess_lfno_primary | primaryNoNewArray_lfno_primary_lfno_arrayAccess_lfno_primary) (FM_ELSE_IF (fm_primaryNoNewArray_lfno_primary_lfno_arrayAccess_lfno_primary | primaryNoNewArray_lfno_primary_lfno_arrayAccess_lfno_primary))* FM_ELSE (fm_primaryNoNewArray_lfno_primary_lfno_arrayAccess_lfno_primary | primaryNoNewArray_lfno_primary_lfno_arrayAccess_lfno_primary) FM_IF_CLOSE;
 
 classInstanceCreationExpression
-  : NEW  (typeArguments | fm_typeArgumentsOpt)? (annotation | fm_annotationStar)* (Identifier | fm_Identifier) (DOT  (annotation | fm_annotationStar)* (Identifier | fm_Identifier))* (typeArgumentsOrDiamond | fm_typeArgumentsOrDiamondOpt)? LPAREN  (argumentList | fm_argumentListOpt)? RPAREN  (classBody | fm_classBodyOpt)?
-  | (expressionName | fm_expressionName) DOT  NEW  (typeArguments | fm_typeArgumentsOpt)? (annotation | fm_annotationStar)* (Identifier | fm_Identifier) (typeArgumentsOrDiamond | fm_typeArgumentsOrDiamondOpt)? LPAREN  (argumentList | fm_argumentListOpt)? RPAREN  (classBody | fm_classBodyOpt)?
-  | (primary | fm_primary) DOT  NEW  (typeArguments | fm_typeArgumentsOpt)? (annotation | fm_annotationStar)* (Identifier | fm_Identifier) (typeArgumentsOrDiamond | fm_typeArgumentsOrDiamondOpt)? LPAREN  (argumentList | fm_argumentListOpt)? RPAREN  (classBody | fm_classBodyOpt)?
+  : NEW  (fm_typeArgumentsOpt | typeArguments)? (fm_annotationStar | annotation)* (fm_Identifier | Identifier) (DOT  (fm_annotationStar | annotation)* (fm_Identifier | Identifier))* (fm_typeArgumentsOrDiamondOpt | typeArgumentsOrDiamond)? LPAREN  (fm_argumentListOpt | argumentList)? RPAREN  (fm_classBodyOpt | classBody)?
+  | (fm_expressionName | expressionName) DOT  NEW  (fm_typeArgumentsOpt | typeArguments)? (fm_annotationStar | annotation)* (fm_Identifier | Identifier) (fm_typeArgumentsOrDiamondOpt | typeArgumentsOrDiamond)? LPAREN  (fm_argumentListOpt | argumentList)? RPAREN  (fm_classBodyOpt | classBody)?
+  | (fm_primary | primary) DOT  NEW  (fm_typeArgumentsOpt | typeArguments)? (fm_annotationStar | annotation)* (fm_Identifier | Identifier) (fm_typeArgumentsOrDiamondOpt | typeArgumentsOrDiamond)? LPAREN  (fm_argumentListOpt | argumentList)? RPAREN  (fm_classBodyOpt | classBody)?
   ;
 
 classInstanceCreationExpression_lf_primary
-  : DOT  NEW  (typeArguments | fm_typeArgumentsOpt)? (annotation | fm_annotationStar)* (Identifier | fm_Identifier) (typeArgumentsOrDiamond | fm_typeArgumentsOrDiamondOpt)? LPAREN  (argumentList | fm_argumentListOpt)? RPAREN  (classBody | fm_classBodyOpt)?
+  : DOT  NEW  (fm_typeArgumentsOpt | typeArguments)? (fm_annotationStar | annotation)* (fm_Identifier | Identifier) (fm_typeArgumentsOrDiamondOpt | typeArgumentsOrDiamond)? LPAREN  (fm_argumentListOpt | argumentList)? RPAREN  (fm_classBodyOpt | classBody)?
   ;
 
 classInstanceCreationExpression_lfno_primary
-  : NEW  (typeArguments | fm_typeArgumentsOpt)? (annotation | fm_annotationStar)* (Identifier | fm_Identifier) (DOT  (annotation | fm_annotationStar)* (Identifier | fm_Identifier))* (typeArgumentsOrDiamond | fm_typeArgumentsOrDiamondOpt)? LPAREN  (argumentList | fm_argumentListOpt)? RPAREN  (classBody | fm_classBodyOpt)?
-  | (expressionName | fm_expressionName) DOT  NEW  (typeArguments | fm_typeArgumentsOpt)? (annotation | fm_annotationStar)* (Identifier | fm_Identifier) (typeArgumentsOrDiamond | fm_typeArgumentsOrDiamondOpt)? LPAREN  (argumentList | fm_argumentListOpt)? RPAREN  (classBody | fm_classBodyOpt)?
+  : NEW  (fm_typeArgumentsOpt | typeArguments)? (fm_annotationStar | annotation)* (fm_Identifier | Identifier) (DOT  (fm_annotationStar | annotation)* (fm_Identifier | Identifier))* (fm_typeArgumentsOrDiamondOpt | typeArgumentsOrDiamond)? LPAREN  (fm_argumentListOpt | argumentList)? RPAREN  (fm_classBodyOpt | classBody)?
+  | (fm_expressionName | expressionName) DOT  NEW  (fm_typeArgumentsOpt | typeArguments)? (fm_annotationStar | annotation)* (fm_Identifier | Identifier) (fm_typeArgumentsOrDiamondOpt | typeArgumentsOrDiamond)? LPAREN  (fm_argumentListOpt | argumentList)? RPAREN  (fm_classBodyOpt | classBody)?
   ;
 
 typeArgumentsOrDiamond
   : typeArguments
   | LT  GT 
   ;
-fm_typeArgumentsOrDiamondOpt: FM_PLACEHOLDER | FM_IF (fm_typeArgumentsOrDiamondOpt | typeArgumentsOrDiamond) (FM_ELSE_IF (fm_typeArgumentsOrDiamondOpt | typeArgumentsOrDiamond))* (FM_ELSE (fm_typeArgumentsOrDiamondOpt | typeArgumentsOrDiamond))? FM_IF_CLOSE;
+fm_typeArgumentsOrDiamondOpt: FM_PLACEHOLDER | FM_IF (fm_typeArgumentsOrDiamondOpt | typeArgumentsOrDiamond)? (FM_ELSE_IF (fm_typeArgumentsOrDiamondOpt | typeArgumentsOrDiamond)?)* (FM_ELSE (fm_typeArgumentsOrDiamondOpt | typeArgumentsOrDiamond)?)? FM_IF_CLOSE;
 
 fieldAccess
-  : (primary | fm_primary) DOT  (Identifier | fm_Identifier)
-  | SUPER  DOT  (Identifier | fm_Identifier)
-  | (typeName | fm_typeName) DOT  SUPER  DOT  (Identifier | fm_Identifier)
+  : (fm_primary | primary) DOT  (fm_Identifier | Identifier)
+  | SUPER  DOT  (fm_Identifier | Identifier)
+  | (fm_typeName | typeName) DOT  SUPER  DOT  (fm_Identifier | Identifier)
   ;
 
 fieldAccess_lf_primary
-  : DOT  (Identifier | fm_Identifier)
+  : DOT  (fm_Identifier | Identifier)
   ;
 
 fieldAccess_lfno_primary
-  : SUPER  DOT  (Identifier | fm_Identifier)
-  | (typeName | fm_typeName) DOT  SUPER  DOT  (Identifier | fm_Identifier)
+  : SUPER  DOT  (fm_Identifier | Identifier)
+  | (fm_typeName | typeName) DOT  SUPER  DOT  (fm_Identifier | Identifier)
   ;
 
 arrayAccess
-  : ( (expressionName | fm_expressionName) LBRACK  (expression | fm_expression) RBRACK 
-    | (primaryNoNewArray_lfno_arrayAccess | fm_primaryNoNewArray_lfno_arrayAccess) LBRACK  (expression | fm_expression) RBRACK 
+  : ( (fm_expressionName | expressionName) LBRACK  (fm_expression | expression) RBRACK 
+    | (fm_primaryNoNewArray_lfno_arrayAccess | primaryNoNewArray_lfno_arrayAccess) LBRACK  (fm_expression | expression) RBRACK 
     )
-    ( (primaryNoNewArray_lf_arrayAccess | fm_primaryNoNewArray_lf_arrayAccess) LBRACK  (expression | fm_expression) RBRACK 
+    ( (fm_primaryNoNewArray_lf_arrayAccess | primaryNoNewArray_lf_arrayAccess) LBRACK  (fm_expression | expression) RBRACK 
     )*
   ;
 
 arrayAccess_lf_primary
-  : ( (primaryNoNewArray_lf_primary_lfno_arrayAccess_lf_primary | fm_primaryNoNewArray_lf_primary_lfno_arrayAccess_lf_primary) LBRACK  (expression | fm_expression) RBRACK 
+  : ( (fm_primaryNoNewArray_lf_primary_lfno_arrayAccess_lf_primary | primaryNoNewArray_lf_primary_lfno_arrayAccess_lf_primary) LBRACK  (fm_expression | expression) RBRACK 
     )
-    ( (primaryNoNewArray_lf_primary_lf_arrayAccess_lf_primary | fm_primaryNoNewArray_lf_primary_lf_arrayAccess_lf_primary) LBRACK  (expression | fm_expression) RBRACK 
+    ( (fm_primaryNoNewArray_lf_primary_lf_arrayAccess_lf_primary | primaryNoNewArray_lf_primary_lf_arrayAccess_lf_primary) LBRACK  (fm_expression | expression) RBRACK 
     )*
   ;
 
 arrayAccess_lfno_primary
-  : ( (expressionName | fm_expressionName) LBRACK  (expression | fm_expression) RBRACK 
-    | (primaryNoNewArray_lfno_primary_lfno_arrayAccess_lfno_primary | fm_primaryNoNewArray_lfno_primary_lfno_arrayAccess_lfno_primary) LBRACK  (expression | fm_expression) RBRACK 
+  : ( (fm_expressionName | expressionName) LBRACK  (fm_expression | expression) RBRACK 
+    | (fm_primaryNoNewArray_lfno_primary_lfno_arrayAccess_lfno_primary | primaryNoNewArray_lfno_primary_lfno_arrayAccess_lfno_primary) LBRACK  (fm_expression | expression) RBRACK 
     )
-    ( (primaryNoNewArray_lfno_primary_lf_arrayAccess_lfno_primary | fm_primaryNoNewArray_lfno_primary_lf_arrayAccess_lfno_primary) LBRACK  (expression | fm_expression) RBRACK 
+    ( (fm_primaryNoNewArray_lfno_primary_lf_arrayAccess_lfno_primary | primaryNoNewArray_lfno_primary_lf_arrayAccess_lfno_primary) LBRACK  (fm_expression | expression) RBRACK 
     )*
   ;
 
 methodInvocation
-  : (methodName | fm_methodName) LPAREN  (argumentList | fm_argumentListOpt)? RPAREN 
-  | (typeName | fm_typeName) DOT  (typeArguments | fm_typeArgumentsOpt)? (Identifier | fm_Identifier) LPAREN  (argumentList | fm_argumentListOpt)? RPAREN 
-  | (expressionName | fm_expressionName) DOT  (typeArguments | fm_typeArgumentsOpt)? (Identifier | fm_Identifier) LPAREN  (argumentList | fm_argumentListOpt)? RPAREN 
-  | (primary | fm_primary) DOT  (typeArguments | fm_typeArgumentsOpt)? (Identifier | fm_Identifier) LPAREN  (argumentList | fm_argumentListOpt)? RPAREN 
-  | SUPER  DOT  (typeArguments | fm_typeArgumentsOpt)? (Identifier | fm_Identifier) LPAREN  (argumentList | fm_argumentListOpt)? RPAREN 
-  | (typeName | fm_typeName) DOT  SUPER  DOT  (typeArguments | fm_typeArgumentsOpt)? (Identifier | fm_Identifier) LPAREN  (argumentList | fm_argumentListOpt)? RPAREN 
+  : (fm_methodName | methodName) LPAREN  (fm_argumentListOpt | argumentList)? RPAREN 
+  | (fm_typeName | typeName) DOT  (fm_typeArgumentsOpt | typeArguments)? (fm_Identifier | Identifier) LPAREN  (fm_argumentListOpt | argumentList)? RPAREN 
+  | (fm_expressionName | expressionName) DOT  (fm_typeArgumentsOpt | typeArguments)? (fm_Identifier | Identifier) LPAREN  (fm_argumentListOpt | argumentList)? RPAREN 
+  | (fm_primary | primary) DOT  (fm_typeArgumentsOpt | typeArguments)? (fm_Identifier | Identifier) LPAREN  (fm_argumentListOpt | argumentList)? RPAREN 
+  | SUPER  DOT  (fm_typeArgumentsOpt | typeArguments)? (fm_Identifier | Identifier) LPAREN  (fm_argumentListOpt | argumentList)? RPAREN 
+  | (fm_typeName | typeName) DOT  SUPER  DOT  (fm_typeArgumentsOpt | typeArguments)? (fm_Identifier | Identifier) LPAREN  (fm_argumentListOpt | argumentList)? RPAREN 
   ;
 
 methodInvocation_lf_primary
-  : DOT  (typeArguments | fm_typeArgumentsOpt)? (Identifier | fm_Identifier) LPAREN  (argumentList | fm_argumentListOpt)? RPAREN 
+  : DOT  (fm_typeArgumentsOpt | typeArguments)? (fm_Identifier | Identifier) LPAREN  (fm_argumentListOpt | argumentList)? RPAREN 
   ;
 
 methodInvocation_lfno_primary
-  : (methodName | fm_methodName) LPAREN  (argumentList | fm_argumentListOpt)? RPAREN 
-  | (typeName | fm_typeName) DOT  (typeArguments | fm_typeArgumentsOpt)? (Identifier | fm_Identifier) LPAREN  (argumentList | fm_argumentListOpt)? RPAREN 
-  | (expressionName | fm_expressionName) DOT  (typeArguments | fm_typeArgumentsOpt)? (Identifier | fm_Identifier) LPAREN  (argumentList | fm_argumentListOpt)? RPAREN 
-  | SUPER  DOT  (typeArguments | fm_typeArgumentsOpt)? (Identifier | fm_Identifier) LPAREN  (argumentList | fm_argumentListOpt)? RPAREN 
-  | (typeName | fm_typeName) DOT  SUPER  DOT  (typeArguments | fm_typeArgumentsOpt)? (Identifier | fm_Identifier) LPAREN  (argumentList | fm_argumentListOpt)? RPAREN 
+  : (fm_methodName | methodName) LPAREN  (fm_argumentListOpt | argumentList)? RPAREN 
+  | (fm_typeName | typeName) DOT  (fm_typeArgumentsOpt | typeArguments)? (fm_Identifier | Identifier) LPAREN  (fm_argumentListOpt | argumentList)? RPAREN 
+  | (fm_expressionName | expressionName) DOT  (fm_typeArgumentsOpt | typeArguments)? (fm_Identifier | Identifier) LPAREN  (fm_argumentListOpt | argumentList)? RPAREN 
+  | SUPER  DOT  (fm_typeArgumentsOpt | typeArguments)? (fm_Identifier | Identifier) LPAREN  (fm_argumentListOpt | argumentList)? RPAREN 
+  | (fm_typeName | typeName) DOT  SUPER  DOT  (fm_typeArgumentsOpt | typeArguments)? (fm_Identifier | Identifier) LPAREN  (fm_argumentListOpt | argumentList)? RPAREN 
   ;
 
 argumentList
-  : (expression | fm_expression) (COMMA  (expression | fm_expression))*
+  : (fm_expression | expression) (COMMA  (fm_expression | expression))*
   ;
-fm_argumentListOpt: FM_PLACEHOLDER | FM_IF (fm_argumentListOpt | argumentList) (FM_ELSE_IF (fm_argumentListOpt | argumentList))* (FM_ELSE (fm_argumentListOpt | argumentList))? FM_IF_CLOSE;
+fm_argumentListOpt: FM_PLACEHOLDER | FM_IF (fm_argumentListOpt | argumentList)? (FM_ELSE_IF (fm_argumentListOpt | argumentList)?)* (FM_ELSE (fm_argumentListOpt | argumentList)?)? FM_IF_CLOSE;
 
 methodReference
-  : (expressionName | fm_expressionName) COLONCOLON  (typeArguments | fm_typeArgumentsOpt)? (Identifier | fm_Identifier)
-  | (referenceType | fm_referenceType) COLONCOLON  (typeArguments | fm_typeArgumentsOpt)? (Identifier | fm_Identifier)
-  | (primary | fm_primary) COLONCOLON  (typeArguments | fm_typeArgumentsOpt)? (Identifier | fm_Identifier)
-  | SUPER  COLONCOLON  (typeArguments | fm_typeArgumentsOpt)? (Identifier | fm_Identifier)
-  | (typeName | fm_typeName) DOT  SUPER  COLONCOLON  (typeArguments | fm_typeArgumentsOpt)? (Identifier | fm_Identifier)
-  | (classType | fm_classType) COLONCOLON  (typeArguments | fm_typeArgumentsOpt)? NEW 
-  | (arrayType | fm_arrayType) COLONCOLON  NEW 
+  : (fm_expressionName | expressionName) COLONCOLON  (fm_typeArgumentsOpt | typeArguments)? (fm_Identifier | Identifier)
+  | (fm_referenceType | referenceType) COLONCOLON  (fm_typeArgumentsOpt | typeArguments)? (fm_Identifier | Identifier)
+  | (fm_primary | primary) COLONCOLON  (fm_typeArgumentsOpt | typeArguments)? (fm_Identifier | Identifier)
+  | SUPER  COLONCOLON  (fm_typeArgumentsOpt | typeArguments)? (fm_Identifier | Identifier)
+  | (fm_typeName | typeName) DOT  SUPER  COLONCOLON  (fm_typeArgumentsOpt | typeArguments)? (fm_Identifier | Identifier)
+  | (fm_classType | classType) COLONCOLON  (fm_typeArgumentsOpt | typeArguments)? NEW 
+  | (fm_arrayType | arrayType) COLONCOLON  NEW 
   ;
 
 methodReference_lf_primary
-  : COLONCOLON  (typeArguments | fm_typeArgumentsOpt)? (Identifier | fm_Identifier)
+  : COLONCOLON  (fm_typeArgumentsOpt | typeArguments)? (fm_Identifier | Identifier)
   ;
 
 methodReference_lfno_primary
-  : (expressionName | fm_expressionName) COLONCOLON  (typeArguments | fm_typeArgumentsOpt)? (Identifier | fm_Identifier)
-  | (referenceType | fm_referenceType) COLONCOLON  (typeArguments | fm_typeArgumentsOpt)? (Identifier | fm_Identifier)
-  | SUPER  COLONCOLON  (typeArguments | fm_typeArgumentsOpt)? (Identifier | fm_Identifier)
-  | (typeName | fm_typeName) DOT  SUPER  COLONCOLON  (typeArguments | fm_typeArgumentsOpt)? (Identifier | fm_Identifier)
-  | (classType | fm_classType) COLONCOLON  (typeArguments | fm_typeArgumentsOpt)? NEW 
-  | (arrayType | fm_arrayType) COLONCOLON  NEW 
+  : (fm_expressionName | expressionName) COLONCOLON  (fm_typeArgumentsOpt | typeArguments)? (fm_Identifier | Identifier)
+  | (fm_referenceType | referenceType) COLONCOLON  (fm_typeArgumentsOpt | typeArguments)? (fm_Identifier | Identifier)
+  | SUPER  COLONCOLON  (fm_typeArgumentsOpt | typeArguments)? (fm_Identifier | Identifier)
+  | (fm_typeName | typeName) DOT  SUPER  COLONCOLON  (fm_typeArgumentsOpt | typeArguments)? (fm_Identifier | Identifier)
+  | (fm_classType | classType) COLONCOLON  (fm_typeArgumentsOpt | typeArguments)? NEW 
+  | (fm_arrayType | arrayType) COLONCOLON  NEW 
   ;
 
 arrayCreationExpression
-  : NEW  (primitiveType | fm_primitiveType) (dimExprs | fm_dimExprs) (dims | fm_dimsOpt)?
-  | NEW  (classOrInterfaceType | fm_classOrInterfaceType) (dimExprs | fm_dimExprs) (dims | fm_dimsOpt)?
-  | NEW  (primitiveType | fm_primitiveType) (dims | fm_dims) (arrayInitializer | fm_arrayInitializer)
-  | NEW  (classOrInterfaceType | fm_classOrInterfaceType) (dims | fm_dims) (arrayInitializer | fm_arrayInitializer)
+  : NEW  (fm_primitiveType | primitiveType) (fm_dimExprs | dimExprs) (fm_dimsOpt | dims)?
+  | NEW  (fm_classOrInterfaceType | classOrInterfaceType) (fm_dimExprs | dimExprs) (fm_dimsOpt | dims)?
+  | NEW  (fm_primitiveType | primitiveType) (fm_dims | dims) (fm_arrayInitializer | arrayInitializer)
+  | NEW  (fm_classOrInterfaceType | classOrInterfaceType) (fm_dims | dims) (fm_arrayInitializer | arrayInitializer)
   ;
 
 dimExprs
-  : (dimExpr | fm_dimExpr) (dimExpr | fm_dimExprStar)*
+  : (fm_dimExpr | dimExpr) (fm_dimExprStar | dimExpr)*
   ;
 fm_dimExprs: FM_PLACEHOLDER | FM_IF (fm_dimExprs | dimExprs) (FM_ELSE_IF (fm_dimExprs | dimExprs))* FM_ELSE (fm_dimExprs | dimExprs) FM_IF_CLOSE;
 
 dimExpr
-  : (annotation | fm_annotationStar)* LBRACK  (expression | fm_expression) RBRACK 
+  : (fm_annotationStar | annotation)* LBRACK  (fm_expression | expression) RBRACK 
   ;
 fm_dimExpr: FM_PLACEHOLDER | FM_IF (fm_dimExpr | dimExpr) (FM_ELSE_IF (fm_dimExpr | dimExpr))* FM_ELSE (fm_dimExpr | dimExpr) FM_IF_CLOSE;
-fm_dimExprStar: FM_PLACEHOLDER | FM_IF (fm_dimExprStar | dimExpr) (FM_ELSE_IF (fm_dimExprStar | dimExpr))* (FM_ELSE (fm_dimExprStar | dimExpr))? FM_IF_CLOSE | FM_LIST (fm_dimExprStar | dimExpr) FM_LIST_CLOSE;
+fm_dimExprStar: FM_PLACEHOLDER | FM_IF (fm_dimExprStar | dimExpr)* (FM_ELSE_IF (fm_dimExprStar | dimExpr)*)* (FM_ELSE (fm_dimExprStar | dimExpr)*)? FM_IF_CLOSE | FM_LIST (fm_dimExprStar | dimExpr)* FM_LIST_CLOSE;
 
 constantExpression
   : expression
@@ -1313,22 +1305,22 @@ expression
   | assignmentExpression
   ;
 fm_expression: FM_PLACEHOLDER | FM_IF (fm_expression | expression) (FM_ELSE_IF (fm_expression | expression))* FM_ELSE (fm_expression | expression) FM_IF_CLOSE;
-fm_expressionOpt: FM_PLACEHOLDER | FM_IF (fm_expressionOpt | expression) (FM_ELSE_IF (fm_expressionOpt | expression))* (FM_ELSE (fm_expressionOpt | expression))? FM_IF_CLOSE;
+fm_expressionOpt: FM_PLACEHOLDER | FM_IF (fm_expressionOpt | expression)? (FM_ELSE_IF (fm_expressionOpt | expression)?)* (FM_ELSE (fm_expressionOpt | expression)?)? FM_IF_CLOSE;
 
 lambdaExpression
-  : (lambdaParameters | fm_lambdaParameters) ARROW  (lambdaBody | fm_lambdaBody)
+  : (fm_lambdaParameters | lambdaParameters) ARROW  (fm_lambdaBody | lambdaBody)
   ;
 fm_lambdaExpression: FM_PLACEHOLDER | FM_IF (fm_lambdaExpression | lambdaExpression) (FM_ELSE_IF (fm_lambdaExpression | lambdaExpression))* FM_ELSE (fm_lambdaExpression | lambdaExpression) FM_IF_CLOSE;
 
 lambdaParameters
   : Identifier
-  | LPAREN  (formalParameterList | fm_formalParameterListOpt)? RPAREN 
-  | LPAREN  (inferredFormalParameterList | fm_inferredFormalParameterList) RPAREN 
+  | LPAREN  (fm_formalParameterListOpt | formalParameterList)? RPAREN 
+  | LPAREN  (fm_inferredFormalParameterList | inferredFormalParameterList) RPAREN 
   ;
 fm_lambdaParameters: FM_PLACEHOLDER | FM_IF (fm_lambdaParameters | lambdaParameters) (FM_ELSE_IF (fm_lambdaParameters | lambdaParameters))* FM_ELSE (fm_lambdaParameters | lambdaParameters) FM_IF_CLOSE;
 
 inferredFormalParameterList
-  : (Identifier | fm_Identifier) (COMMA  (Identifier | fm_Identifier))*
+  : (fm_Identifier | Identifier) (COMMA  (fm_Identifier | Identifier))*
   ;
 fm_inferredFormalParameterList: FM_PLACEHOLDER | FM_IF (fm_inferredFormalParameterList | inferredFormalParameterList) (FM_ELSE_IF (fm_inferredFormalParameterList | inferredFormalParameterList))* FM_ELSE (fm_inferredFormalParameterList | inferredFormalParameterList) FM_IF_CLOSE;
 
@@ -1344,7 +1336,7 @@ assignmentExpression
   ;
 
 assignment
-  : (leftHandSide | fm_leftHandSide) (assignmentOperator | fm_assignmentOperator) (expression | fm_expression)
+  : (fm_leftHandSide | leftHandSide) (fm_assignmentOperator | assignmentOperator) (fm_expression | expression)
   ;
 
 leftHandSide
@@ -1372,121 +1364,121 @@ fm_assignmentOperator: FM_PLACEHOLDER | FM_IF (fm_assignmentOperator | assignmen
 
 conditionalExpression
   : conditionalOrExpression
-  | (conditionalOrExpression | fm_conditionalOrExpression) QUESTION  (expression | fm_expression) COLON  (conditionalExpression | fm_conditionalExpression)
+  | (fm_conditionalOrExpression | conditionalOrExpression) QUESTION  (fm_expression | expression) COLON  (fm_conditionalExpression | conditionalExpression)
   ;
 fm_conditionalExpression: FM_PLACEHOLDER | FM_IF (fm_conditionalExpression | conditionalExpression) (FM_ELSE_IF (fm_conditionalExpression | conditionalExpression))* FM_ELSE (fm_conditionalExpression | conditionalExpression) FM_IF_CLOSE;
 
 conditionalOrExpression
   : conditionalAndExpression
-  | fm_conditionalOrExpression OR ( conditionalAndExpression | fm_conditionalAndExpression ) 
-  | conditionalOrExpression OR  (conditionalAndExpression | fm_conditionalAndExpression)
+  | fm_conditionalOrExpression OR ( fm_conditionalAndExpression | conditionalAndExpression ) 
+  | conditionalOrExpression OR  (fm_conditionalAndExpression | conditionalAndExpression)
   ;
 fm_conditionalOrExpression: FM_PLACEHOLDER | FM_IF (fm_conditionalOrExpression | conditionalOrExpression) (FM_ELSE_IF (fm_conditionalOrExpression | conditionalOrExpression))* FM_ELSE (fm_conditionalOrExpression | conditionalOrExpression) FM_IF_CLOSE;
 
 conditionalAndExpression
   : inclusiveOrExpression
-  | fm_conditionalAndExpression AND ( inclusiveOrExpression | fm_inclusiveOrExpression ) 
-  | conditionalAndExpression AND  (inclusiveOrExpression | fm_inclusiveOrExpression)
+  | fm_conditionalAndExpression AND ( fm_inclusiveOrExpression | inclusiveOrExpression ) 
+  | conditionalAndExpression AND  (fm_inclusiveOrExpression | inclusiveOrExpression)
   ;
 fm_conditionalAndExpression: FM_PLACEHOLDER | FM_IF (fm_conditionalAndExpression | conditionalAndExpression) (FM_ELSE_IF (fm_conditionalAndExpression | conditionalAndExpression))* FM_ELSE (fm_conditionalAndExpression | conditionalAndExpression) FM_IF_CLOSE;
 
 inclusiveOrExpression
   : exclusiveOrExpression
-  | fm_inclusiveOrExpression BITOR ( exclusiveOrExpression | fm_exclusiveOrExpression ) 
-  | inclusiveOrExpression BITOR  (exclusiveOrExpression | fm_exclusiveOrExpression)
+  | fm_inclusiveOrExpression BITOR ( fm_exclusiveOrExpression | exclusiveOrExpression ) 
+  | inclusiveOrExpression BITOR  (fm_exclusiveOrExpression | exclusiveOrExpression)
   ;
 fm_inclusiveOrExpression: FM_PLACEHOLDER | FM_IF (fm_inclusiveOrExpression | inclusiveOrExpression) (FM_ELSE_IF (fm_inclusiveOrExpression | inclusiveOrExpression))* FM_ELSE (fm_inclusiveOrExpression | inclusiveOrExpression) FM_IF_CLOSE;
 
 exclusiveOrExpression
   : andExpression
-  | fm_exclusiveOrExpression CARET ( andExpression | fm_andExpression ) 
-  | exclusiveOrExpression CARET  (andExpression | fm_andExpression)
+  | fm_exclusiveOrExpression CARET ( fm_andExpression | andExpression ) 
+  | exclusiveOrExpression CARET  (fm_andExpression | andExpression)
   ;
 fm_exclusiveOrExpression: FM_PLACEHOLDER | FM_IF (fm_exclusiveOrExpression | exclusiveOrExpression) (FM_ELSE_IF (fm_exclusiveOrExpression | exclusiveOrExpression))* FM_ELSE (fm_exclusiveOrExpression | exclusiveOrExpression) FM_IF_CLOSE;
 
 andExpression
   : equalityExpression
-  | fm_andExpression BITAND ( equalityExpression | fm_equalityExpression ) 
-  | andExpression BITAND  (equalityExpression | fm_equalityExpression)
+  | fm_andExpression BITAND ( fm_equalityExpression | equalityExpression ) 
+  | andExpression BITAND  (fm_equalityExpression | equalityExpression)
   ;
 fm_andExpression: FM_PLACEHOLDER | FM_IF (fm_andExpression | andExpression) (FM_ELSE_IF (fm_andExpression | andExpression))* FM_ELSE (fm_andExpression | andExpression) FM_IF_CLOSE;
 
 equalityExpression
   : relationalExpression
-  | fm_equalityExpression EQUAL ( relationalExpression | fm_relationalExpression ) 
-  | equalityExpression EQUAL  (relationalExpression | fm_relationalExpression)
-  | fm_equalityExpression NOTEQUAL ( relationalExpression | fm_relationalExpression ) 
-  | equalityExpression NOTEQUAL  (relationalExpression | fm_relationalExpression)
+  | fm_equalityExpression EQUAL ( fm_relationalExpression | relationalExpression ) 
+  | equalityExpression EQUAL  (fm_relationalExpression | relationalExpression)
+  | fm_equalityExpression NOTEQUAL ( fm_relationalExpression | relationalExpression ) 
+  | equalityExpression NOTEQUAL  (fm_relationalExpression | relationalExpression)
   ;
 fm_equalityExpression: FM_PLACEHOLDER | FM_IF (fm_equalityExpression | equalityExpression) (FM_ELSE_IF (fm_equalityExpression | equalityExpression))* FM_ELSE (fm_equalityExpression | equalityExpression) FM_IF_CLOSE;
 
 relationalExpression
   : shiftExpression
-  | fm_relationalExpression LT ( shiftExpression | fm_shiftExpression ) 
-  | relationalExpression LT  (shiftExpression | fm_shiftExpression)
-  | fm_relationalExpression GT ( shiftExpression | fm_shiftExpression ) 
-  | relationalExpression GT  (shiftExpression | fm_shiftExpression)
-  | fm_relationalExpression LE ( shiftExpression | fm_shiftExpression ) 
-  | relationalExpression LE  (shiftExpression | fm_shiftExpression)
-  | fm_relationalExpression GE ( shiftExpression | fm_shiftExpression ) 
-  | relationalExpression GE  (shiftExpression | fm_shiftExpression)
-  | fm_relationalExpression INSTANCEOF ( referenceType | fm_referenceType ) 
-  | relationalExpression INSTANCEOF  (referenceType | fm_referenceType)
+  | fm_relationalExpression LT ( fm_shiftExpression | shiftExpression ) 
+  | relationalExpression LT  (fm_shiftExpression | shiftExpression)
+  | fm_relationalExpression GT ( fm_shiftExpression | shiftExpression ) 
+  | relationalExpression GT  (fm_shiftExpression | shiftExpression)
+  | fm_relationalExpression LE ( fm_shiftExpression | shiftExpression ) 
+  | relationalExpression LE  (fm_shiftExpression | shiftExpression)
+  | fm_relationalExpression GE ( fm_shiftExpression | shiftExpression ) 
+  | relationalExpression GE  (fm_shiftExpression | shiftExpression)
+  | fm_relationalExpression INSTANCEOF ( fm_referenceType | referenceType ) 
+  | relationalExpression INSTANCEOF  (fm_referenceType | referenceType)
   ;
 fm_relationalExpression: FM_PLACEHOLDER | FM_IF (fm_relationalExpression | relationalExpression) (FM_ELSE_IF (fm_relationalExpression | relationalExpression))* FM_ELSE (fm_relationalExpression | relationalExpression) FM_IF_CLOSE;
 
 shiftExpression
   : additiveExpression
-  | fm_shiftExpression LT LT ( additiveExpression | fm_additiveExpression ) 
-  | shiftExpression LT  LT  (additiveExpression | fm_additiveExpression)
-  | fm_shiftExpression GT GT ( additiveExpression | fm_additiveExpression ) 
-  | shiftExpression GT  GT  (additiveExpression | fm_additiveExpression)
-  | fm_shiftExpression GT GT GT ( additiveExpression | fm_additiveExpression ) 
-  | shiftExpression GT  GT  GT  (additiveExpression | fm_additiveExpression)
+  | fm_shiftExpression LT LT ( fm_additiveExpression | additiveExpression ) 
+  | shiftExpression LT  LT  (fm_additiveExpression | additiveExpression)
+  | fm_shiftExpression GT GT ( fm_additiveExpression | additiveExpression ) 
+  | shiftExpression GT  GT  (fm_additiveExpression | additiveExpression)
+  | fm_shiftExpression GT GT GT ( fm_additiveExpression | additiveExpression ) 
+  | shiftExpression GT  GT  GT  (fm_additiveExpression | additiveExpression)
   ;
 fm_shiftExpression: FM_PLACEHOLDER | FM_IF (fm_shiftExpression | shiftExpression) (FM_ELSE_IF (fm_shiftExpression | shiftExpression))* FM_ELSE (fm_shiftExpression | shiftExpression) FM_IF_CLOSE;
 
 additiveExpression
   : multiplicativeExpression
-  | fm_additiveExpression ADD ( multiplicativeExpression | fm_multiplicativeExpression ) 
-  | additiveExpression ADD  (multiplicativeExpression | fm_multiplicativeExpression)
-  | fm_additiveExpression SUB ( multiplicativeExpression | fm_multiplicativeExpression ) 
-  | additiveExpression SUB  (multiplicativeExpression | fm_multiplicativeExpression)
+  | fm_additiveExpression ADD ( fm_multiplicativeExpression | multiplicativeExpression ) 
+  | additiveExpression ADD  (fm_multiplicativeExpression | multiplicativeExpression)
+  | fm_additiveExpression SUB ( fm_multiplicativeExpression | multiplicativeExpression ) 
+  | additiveExpression SUB  (fm_multiplicativeExpression | multiplicativeExpression)
   ;
 fm_additiveExpression: FM_PLACEHOLDER | FM_IF (fm_additiveExpression | additiveExpression) (FM_ELSE_IF (fm_additiveExpression | additiveExpression))* FM_ELSE (fm_additiveExpression | additiveExpression) FM_IF_CLOSE;
 
 multiplicativeExpression
   : unaryExpression
-  | fm_multiplicativeExpression MUL ( unaryExpression | fm_unaryExpression ) 
-  | multiplicativeExpression MUL  (unaryExpression | fm_unaryExpression)
-  | fm_multiplicativeExpression DIV ( unaryExpression | fm_unaryExpression ) 
-  | multiplicativeExpression DIV  (unaryExpression | fm_unaryExpression)
-  | fm_multiplicativeExpression MOD ( unaryExpression | fm_unaryExpression ) 
-  | multiplicativeExpression MOD  (unaryExpression | fm_unaryExpression)
+  | fm_multiplicativeExpression MUL ( fm_unaryExpression | unaryExpression ) 
+  | multiplicativeExpression MUL  (fm_unaryExpression | unaryExpression)
+  | fm_multiplicativeExpression DIV ( fm_unaryExpression | unaryExpression ) 
+  | multiplicativeExpression DIV  (fm_unaryExpression | unaryExpression)
+  | fm_multiplicativeExpression MOD ( fm_unaryExpression | unaryExpression ) 
+  | multiplicativeExpression MOD  (fm_unaryExpression | unaryExpression)
   ;
 fm_multiplicativeExpression: FM_PLACEHOLDER | FM_IF (fm_multiplicativeExpression | multiplicativeExpression) (FM_ELSE_IF (fm_multiplicativeExpression | multiplicativeExpression))* FM_ELSE (fm_multiplicativeExpression | multiplicativeExpression) FM_IF_CLOSE;
 
 unaryExpression
   : preIncrementExpression
   | preDecrementExpression
-  | ADD  (unaryExpression | fm_unaryExpression)
-  | SUB  (unaryExpression | fm_unaryExpression)
+  | ADD  (fm_unaryExpression | unaryExpression)
+  | SUB  (fm_unaryExpression | unaryExpression)
   | unaryExpressionNotPlusMinus
   ;
 fm_unaryExpression: FM_PLACEHOLDER | FM_IF (fm_unaryExpression | unaryExpression) (FM_ELSE_IF (fm_unaryExpression | unaryExpression))* FM_ELSE (fm_unaryExpression | unaryExpression) FM_IF_CLOSE;
 
 preIncrementExpression
-  : INC  (unaryExpression | fm_unaryExpression)
+  : INC  (fm_unaryExpression | unaryExpression)
   ;
 
 preDecrementExpression
-  : DEC  (unaryExpression | fm_unaryExpression)
+  : DEC  (fm_unaryExpression | unaryExpression)
   ;
 
 unaryExpressionNotPlusMinus
   : postfixExpression
-  | TILDE  (unaryExpression | fm_unaryExpression)
-  | BANG  (unaryExpression | fm_unaryExpression)
+  | TILDE  (fm_unaryExpression | unaryExpression)
+  | BANG  (fm_unaryExpression | unaryExpression)
   | castExpression
   ;
 fm_unaryExpressionNotPlusMinus: FM_PLACEHOLDER | FM_IF (fm_unaryExpressionNotPlusMinus | unaryExpressionNotPlusMinus) (FM_ELSE_IF (fm_unaryExpressionNotPlusMinus | unaryExpressionNotPlusMinus))* FM_ELSE (fm_unaryExpressionNotPlusMinus | unaryExpressionNotPlusMinus) FM_IF_CLOSE;
@@ -1502,7 +1494,7 @@ postfixExpression
 fm_postfixExpression: FM_PLACEHOLDER | FM_IF (fm_postfixExpression | postfixExpression) (FM_ELSE_IF (fm_postfixExpression | postfixExpression))* FM_ELSE (fm_postfixExpression | postfixExpression) FM_IF_CLOSE;
 
 postIncrementExpression
-  : (postfixExpression | fm_postfixExpression) INC 
+  : (fm_postfixExpression | postfixExpression) INC 
   ;
 
 postIncrementExpression_lf_postfixExpression
@@ -1510,7 +1502,7 @@ postIncrementExpression_lf_postfixExpression
   ;
 
 postDecrementExpression
-  : (postfixExpression | fm_postfixExpression) DEC 
+  : (fm_postfixExpression | postfixExpression) DEC 
   ;
 
 postDecrementExpression_lf_postfixExpression
@@ -1518,9 +1510,9 @@ postDecrementExpression_lf_postfixExpression
   ;
 
 castExpression
-  : LPAREN  (primitiveType | fm_primitiveType) RPAREN  (unaryExpression | fm_unaryExpression)
-  | LPAREN  (referenceType | fm_referenceType) (additionalBound | fm_additionalBoundStar)* RPAREN  (unaryExpressionNotPlusMinus | fm_unaryExpressionNotPlusMinus)
-  | LPAREN  (referenceType | fm_referenceType) (additionalBound | fm_additionalBoundStar)* RPAREN  (lambdaExpression | fm_lambdaExpression)
+  : LPAREN  (fm_primitiveType | primitiveType) RPAREN  (fm_unaryExpression | unaryExpression)
+  | LPAREN  (fm_referenceType | referenceType) (fm_additionalBoundStar | additionalBound)* RPAREN  (fm_unaryExpressionNotPlusMinus | unaryExpressionNotPlusMinus)
+  | LPAREN  (fm_referenceType | referenceType) (fm_additionalBoundStar | additionalBound)* RPAREN  (fm_lambdaExpression | lambdaExpression)
   ;
 
 // LEXER
@@ -1916,7 +1908,7 @@ Identifier
   : JavaLetter JavaLetterOrDigit*
   ;
 fm_Identifier: FM_PLACEHOLDER | FM_IF (fm_Identifier | Identifier) (FM_ELSE_IF (fm_Identifier | Identifier))* FM_ELSE (fm_Identifier | Identifier) FM_IF_CLOSE;
-fm_IdentifierOpt: FM_PLACEHOLDER | FM_IF (fm_IdentifierOpt | Identifier) (FM_ELSE_IF (fm_IdentifierOpt | Identifier))* (FM_ELSE (fm_IdentifierOpt | Identifier))? FM_IF_CLOSE;
+fm_IdentifierOpt: FM_PLACEHOLDER | FM_IF (fm_IdentifierOpt | Identifier)? (FM_ELSE_IF (fm_IdentifierOpt | Identifier)?)* (FM_ELSE (fm_IdentifierOpt | Identifier)?)? FM_IF_CLOSE;
 
 fragment
 JavaLetter
