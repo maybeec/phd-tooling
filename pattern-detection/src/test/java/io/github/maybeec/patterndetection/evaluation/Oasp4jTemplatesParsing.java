@@ -14,6 +14,7 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.atn.PredictionMode;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.assertj.core.util.Lists;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import io.github.maybeec.antlr4.parser.TemplateParser;
@@ -24,6 +25,7 @@ import io.github.maybeec.patterndetection.utils.MetaLangCounter;
 /**
  *
  */
+@Ignore
 public class Oasp4jTemplatesParsing {
 
     private final static Path testResourcesRootPath =

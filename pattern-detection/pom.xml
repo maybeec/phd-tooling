@@ -45,11 +45,11 @@
       <scope>test</scope>
     </dependency>
     
-    <dependency>
+    <!-- <dependency>
       <groupId>com.capgemini</groupId>
       <artifactId>cobigen-templates-oasp4j</artifactId>
       <version>1.0.0</version>
-    </dependency>
+    </dependency> -->
   </dependencies>
 
   <build>
