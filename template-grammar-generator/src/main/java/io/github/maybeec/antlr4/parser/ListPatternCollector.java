@@ -40,7 +40,14 @@ import org.antlr.v4.runtime.tree.TerminalNode;
  * transform list elements later on to provide a more generic label. Take this example as a production of the
  * list pattern to be handled by the {@link ListPatternCollector}:
  * <p>
- * {@code AnyList: elem | fm_AnyList 'sep' (elem | fm_elem) | AnyList 'sep' (elem | fm_elem)}
+ * {@code AnyList: elem | fm_AnyList 'sep' (fm_elem | elem) | AnyList 'sep' (fm_elem | elem)}
+ * </p>
+ * <p>
+ * and
+ * </p>
+ * <p>
+ * {@code AnyList: (fm_elem | elem) ('sep' (fm_elem | elem))*} not covered as there is no valid transformation
+ * of fm_elem to fm_AnyList
  * </p>
  * If placeholders are parsed as elements of this list, we will get ph_elem placeholders. However, due to
  * common use cases like in the definition of packages, we want to support to potentially insert more than one

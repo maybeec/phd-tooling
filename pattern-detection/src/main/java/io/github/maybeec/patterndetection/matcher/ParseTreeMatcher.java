@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -17,6 +19,7 @@ import org.antlr.v4.runtime.Vocabulary;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNodeImpl;
 
+import io.github.maybeec.antlr4.parser.ListPatternCollector;
 import io.github.maybeec.patterndetection.exception.NoMatchException;
 import io.github.maybeec.patterndetection.exception.NotYetImplementedException;
 
@@ -36,7 +39,7 @@ public class ParseTreeMatcher {
     static {
         nonOrderedNodes = new HashSet<>();
         for (String production : _nonOrderedNodes) {
-            nonOrderedNodes.add(production);
+            nonOrderedNodes.add(production + "Context");
             nonOrderedNodes.add("Fm_" + production + "Context");
             nonOrderedNodes.add("Fm_" + production + "OptContext");
             nonOrderedNodes.add("Fm_" + production + "StarContext");
@@ -77,6 +80,9 @@ public class ParseTreeMatcher {
     /** Decision points to may get back to during backtracking. */
     private Stack<MatcherState> decisionPoints = new Stack<>();
 
+    /** List patterns in the underlying grammar. See {@link ListPatternCollector} for more details */
+    private Map<String, String> listPatterns;
+
     /**
      * Creates a new instance of the matcher.
      * @param templateCST
@@ -85,13 +91,17 @@ public class ParseTreeMatcher {
      *            application CST root
      * @param parserVocabulary
      *            vocabulary of the parser to resolve token names from.
+     * @param listPatterns
+     *            list patterns
      */
-    public ParseTreeMatcher(ParseTree templateCST, ParseTree applicationFileCST, Vocabulary parserVocabulary) {
+    public ParseTreeMatcher(ParseTree templateCST, ParseTree applicationFileCST, Vocabulary parserVocabulary,
+        Map<String, String> listPatterns) {
         templatePointer = templateCST;
         appPointer = applicationFileCST;
         templatePointerInit = templateCST;
         appPointerInit = applicationFileCST;
         this.parserVocabulary = parserVocabulary;
+        this.listPatterns = listPatterns;
     }
 
     /**
@@ -151,9 +161,9 @@ public class ParseTreeMatcher {
                                             && nonOrderedNodes.contains(appChild.getClass().getSimpleName())
                                             && isOfSameProduction(appChild, templateChild)) {
 
-                                            new ParseTreeMatcher(templateChild, appChild, parserVocabulary).detect(
-                                                tokenSubstituitions, selectedSubstitutions,
-                                                selectedSubstitutionTokenCount);
+                                            new ParseTreeMatcher(templateChild, appChild, parserVocabulary,
+                                                listPatterns).detect(tokenSubstituitions, selectedSubstitutions,
+                                                    selectedSubstitutionTokenCount);
                                             match = appChild;
                                             break;
                                         }
@@ -247,12 +257,28 @@ public class ParseTreeMatcher {
                                         appPointer = LA(placeholderSubstitutionPointer, 1, false);
                                         templatePointer = LA(nextTemplateToken, 1, false);
                                         break;
-                                    } else if (!isOfSameProduction(placeholderSubstitutionPointer,
-                                        templateRootProductionName)) {
-                                        throw new NoMatchException("Could not find valid substitution of placeholder. '"
-                                            + placeholderSubstitutionPointer.getClass().getSimpleName()
-                                            + "' is not part of placeholder production " + templateRootProductionName);
+                                    } else {
 
+                                        // if (templateRootProductionName.equals("Fm_qualifiedNameContext")) {
+                                        // System.out.println("here");
+                                        // }
+                                        //
+                                        // placeholderSubstitutionPointer.get
+
+                                        // if (listPatterns.containsKey(templateRootProductionName) &&
+                                        // listPatterns
+                                        // .get(templateRootProductionName).equals(objectLangProduction)) {
+                                        // return true;
+                                        // } else
+                                        if (!isOfSameProduction(placeholderSubstitutionPointer,
+                                            templateRootProductionName)) {
+                                            throw new NoMatchException(
+                                                "Could not find valid substitution of placeholder. '"
+                                                    + placeholderSubstitutionPointer.getClass().getSimpleName()
+                                                    + "' is not part of placeholder production "
+                                                    + templateRootProductionName);
+
+                                        }
                                     }
                                     placeholderSubstitutionPointer = LA(placeholderSubstitutionPointer, 1, true);
                                 }
@@ -365,17 +391,41 @@ public class ParseTreeMatcher {
         if (objectLangProduction == null) {
             return false;
         }
+
+        if (templateLangProductionName.equals("Fm_qualifiedNameContext")) {
+            System.out.println("here");
+        }
+
+        String objectLangProductionName = null;
+        String objectLangProductionNameConverted = null;
         if (objectLangProduction instanceof RuleContext) {
-            if (templateLangProductionName
-                .matches("(F|f)m_" + getCapitalizedProductionName(objectLangProduction) + "(Opt|Star|Plus)?")) {
+            objectLangProductionName = objectLangProduction.getClass().getSimpleName();
+            objectLangProductionNameConverted =
+                "(F|f)m_" + getCapitalizedProductionName(objectLangProduction) + "(Opt|Star|Plus)?";
+        } else if (objectLangProduction instanceof TerminalNodeImpl) {
+            objectLangProductionName =
+                parserVocabulary.getSymbolicName(((TerminalNodeImpl) objectLangProduction).getSymbol().getType());
+            objectLangProductionNameConverted = "(F|f)m_" + objectLangProductionName + "(Opt|Star|Plus)?Context";
+        }
+
+        String originGrammarTemplateProductionName = templateLangProductionName;
+        Pattern p = Pattern.compile("(F|f)m_(.+)Context");
+        Matcher m = p.matcher(templateLangProductionName);
+        if (m.matches()) {
+            originGrammarTemplateProductionName = m.group(2);
+        }
+
+        if (listPatterns.containsKey(originGrammarTemplateProductionName)
+            && listPatterns.get(originGrammarTemplateProductionName).equals(objectLangProductionName)) {
+            return true;
+        } else if (objectLangProduction instanceof RuleContext) {
+            if (templateLangProductionName.matches(objectLangProductionNameConverted)) {
                 return true;
             } else {
                 return isOfSameProduction(objectLangProduction.getParent(), templateLangProductionName);
             }
         } else if (objectLangProduction instanceof TerminalNodeImpl) {
-            if (templateLangProductionName.matches("(F|f)m_"
-                + parserVocabulary.getSymbolicName(((TerminalNodeImpl) objectLangProduction).getSymbol().getType())
-                + "(Opt|Star|Plus)?Context")) {
+            if (templateLangProductionName.matches(objectLangProductionNameConverted)) {
                 return true;
             } else {
                 return isOfSameProduction(objectLangProduction.getParent(), templateLangProductionName);

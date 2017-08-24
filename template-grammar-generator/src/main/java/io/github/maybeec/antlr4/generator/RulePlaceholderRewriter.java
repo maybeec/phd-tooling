@@ -6,10 +6,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.antlr.parser.antlr4.ANTLRv4Parser.AltListContext;
+import org.antlr.parser.antlr4.ANTLRv4Parser.AlternativeContext;
 import org.antlr.parser.antlr4.ANTLRv4Parser.AtomContext;
+import org.antlr.parser.antlr4.ANTLRv4Parser.BlockContext;
 import org.antlr.parser.antlr4.ANTLRv4Parser.EbnfContext;
 import org.antlr.parser.antlr4.ANTLRv4Parser.EbnfSuffixContext;
 import org.antlr.parser.antlr4.ANTLRv4Parser.ElementContext;
+import org.antlr.parser.antlr4.ANTLRv4Parser.IdentifierContext;
 import org.antlr.parser.antlr4.ANTLRv4Parser.LabeledElementContext;
 import org.antlr.parser.antlr4.ANTLRv4Parser.ParserRuleSpecContext;
 import org.antlr.parser.antlr4.ANTLRv4Parser.RulerefContext;
@@ -17,6 +21,7 @@ import org.antlr.parser.antlr4.ANTLRv4Parser.TerminalContext;
 import org.antlr.parser.antlr4.ANTLRv4ParserBaseListener;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.TokenStreamRewriter;
 import org.antlr.v4.runtime.tree.ParseTree;
 
@@ -24,6 +29,8 @@ import org.antlr.v4.runtime.tree.ParseTree;
  * A class to introduce placeholders of a given meta language into an object language grammar
  */
 public class RulePlaceholderRewriter extends ANTLRv4ParserBaseListener {
+
+    public static final boolean TRANSFORM_POTENTIAL_CHAIN_RULES = true;
 
     private TokenStreamRewriter rewriter;
 
@@ -60,10 +67,9 @@ public class RulePlaceholderRewriter extends ANTLRv4ParserBaseListener {
 
         if (!GrammarUtil.isLeftRecursive(ctx)) {
             if (selectedRules.contains(referencedRuleName)) {
-                EbnfSuffixContext ebnfSuffixContext = getElementParent(ctx).ebnfSuffix();
+                EbnfSuffixContext ebnfSuffixContext = getParent(ctx, ElementContext.class).ebnfSuffix();
                 // ignore chain productions of max occurrence 1
-                if (countSiblings(ctx) > 1
-                    || (ebnfSuffixContext != null && ebnfSuffixContext.getText().matches("(\\?|\\+)"))) {
+                if (!isChainRule(ctx, ebnfSuffixContext)) {
                     String ebnfSuffix = ebnfSuffixContext != null ? ebnfSuffixContext.getText() : "";
                     extendRuleRef(ctx, ebnfSuffix);
                 }
@@ -76,9 +82,100 @@ public class RulePlaceholderRewriter extends ANTLRv4ParserBaseListener {
         }
     }
 
-    private int countSiblings(ParserRuleContext ctx) {
+    /**
+     * @param ctx
+     * @param ebnfSuffixContext
+     * @return
+     */
+    private boolean isChainRule(ParseTree ctx, EbnfSuffixContext ebnfSuffixContext) {
+        // if (ctx.getText().equals("IDENTIFIER")
+        // && getParent(ctx, ParserRuleSpecContext.class).RULE_REF().getText().equals("qualifiedName")) {
+        // System.out.println("asdf");
+        // }
+
+        if (ebnfSuffixContext == null || ebnfSuffixContext.equals("")) {
+            // simple case
+            AltListContext parentAltList = getParent(ctx, AltListContext.class);
+            // just in case of top level alternative list. The top level alternatives are indicated by
+            // RuleListContext rather than AltListContext. AltListContexts are just intermediate alternative
+            // lists
+            if (countSiblings(ctx) == 1 && parentAltList == null) {
+                return true;
+            }
+
+            if (!TRANSFORM_POTENTIAL_CHAIN_RULES) {
+                boolean isPotentialChainRule = true;
+                ElementContext elem = getParent((RuleContext) ctx, ElementContext.class);
+
+                do {
+                    for (ParseTree sibling : elem.getParent().children) {
+                        if (!elem.equals(sibling)) {
+                            ebnfSuffixContext = getEbnfSuffix(sibling);
+                            isPotentialChainRule = isPotentialChainRule && ebnfSuffixContext != null
+                                && ebnfSuffixContext.getText().matches("\\?|\\*");
+                        }
+                    }
+
+                    elem = getParent(elem, ElementContext.class);
+                } while (elem != null);
+
+                if (isPotentialChainRule) {
+                    // check if it is not first elem of list pattern: elem (SEP elem)*
+                    elem = getParent((RuleContext) ctx, ElementContext.class);
+                    List<ParseTree> children = elem.getParent().children;
+                    if (children.size() == 2) {
+                        String elemName = children.get(0).getText();
+                        ParseTree blockElem = children.get(1);
+                        EbnfSuffixContext suffix = getEbnfSuffix(blockElem);
+                        if (suffix != null && suffix.getText().equals("*")) {
+                            if (blockElem.getChild(0) instanceof EbnfContext
+                                && blockElem.getChild(0).getChild(0) instanceof BlockContext
+                                && blockElem.getChild(0).getChild(0).getChildCount() == 3
+                                && blockElem.getChild(0).getChild(0).getChild(1) instanceof AltListContext) {
+                                // ( AltListContext )
+                                AltListContext altList = (AltListContext) blockElem.getChild(0).getChild(0).getChild(1);
+                                if (altList.getChild(0) instanceof AlternativeContext
+                                    && altList.getChild(0).getChildCount() == 2) {
+                                    if (altList.getChild(0).getChild(1).getText().equals(elemName)) {
+                                        // ignore this case to allow also the first element of a list to be
+                                        // replaced by a placeholder
+                                        return false;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                return isPotentialChainRule;
+            }
+        }
+
+        return false;
+
+    }
+
+    /**
+     * @param sibling
+     * @return
+     */
+    private EbnfSuffixContext getEbnfSuffix(ParseTree sibling) {
+        EbnfSuffixContext ebnfSuffixContext;
+        if (sibling instanceof ElementContext) {
+            ElementContext siblingElement = (ElementContext) sibling;
+            ebnfSuffixContext = siblingElement.ebnfSuffix();
+            if (ebnfSuffixContext == null && siblingElement.ebnf() != null
+                && siblingElement.ebnf().blockSuffix() != null) {
+                ebnfSuffixContext = siblingElement.ebnf().blockSuffix().ebnfSuffix();
+            }
+        } else {
+            ebnfSuffixContext = null;
+        }
+        return ebnfSuffixContext;
+    }
+
+    private int countSiblings(ParseTree ctx) {
         int elementCount = 0;
-        ElementContext elementCtx = getElementParent(ctx);
+        ElementContext elementCtx = getParent(ctx, ElementContext.class);
         for (ParseTree sibling : elementCtx.getParent().children) {
             if (sibling instanceof ElementContext) {
                 for (ParseTree elementChild : ((ElementContext) sibling).children) {
@@ -92,11 +189,12 @@ public class RulePlaceholderRewriter extends ANTLRv4ParserBaseListener {
         return elementCount;
     }
 
-    private ElementContext getElementParent(ParserRuleContext ctx) {
-        ParserRuleContext parent = ctx.getParent();
+    private <PARENT extends ParserRuleContext> PARENT getParent(ParseTree ctx, Class<PARENT> parentClass) {
+
+        ParseTree parent = ctx.getParent();
         while (parent != null) {
-            if (parent instanceof ElementContext) {
-                return (ElementContext) parent;
+            if (parentClass.isAssignableFrom(parent.getClass())) {
+                return (PARENT) parent;
             }
             parent = parent.getParent();
         }
@@ -132,8 +230,7 @@ public class RulePlaceholderRewriter extends ANTLRv4ParserBaseListener {
                         tokenName = newLexerRuleName;
                         createdLexerRuleList.add(newLexerRuleName + ":" + ctx.getText() + ";");
                     }
-                    rewriter.replace(ctx.stop, tokenName + " "); // normalize
-                                                                 // grammar
+                    rewriter.replace(ctx.stop, tokenName + " "); // normalize grammar
 
                     break;
                 } else {
@@ -158,14 +255,15 @@ public class RulePlaceholderRewriter extends ANTLRv4ParserBaseListener {
         }
 
         if (tokenName != null && isInParserRule && selectedRules.contains(tokenName)) {
-            if (countSiblings(ctx) > 1) {
+            EbnfSuffixContext ebnfSuffixContext = getParent(ctx, ElementContext.class).ebnfSuffix();
+            if (!isChainRule(ctx, ebnfSuffixContext)) {
                 extendTerminal(ctx, tokenName);
             }
         } else if (tokenName != null && isInParserRule && !selectedRules.contains(tokenName)
             && multiLexerRules.contains(tokenName)) {
             // add () to allow condition and loop extension if not fixed token
-            rewriter.insertBefore(ctx.start, "(");
-            rewriter.insertAfter(ctx.stop, ")");
+            // rewriter.insertBefore(ctx.start, "(");
+            // rewriter.insertAfter(ctx.stop, ")");
         }
 
     }
@@ -180,39 +278,50 @@ public class RulePlaceholderRewriter extends ANTLRv4ParserBaseListener {
         switch (cardinality) {
         case "":
             phRuleName = grammarSpec.getMetaLangParserRulePrefix() + ruleName;
-
-            usedPlaceholderRules.add(phRuleName);
-            rewriter.insertBefore(ctx.start, "(" + phRuleName + " | ");
-            rewriter.insertAfter(ctx.stop, ")");
             break;
         case "?":
             phRuleName = grammarSpec.getOptPhParserRuleName(ruleName);
-
-            usedPlaceholderRules.add(phRuleName);
-            rewriter.insertBefore(ctx.start, "(" + phRuleName + " | ");
-            rewriter.insertAfter(ctx.stop, ")");
             break;
         case "*":
             phRuleName = grammarSpec.getStarPhParserRuleName(ruleName);
-
-            usedPlaceholderRules.add(phRuleName);
-            rewriter.insertBefore(ctx.start, "(" + phRuleName + " | ");
-            rewriter.insertAfter(ctx.stop, ")");
             break;
         case "+":
             phRuleName = grammarSpec.getPlusPhParserRuleName(ruleName);
-
-            usedPlaceholderRules.add(phRuleName);
-            rewriter.insertBefore(ctx.start, "(" + phRuleName + " | ");
-            rewriter.insertAfter(ctx.stop, ")");
             break;
         default:
             throw new IllegalArgumentException("Unkown EBNF cardinality '" + cardinality + "'");
         }
+
+        // remove labels as they cannot be duplicated. Might be interesting if we start to introduce
+        // placeholder rules again.
+        if (ctx.getParent().getParent() instanceof LabeledElementContext) {
+            LabeledElementContext labeledElement = (LabeledElementContext) ctx.getParent().getParent();
+            for (int i = 0; i < labeledElement.getChildCount(); i++) {
+                ParseTree c = labeledElement.getChild(i);
+                if (c instanceof IdentifierContext && i + 2 < labeledElement.getChildCount()
+                    && labeledElement.getChild(i + 1).getText().equals("=")
+                    && labeledElement.getChild(i + 2).equals(ctx.getParent())) {
+                    rewriter.replace(labeledElement.start, labeledElement.stop,
+                        "(" + phRuleName + " | " + ruleName + ")");
+                    // rewriter.insertBefore(labeledElement.start, "(" + c.getText() + "=" + phRuleName + " |
+                    // ");
+                    // rewriter.insertAfter(labeledElement.stop, ")");
+                }
+            }
+        } else {
+            rewriter.insertBefore(ctx.start, "(" + phRuleName + " | ");
+            rewriter.insertAfter(ctx.stop, ")");
+        }
+        usedPlaceholderRules.add(phRuleName);
     }
 
     private void extendTerminal(TerminalContext ctx, String tokenName) {
-        EbnfSuffixContext ebnfSuffixContext = ((ElementContext) ctx.parent.parent).ebnfSuffix();
+        EbnfSuffixContext ebnfSuffixContext;
+        if (ctx.parent.parent instanceof ElementContext) {
+            ebnfSuffixContext = ((ElementContext) ctx.parent.parent).ebnfSuffix();
+        } else {
+            ebnfSuffixContext = ((ElementContext) ctx.parent.parent.parent).ebnfSuffix();
+        }
         String ebnfSuffix = ebnfSuffixContext != null ? ebnfSuffixContext.getText() : "";
         rewriteRuleRef(ctx, ebnfSuffix, tokenName);
     }

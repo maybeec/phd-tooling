@@ -16,7 +16,7 @@ public class GrammarExtenderCoreTest {
         String targetPackage = "io.github.maybeec.antlr4.templateparser.java8";
         Tactics customTactic = Tactics.ALL_PARSER_CUSTOM_LEXER;
         HashSet<String> tokenNames = new HashSet<>();
-        tokenNames.add("Identifier");
+        tokenNames.add("IDENTIFIER");
         customTactic.addTokens(tokenNames);
 
         // transform grammar

@@ -25,7 +25,6 @@ import io.github.maybeec.patterndetection.utils.MetaLangCounter;
 /**
  *
  */
-@Ignore
 public class Oasp4jTemplatesParsing {
 
     private final static Path testResourcesRootPath =

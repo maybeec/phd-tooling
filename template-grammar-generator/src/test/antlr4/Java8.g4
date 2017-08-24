@@ -269,7 +269,8 @@ lastFormalParameter
     ;
 
 qualifiedName
-    : IDENTIFIER ('.' IDENTIFIER)*
+    : IDENTIFIER 
+    | qualifiedName '.' IDENTIFIER
     ;
 
 literal
@@ -560,7 +561,8 @@ nonWildcardTypeArguments
     ;
 
 typeList
-    : typeType (',' typeType)*
+    : typeType
+    | typeList ',' typeType
     ;
 
 typeType
