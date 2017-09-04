@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -17,8 +19,8 @@ import org.antlr.v4.runtime.Vocabulary;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNodeImpl;
 
+import io.github.maybeec.antlr4.parser.ListPatternCollector;
 import io.github.maybeec.patterndetection.exception.NoMatchException;
-import io.github.maybeec.patterndetection.exception.NotYetImplementedException;
 
 /**
  * Parse tree matcher, which tries to find a template CST in an application CST by finding one valid
@@ -27,8 +29,8 @@ import io.github.maybeec.patterndetection.exception.NotYetImplementedException;
 public class ParseTreeMatcher {
 
     /** Non ordered productions. Might be served as input later on */
-    private static final Set<String> _nonOrderedNodes =
-        new HashSet<>(Arrays.asList(new String[] { "ImportDeclaration" }));
+    private static final Set<String> _nonOrderedNodes = new HashSet<>(
+        Arrays.asList(new String[] { "ImportDeclaration", "InterfaceMemberDeclaration", "ClassMemberDeclaration" }));
 
     /** Non ordered node class names, prepared on the basis of {@value #_nonOrderedNodes} */
     private static Set<String> nonOrderedNodes;
@@ -36,7 +38,7 @@ public class ParseTreeMatcher {
     static {
         nonOrderedNodes = new HashSet<>();
         for (String production : _nonOrderedNodes) {
-            nonOrderedNodes.add(production);
+            nonOrderedNodes.add(production + "Context");
             nonOrderedNodes.add("Fm_" + production + "Context");
             nonOrderedNodes.add("Fm_" + production + "OptContext");
             nonOrderedNodes.add("Fm_" + production + "StarContext");
@@ -77,6 +79,9 @@ public class ParseTreeMatcher {
     /** Decision points to may get back to during backtracking. */
     private Stack<MatcherState> decisionPoints = new Stack<>();
 
+    /** List patterns in the underlying grammar. See {@link ListPatternCollector} for more details */
+    private Map<String, String> listPatterns;
+
     /**
      * Creates a new instance of the matcher.
      * @param templateCST
@@ -85,13 +90,17 @@ public class ParseTreeMatcher {
      *            application CST root
      * @param parserVocabulary
      *            vocabulary of the parser to resolve token names from.
+     * @param listPatterns
+     *            list patterns
      */
-    public ParseTreeMatcher(ParseTree templateCST, ParseTree applicationFileCST, Vocabulary parserVocabulary) {
+    public ParseTreeMatcher(ParseTree templateCST, ParseTree applicationFileCST, Vocabulary parserVocabulary,
+        Map<String, String> listPatterns) {
         templatePointer = templateCST;
         appPointer = applicationFileCST;
         templatePointerInit = templateCST;
         appPointerInit = applicationFileCST;
         this.parserVocabulary = parserVocabulary;
+        this.listPatterns = listPatterns;
     }
 
     /**
@@ -136,6 +145,7 @@ public class ParseTreeMatcher {
                     templatePointer = skipAlreadyCoveredUnorderedNodes(templatePointer);
                     appPointer = skipAlreadyCoveredUnorderedNodes(appPointer);
 
+                    Class<?> lastMatchType = null;
                     if ((nonOrderedNodes.contains(appPointer.getClass().getSimpleName())
                         || nonOrderedNodes.contains(templatePointer.getClass().getSimpleName()))
                         && isOfSameProduction(appPointer, templatePointer)) {
@@ -151,9 +161,9 @@ public class ParseTreeMatcher {
                                             && nonOrderedNodes.contains(appChild.getClass().getSimpleName())
                                             && isOfSameProduction(appChild, templateChild)) {
 
-                                            new ParseTreeMatcher(templateChild, appChild, parserVocabulary).detect(
-                                                tokenSubstituitions, selectedSubstitutions,
-                                                selectedSubstitutionTokenCount);
+                                            new ParseTreeMatcher(templateChild, appChild, parserVocabulary,
+                                                listPatterns).detect(tokenSubstituitions, selectedSubstitutions,
+                                                    selectedSubstitutionTokenCount);
                                             match = appChild;
                                             break;
                                         }
@@ -165,15 +175,27 @@ public class ParseTreeMatcher {
                                     matches.put(templateChild, match);
                                     coveredUnorderedNodes.add(templateChild);
                                     coveredUnorderedNodes.add(match);
+                                    lastMatchType = match.getClass();
                                 } else {
                                     throw new NoMatchException("No match found for "
                                         + templateChild.getClass().getSimpleName() + " :: " + templateChild.getText());
                                 }
                             }
                         }
+
+                        /*
+                         * at this state we found all unordered template nodes of the last type in the app
+                         * nodes, so we have to skip all other nodes of app of this type
+                         */
+                        if (lastMatchType != null) {
+                            appPointer = skipAdditionalNodesOfType(appPointer, lastMatchType);
+                        }
                         continue;
                     }
 
+                    /*
+                     * continue
+                     */
                     if (templatePointer.getClass().equals(appPointer.getClass())) {
                         if (templatePointer instanceof TerminalNodeImpl) {
                             if (!templatePointer.getText().equals(appPointer.getText())) {
@@ -212,8 +234,10 @@ public class ParseTreeMatcher {
                                     ">>> Take substitution from selection: template['" + templatePointer.getText()
                                         + "'], app['" + selectedSubstitutions.get(tpToken.getText()) + "'], count: "
                                         + selectedSubstitutionTokenCount.get(tpToken.getText()));
+
+                                visited.add(appPointer);
                                 appPointer =
-                                    LA(appPointer, selectedSubstitutionTokenCount.get(tpToken.getText()), true);
+                                    LA(appPointer, selectedSubstitutionTokenCount.get(tpToken.getText()), false);
                                 templatePointer = LA(templatePointer, 1, false);
                             } else {
                                 ParseTree placeholderSubstitutionPointer = appPointer;
@@ -221,10 +245,10 @@ public class ParseTreeMatcher {
                                 while (placeholderSubstitutionPointer != null) {
                                     path.add(placeholderSubstitutionPointer);
 
+                                    String placeholderSubstitution =
+                                        path.stream().limit(path.size() - 1).filter(c -> c instanceof TerminalNodeImpl)
+                                            .map(t -> t.getText()).collect(Collectors.joining());
                                     if (path.get(path.size() - 1).getText().equals(nextTemplateToken.getText())) {
-                                        String placeholderSubstitution = path.stream().limit(path.size() - 1)
-                                            .filter(c -> c instanceof TerminalNodeImpl).map(t -> t.getText())
-                                            .collect(Collectors.joining());
 
                                         // to not take decision twice after backtracking
                                         if (tokenSubstituitions.containsKey(tpToken.getText()) && tokenSubstituitions
@@ -247,12 +271,30 @@ public class ParseTreeMatcher {
                                         appPointer = LA(placeholderSubstitutionPointer, 1, false);
                                         templatePointer = LA(nextTemplateToken, 1, false);
                                         break;
-                                    } else if (!isOfSameProduction(placeholderSubstitutionPointer,
-                                        templateRootProductionName)) {
-                                        throw new NoMatchException("Could not find valid substitution of placeholder. '"
-                                            + placeholderSubstitutionPointer.getClass().getSimpleName()
-                                            + "' is not part of placeholder production " + templateRootProductionName);
+                                    } else {
 
+                                        // if (templateRootProductionName.equals("Fm_qualifiedNameContext")) {
+                                        // System.out.println("here");
+                                        // }
+                                        //
+                                        // placeholderSubstitutionPointer.get
+
+                                        // if (listPatterns.containsKey(templateRootProductionName) &&
+                                        // listPatterns
+                                        // .get(templateRootProductionName).equals(objectLangProduction)) {
+                                        // return true;
+                                        // } else
+                                        if (!isOfSameProduction(placeholderSubstitutionPointer,
+                                            templateRootProductionName)) {
+                                            throw new NoMatchException(
+                                                "Could not find valid substitution of placeholder. '"
+                                                    + placeholderSubstitutionPointer.getClass().getSimpleName() + "' ("
+                                                    + placeholderSubstitution
+                                                    + ") is not part of placeholder production "
+                                                    + templateRootProductionName + " (" + templatePointer.getText()
+                                                    + ")");
+
+                                        }
                                     }
                                     placeholderSubstitutionPointer = LA(placeholderSubstitutionPointer, 1, true);
                                 }
@@ -265,12 +307,32 @@ public class ParseTreeMatcher {
 
                         // TODO check of *Star, *Opt, *Plus
                     } else {
-                        String message = "NOT YET COVERED template: " + templatePointer.getClass().getSimpleName()
-                            + "['" + templatePointer.getText() + "', '" + templatePointer.toStringTree() + "'], app: "
-                            + appPointer.getClass().getSimpleName() + "['" + appPointer.getText() + "', '"
-                            + appPointer.toStringTree() + "']";
-                        System.out.println(message);
-                        throw new NotYetImplementedException(message);
+                        String listPatternRule = appPointer.getClass().getSimpleName().replace("Context", "");
+                        listPatternRule =
+                            Character.toLowerCase(listPatternRule.charAt(0)) + listPatternRule.substring(1);
+                        String templateRuleName;
+                        if (templatePointer instanceof RuleContext) {
+                            templateRuleName = templatePointer.getClass().getSimpleName();
+                        } else if (templatePointer instanceof TerminalNodeImpl) {
+                            templateRuleName = parserVocabulary
+                                .getSymbolicName(((TerminalNodeImpl) templatePointer).getSymbol().getType());
+                        } else {
+                            throw new IllegalArgumentException(
+                                "Unknown CST node type " + templatePointer.getClass().getCanonicalName());
+                        }
+
+                        if (listPatterns.containsKey(listPatternRule)
+                            && templateRuleName.equals(listPatterns.get(listPatternRule))) {
+                            appPointer = LA(appPointer, 1, false);
+                        } else {
+                            String message = "Template: " + templatePointer.getClass().getSimpleName() + "['"
+                                + templatePointer.getText() + "', '" + templatePointer.toStringTree() + "'], app: "
+                                + appPointer.getClass().getSimpleName() + "['" + appPointer.getText() + "', '"
+                                + appPointer.toStringTree() + "']";
+                            // System.out.println(message);
+                            // throw new NotYetImplementedException(message);
+                            throw new NoMatchException(message);
+                        }
                     }
                 }
                 break;
@@ -296,6 +358,26 @@ public class ParseTreeMatcher {
         System.out.println("END");
         return selectedSubstitutions;
 
+    }
+
+    /**
+     * @param appPointer2
+     * @param lastMatchType
+     */
+    private ParseTree skipAdditionalNodesOfType(ParseTree current, Class<?> lastMatchType) {
+        while (current.getClass().equals(lastMatchType)) {
+            ParseTree next = nextSibling(current);
+            if (next == null) { // no more siblings
+                current = LA(current, 1, false);
+                break;
+            } else {
+                if (next.getClass().equals(lastMatchType)) {
+                    visited.add(next);
+                }
+                current = next;
+            }
+        }
+        return current;
     }
 
     /**
@@ -365,17 +447,41 @@ public class ParseTreeMatcher {
         if (objectLangProduction == null) {
             return false;
         }
+
+        // if (templateLangProductionName.equals("Fm_qualifiedNameContext")) {
+        // System.out.println("here");
+        // }
+
+        String objectLangProductionName = null;
+        String objectLangProductionNameConverted = null;
         if (objectLangProduction instanceof RuleContext) {
-            if (templateLangProductionName
-                .matches("(F|f)m_" + getCapitalizedProductionName(objectLangProduction) + "(Opt|Star|Plus)?")) {
+            objectLangProductionName = objectLangProduction.getClass().getSimpleName();
+            objectLangProductionNameConverted =
+                "(F|f)m_" + getCapitalizedProductionName(objectLangProduction) + "(Opt|Star|Plus)?";
+        } else if (objectLangProduction instanceof TerminalNodeImpl) {
+            objectLangProductionName =
+                parserVocabulary.getSymbolicName(((TerminalNodeImpl) objectLangProduction).getSymbol().getType());
+            objectLangProductionNameConverted = "(F|f)m_" + objectLangProductionName + "(Opt|Star|Plus)?Context";
+        }
+
+        String originGrammarTemplateProductionName = templateLangProductionName;
+        Pattern p = Pattern.compile("(F|f)m_(.+)Context");
+        Matcher m = p.matcher(templateLangProductionName);
+        if (m.matches()) {
+            originGrammarTemplateProductionName = m.group(2);
+        }
+
+        if (listPatterns.containsKey(originGrammarTemplateProductionName)
+            && listPatterns.get(originGrammarTemplateProductionName).equals(objectLangProductionName)) {
+            return true;
+        } else if (objectLangProduction instanceof RuleContext) {
+            if (templateLangProductionName.matches(objectLangProductionNameConverted)) {
                 return true;
             } else {
                 return isOfSameProduction(objectLangProduction.getParent(), templateLangProductionName);
             }
         } else if (objectLangProduction instanceof TerminalNodeImpl) {
-            if (templateLangProductionName.matches("(F|f)m_"
-                + parserVocabulary.getSymbolicName(((TerminalNodeImpl) objectLangProduction).getSymbol().getType())
-                + "(Opt|Star|Plus)?Context")) {
+            if (templateLangProductionName.matches(objectLangProductionNameConverted)) {
                 return true;
             } else {
                 return isOfSameProduction(objectLangProduction.getParent(), templateLangProductionName);

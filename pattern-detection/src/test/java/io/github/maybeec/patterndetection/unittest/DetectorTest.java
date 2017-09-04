@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import io.github.maybeec.patterndetection.Detector;
@@ -94,12 +93,9 @@ public class DetectorTest {
     }
 
     @Test
-    @Ignore
     public void complexTest() throws Exception {
 
-        Path componentFacade = new File(
-            "src/test/resources/crud_java_server_app/templates/java/${variables.rootpackage}/${variables.component}/logic/api/${variables.component#cap_first}.java.ftl")
-                .toPath();
+        Path componentFacade = new File(testResourcesRootPath + "ComponentFacade.java.ftl").toPath();
 
         List<Path> pattern = new ArrayList<>();
         pattern.add(componentFacade);
@@ -116,10 +112,7 @@ public class DetectorTest {
         // ).collect(Collectors.toSet());
 
         Set<Path> applicationFiles = new HashSet<>();
-        applicationFiles.add(new File("").getAbsoluteFile().toPath()
-            .resolve(
-                "../oasp4j/samples/core/src/main/java/io/oasp/gastronomy/restaurant/offermanagement/logic/api/Offermanagement.java")
-            .normalize());
+        applicationFiles.add(new File(testResourcesRootPath + "ComponentFacadeInstance.java").toPath());
 
         new Detector().detect(pattern, applicationFiles, ".ftl");
 

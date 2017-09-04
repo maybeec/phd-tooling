@@ -42,8 +42,11 @@ public class Detector {
         long start = System.currentTimeMillis();
         Map<Path, List<ParserRuleContext>> templateParseTrees = new HashMap<>();
 
+        // all iterations will yield the same list patterns as we are parsing the same language
+        Map<String, String> listPatterns = new HashMap<>(0);
         for (Path template : pattern) {
             TemplateParser<JavaTemplateParser> parserWrapper = createParser(template);
+            listPatterns = parserWrapper.getListPatterns();
             List<ParserRuleContext> templateCSTs =
                 parserWrapper.parseAmbiguities(PredictionMode.LL_EXACT_AMBIG_DETECTION);
             templateParseTrees.put(template, templateCSTs);
@@ -74,10 +77,11 @@ public class Detector {
                     System.out.println(">>> AT " + file.toFile().getAbsolutePath());
                     System.out.println("");
                     variableSubstitutions.add(new ParseTreeMatcher(templateCST, applicationParseTrees.get(file),
-                        new JavaTemplateParser(null).getVocabulary()).detect());
+                        new JavaTemplateParser(null).getVocabulary(), listPatterns).detect());
                 }
             }
         }
+        System.out.println(variableSubstitutions);
 
         return variableSubstitutions;
     }
