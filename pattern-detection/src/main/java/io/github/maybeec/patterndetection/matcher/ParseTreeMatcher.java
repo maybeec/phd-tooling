@@ -32,6 +32,10 @@ public class ParseTreeMatcher {
     private static final Set<String> _nonOrderedNodes = new HashSet<>(
         Arrays.asList(new String[] { "ImportDeclaration", "InterfaceMemberDeclaration", "ClassMemberDeclaration" }));
 
+    private static final String TL_CONCAT_OP = "+";
+
+    private static final String TL_STR_TRANS_OP = "?";
+
     /** Non ordered node class names, prepared on the basis of {@value #_nonOrderedNodes} */
     private static Set<String> nonOrderedNodes;
 
@@ -259,6 +263,11 @@ public class ParseTreeMatcher {
                                         } else if (tokenSubstituitions.get(tpToken.getText()) == null) {
                                             tokenSubstituitions.put(tpToken.getText(), new HashSet<>());
                                         }
+
+                                        if (!matchesPlaceholderSemantics(tpToken, placeholderSubstitution)) {
+                                            throw new NoMatchException("Placeholder " + tpToken.getText()
+                                                + " does not match substitution '" + placeholderSubstitution + "'");
+                                        }
                                         tokenSubstituitions.get(tpToken.getText()).add(placeholderSubstitution);
                                         selectedSubstitutions.put(tpToken.getText(), placeholderSubstitution);
                                         selectedSubstitutionTokenCount.put(tpToken.getText(), path.size() - 1);
@@ -270,6 +279,7 @@ public class ParseTreeMatcher {
 
                                         appPointer = LA(placeholderSubstitutionPointer, 1, false);
                                         templatePointer = LA(nextTemplateToken, 1, false);
+
                                         break;
                                     } else {
 
@@ -358,6 +368,16 @@ public class ParseTreeMatcher {
         System.out.println("END");
         return selectedSubstitutions;
 
+    }
+
+    /**
+     * @param tpToken
+     * @param placeholderSubstitution
+     * @return
+     */
+    private boolean matchesPlaceholderSemantics(Token tpToken, String placeholderSubstitution) {
+        // TODO implement
+        return false;
     }
 
     /**
