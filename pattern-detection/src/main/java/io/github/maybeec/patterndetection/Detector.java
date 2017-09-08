@@ -18,7 +18,8 @@ import org.antlr.v4.runtime.atn.PredictionMode;
 import io.github.maybeec.antlr4.parser.TemplateParser;
 import io.github.maybeec.parsers.javatemplate.JavaTemplateLexer;
 import io.github.maybeec.parsers.javatemplate.JavaTemplateParser;
-import io.github.maybeec.patterndetection.matcher.ParseTreeMatcher;
+import io.github.maybeec.patterndetection.exception.NoMatchException;
+import io.github.maybeec.patterndetection.matcher.PathBasedMatcher;
 
 /** Application interface of the pattern detection implementation. */
 public class Detector {
@@ -69,19 +70,25 @@ public class Detector {
         System.out.println();
 
         List<Map<String, String>> variableSubstitutions = new ArrayList<>();
-        for (Path template : pattern) {
-            for (Path file : applicationFiles) {
-                for (ParserRuleContext templateCST : templateParseTrees.get(template)) {
-                    System.out.println("");
-                    System.out.println(">>> Matching " + template.toFile().getAbsolutePath());
-                    System.out.println(">>> AT " + file.toFile().getAbsolutePath());
-                    System.out.println("");
-                    variableSubstitutions.add(new ParseTreeMatcher(templateCST, applicationParseTrees.get(file),
-                        new JavaTemplateParser(null).getVocabulary(), listPatterns).detect());
+        try {
+            for (Path template : pattern) {
+                for (Path file : applicationFiles) {
+                    for (ParserRuleContext templateCST : templateParseTrees.get(template)) {
+                        System.out.println("");
+                        System.out.println(">>> Matching " + template.toFile().getAbsolutePath());
+                        System.out.println(">>> AT " + file.toFile().getAbsolutePath());
+                        System.out.println("");
+                        variableSubstitutions.add(new PathBasedMatcher(templateCST, applicationParseTrees.get(file),
+                            new JavaTemplateParser(null).getVocabulary(), listPatterns).detect());
+                    }
                 }
             }
+            System.out.println(variableSubstitutions);
+        } catch (NoMatchException e) {
+            System.out.println(e.getMessage());
+            e.printStackTrace();
+            throw e;
         }
-        System.out.println(variableSubstitutions);
 
         return variableSubstitutions;
     }

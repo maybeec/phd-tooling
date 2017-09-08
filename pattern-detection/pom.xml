@@ -76,6 +76,7 @@
                 <argument>io.github.maybeec.parsers.javatemplate</argument>
               </arguments>
               <outputDirectory>${project.build.directory}/generated-sources/antlr4/io/github/maybeec/parsers/javatemplate</outputDirectory>
+              <listener>true</listener>
             </configuration>
           </execution>
         </executions>
