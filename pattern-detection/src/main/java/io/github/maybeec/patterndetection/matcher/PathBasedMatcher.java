@@ -10,6 +10,7 @@ import java.util.Stack;
 import java.util.stream.Collectors;
 
 import org.antlr.v4.runtime.Vocabulary;
+import org.antlr.v4.runtime.misc.MultiMap;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 
@@ -43,6 +44,14 @@ public class PathBasedMatcher {
             nonOrderedNodes.add("Fm_" + production + "StarContext");
             nonOrderedNodes.add("Fm_" + production + "PlusContext");
         }
+    }
+
+    private static final Set<String> statementTerminals;
+
+    static {
+        statementTerminals = new HashSet<>();
+        statementTerminals.add(";");
+        statementTerminals.add("}");
     }
 
     /** Unordered nodes, which have been matched already */
@@ -79,7 +88,7 @@ public class PathBasedMatcher {
     private Stack<MatcherState> decisionPoints = new Stack<>();
 
     /** List patterns in the underlying grammar. See {@link ListPatternCollector} for more details */
-    private Map<String, String> listPatterns;
+    private MultiMap<String, String> listPatterns;
 
     /**
      * Creates a new instance of the matcher.
@@ -93,7 +102,7 @@ public class PathBasedMatcher {
      *            list patterns
      */
     public PathBasedMatcher(ParseTree templateCST, ParseTree applicationFileCST, Vocabulary parserVocabulary,
-        Map<String, String> listPatterns) {
+        MultiMap<String, String> listPatterns) {
         templatePointer = templateCST;
         appPointer = applicationFileCST;
         templatePointerInit = templateCST;
@@ -109,7 +118,8 @@ public class PathBasedMatcher {
         System.out.println("");
 
         ParseTreeWalker walker = new ParseTreeWalker();
-        AstToPathTransformer listener = new AstToPathTransformer(new JavaTemplateParser(null).getVocabulary());
+        AstToPathTransformer listener =
+            new AstToPathTransformer(new JavaTemplateParser(null).getVocabulary(), statementTerminals, listPatterns);
         walker.walk(listener, templatePointer);
         AstPathSet<AstElem> rootSet = new AstPathSet<>("ROOT");
         AstPathList<AstElem> templatePaths = listener.getPaths();
@@ -120,7 +130,8 @@ public class PathBasedMatcher {
         System.out.println(">> APP: ");
         System.out.println("");
 
-        listener = new AstToPathTransformer(new JavaTemplateParser(null).getVocabulary());
+        listener =
+            new AstToPathTransformer(new JavaTemplateParser(null).getVocabulary(), statementTerminals, listPatterns);
         walker.walk(listener, appPointer);
         rootSet = new AstPathSet<>("ROOT");
         AstPathList<AstElem> appPaths = listener.getPaths();
@@ -176,8 +187,9 @@ public class PathBasedMatcher {
      */
     private Map<String, String> matchOrderedPaths(List<AstPath> orderedTemplatePaths, List<AstPath> orderedAppPaths) {
         Map<String, String> variableSubstitutions = new HashMap<>();
-        int j = 0;
+        int j = 0, initialJ;
         for (int i = 0; i < orderedTemplatePaths.size(); i++) {
+            initialJ = j;
             AstPath tempElem = orderedTemplatePaths.get(i);
 
             AstPath appElem;
@@ -195,7 +207,7 @@ public class PathBasedMatcher {
                 } catch (NoMatchException e) {
                     matches = false;
                 }
-                if (matches) {
+                if (!matches) {
                     j++;
                 }
             } while (!matches);
@@ -233,6 +245,8 @@ public class PathBasedMatcher {
                     variableSubstitutions.put(tempElem.getText(), appElem.getText());
                     break;
                 }
+            } else {
+                appElem = appElem.getParent();
             }
             tempElem = tempElem.getParent();
         } while (tempElem != null);

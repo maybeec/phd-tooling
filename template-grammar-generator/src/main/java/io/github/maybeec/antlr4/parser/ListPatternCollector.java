@@ -7,8 +7,6 @@ import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.antlr.parser.antlr4.ANTLRv4Lexer;
@@ -29,6 +27,7 @@ import org.antlr.parser.antlr4.ANTLRv4Parser.TerminalContext;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.misc.MultiMap;
 import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeListener;
@@ -55,8 +54,8 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 // https://github.com/antlr/antlr4/blob/master/doc/tree-matching.md
 public class ListPatternCollector implements ParseTreeListener {
 
-    /** Found list pattern occurrences mapping rule name to list element name */
-    private Map<String, String> listPatternRules;
+    /** Found list pattern occurrences mapping list element and separator to list parent rule name */
+    private MultiMap<String, String> listPatternRules;
 
     private String grammar;
 
@@ -72,13 +71,13 @@ public class ListPatternCollector implements ParseTreeListener {
         }
     }
 
-    public Map<String, String> detectListPatternInstantiations() throws IOException {
+    public MultiMap<String, String> detectListPatternInstantiations() throws IOException {
         try (StringReader reader = new StringReader(grammar)) {
             ANTLRv4Lexer lexer = new ANTLRv4Lexer(CharStreams.fromString(grammar));
             CommonTokenStream tokenStream = new CommonTokenStream(lexer);
             ANTLRv4Parser parser = new ANTLRv4Parser(tokenStream);
             ParseTree parseTree = parser.grammarSpec();
-            listPatternRules = new HashMap<>();
+            listPatternRules = new MultiMap<>();
             new ParseTreeWalker().walk(this, parseTree);
             return listPatternRules;
         }
@@ -114,10 +113,16 @@ public class ListPatternCollector implements ParseTreeListener {
                         if (checkListAlternatives(currChild, ruleName, elementName)) {
                             currChild = alt.getChild(4);
                             if (checkListAlternatives(currChild, ruleName, elementName)) {
-                                listPatternRules.put(ruleName, elementName);
+                                listPatternRules.map(elementName, ruleName);
+                                // add separator
+                                listPatternRules.map(currChild.getChild(0).getChild(1).getText(), ruleName);
+                                // add placeholder element
+                                listPatternRules.map(currChild.getChild(0).getChild(2).getChild(0).getChild(0)
+                                    .getChild(1).getChild(0).getText(), ruleName);
+                                // add rulename placeholder
+                                listPatternRules.map(alt.getChild(2).getChild(0).getChild(0).getText(), ruleName);
                             }
                         }
-
                     }
                 }
             }
@@ -148,12 +153,12 @@ public class ListPatternCollector implements ParseTreeListener {
                             currChild = currChild.getChild(1); // bracket children around
                             if (currChild instanceof AltListContext && currChild.getChildCount() == 3) {
                                 ParseTree alt3 = currChild;
-                                currChild = alt3.getChild(0); // first alt = list element
+                                currChild = alt3.getChild(0); // first alt = list element placeholder
                                 if (!representsTerminal(currChild) || !currChild.getText().endsWith(elementName)) {
                                     return false;
                                 }
 
-                                currChild = alt3.getChild(2); // second alt = list element placeholder
+                                currChild = alt3.getChild(2); // second alt = list element
                                 if (!representsTerminal(currChild) || !currChild.getText().equals(elementName)) {
                                     return false;
                                 }

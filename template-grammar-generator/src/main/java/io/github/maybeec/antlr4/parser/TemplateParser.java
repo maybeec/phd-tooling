@@ -12,7 +12,6 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
@@ -25,6 +24,7 @@ import org.antlr.v4.runtime.IntStream;
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.atn.PredictionMode;
+import org.antlr.v4.runtime.misc.MultiMap;
 
 import io.github.maybeec.antlr4.analysis.ANTLRParseException;
 import io.github.maybeec.antlr4.analysis.ErrorListener;
@@ -46,7 +46,7 @@ public class TemplateParser<P extends Parser> {
 
     private String grammar;
 
-    private Map<String, String> listPatterns;
+    private MultiMap<String, String> listPatterns;
 
     public TemplateParser(P target, Method parseRule, InputStream grammar) throws IOException {
         parser = target;
@@ -58,7 +58,7 @@ public class TemplateParser<P extends Parser> {
         }
     }
 
-    public Map<String, String> getListPatterns() {
+    public MultiMap<String, String> getListPatterns() {
         return this.listPatterns;
     }
 
@@ -99,7 +99,7 @@ public class TemplateParser<P extends Parser> {
 
         List<ParserRuleContext> trees = new ArrayList<>();
         int count = 0;
-        ListPatternTransformer transformer = new ListPatternTransformer(listPatterns);
+        // ListPatternTransformer transformer = new ListPatternTransformer(listPatterns);
         do {
             ParserRuleContext tree;
             System.out.println("start parsing");
@@ -107,7 +107,7 @@ public class TemplateParser<P extends Parser> {
             try {
                 tree = (ParserRuleContext) parseRule.invoke(parser);
                 // System.out.println(tree.toStringTree(parser));
-                transformer.transform(tree);
+                // transformer.transform(tree);
                 // System.out.println("after transformation:");
                 // System.out.println(tree.toStringTree(parser));
                 trees.add(tree);

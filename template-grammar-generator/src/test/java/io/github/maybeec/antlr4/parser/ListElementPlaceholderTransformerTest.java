@@ -5,8 +5,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.HashSet;
-import java.util.Map;
 
+import org.antlr.v4.runtime.misc.MultiMap;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -43,10 +43,10 @@ public class ListElementPlaceholderTransformerTest {
             "ANY");
 
         Path generatedGrammar = folder.toPath().resolve(newGrammarName + ".g4");
-        Map<String, String> detectedListPatternRules =
+        MultiMap<String, String> detectedListPatternRules =
             new ListPatternCollector(generatedGrammar).detectListPatternInstantiations();
 
-        assertThat(detectedListPatternRules).containsOnlyKeys("packageSegmentList").extracting("packageSegmentList")
-            .containsExactly("Identifier");
+        assertThat(detectedListPatternRules).containsOnlyKeys("Identifier");
+        assertThat(detectedListPatternRules.get("Identifier")).containsExactly("packageSegmentList", "DOT");
     }
 }

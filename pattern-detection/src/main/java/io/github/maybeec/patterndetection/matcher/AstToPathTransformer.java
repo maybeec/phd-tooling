@@ -7,10 +7,13 @@ import java.util.Stack;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Vocabulary;
+import org.antlr.v4.runtime.misc.MultiMap;
 import org.antlr.v4.runtime.tree.ErrorNode;
+import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeListener;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
+import io.github.maybeec.patterndetection.entity.AstElem;
 import io.github.maybeec.patterndetection.entity.AstPath;
 import io.github.maybeec.patterndetection.entity.AstPathCollection;
 import io.github.maybeec.patterndetection.entity.AstPathList;
@@ -38,9 +41,9 @@ public class AstToPathTransformer implements ParseTreeListener {
         }
     }
 
-    private AstPathList paths;
+    private AstPathList<AstElem> paths;
 
-    private Stack<AstPathCollection> current = new Stack<>();
+    private Stack<AstPathCollection<AstElem>> currentCollection = new Stack<>();
 
     private Stack<AstPath> lastNode = new Stack<>();
 
@@ -48,17 +51,64 @@ public class AstToPathTransformer implements ParseTreeListener {
 
     private Vocabulary vocabulary;
 
+    /** Terminal symbols of the smallest entry to be detected. */
+    private Set<String> detectionTerminals;
+
+    private boolean withinAtomarPathSet = false;
+
+    private boolean withinListPattern = false;
+
+    /** Found list pattern occurrences mapping list element and separator to list parent rule name */
+    private MultiMap<String, String> listPatternRules;
+
     /**
      *
      */
-    public AstToPathTransformer(Vocabulary vocabulary) {
+    public AstToPathTransformer(Vocabulary vocabulary, Set<String> detectionTerminals,
+        MultiMap<String, String> listPatternRules) {
         this.vocabulary = vocabulary;
+        this.detectionTerminals = detectionTerminals;
+        this.listPatternRules = listPatternRules;
     }
 
     @Override
     public void visitTerminal(TerminalNode node) {
-        current.peek()
-            .add(new AstPath(vocabulary.getSymbolicName(node.getSymbol().getType()), node.getText(), lastNode.peek()));
+
+        String symbolicName = vocabulary.getSymbolicName(node.getSymbol().getType());
+        if (!withinAtomarPathSet) {
+            AstPathList<AstElem> orderedPaths = new AstPathList<>("<Atom>", true);
+            currentCollection.peek().add(orderedPaths);
+            currentCollection.push(orderedPaths);
+            withinAtomarPathSet = true;
+        }
+
+        String nameToTest = symbolicName;
+        String parentNameToTest = convertToGrammarRuleName(node.getParent());
+        if (symbolicName.equals("FM_PLACEHOLDER")) {
+            nameToTest = convertToGrammarRuleName(node.getParent());
+            parentNameToTest = convertToGrammarRuleName(node.getParent().getParent());
+        }
+        if (!withinListPattern && listPatternRules.containsKey(nameToTest)
+            && listPatternRules.get(nameToTest).contains(parentNameToTest)) {
+            AstPathList<AstElem> orderedPaths = new AstPathList<>("<ListPattern>", true);
+            currentCollection.peek().add(orderedPaths);
+            currentCollection.push(orderedPaths);
+            withinListPattern = true;
+        }
+
+        currentCollection.peek().add(new AstPath(symbolicName, node.getText(), lastNode.peek()));
+
+        if (withinListPattern && (!listPatternRules.containsKey(nameToTest)
+            || !listPatternRules.get(nameToTest).contains(parentNameToTest))) {
+            currentCollection.pop();
+            withinListPattern = false;
+        }
+
+        if (detectionTerminals.contains(node.getText())) {
+            withinAtomarPathSet = false;
+            currentCollection.pop(); // works on the assumption, that no currentCollection.pop is called
+                                     // before in #enterEveryRule
+        }
     }
 
     @Override
@@ -71,18 +121,21 @@ public class AstToPathTransformer implements ParseTreeListener {
         String simpleName = ctx.getClass().getSimpleName();
 
         if (lastNode.isEmpty()) {
+            // initialization
             lastNode.push(new AstPath(simpleName, ctx.getText(), null));
-            paths = new AstPathList(simpleName, true);
-            current.push(paths);
+            paths = new AstPathList<>(simpleName, true);
+            currentCollection.push(paths);
             toPop.push(true);
         } else {
+            // create new path elem for last node
             lastNode.push(new AstPath(simpleName, ctx.getText(), lastNode.peek()));
         }
 
         if (nonOrderedNodes.contains(simpleName)) {
-            AstPathList unorderedPaths = new AstPathList(simpleName, false);
-            current.peek().add(unorderedPaths);
-            current.push(unorderedPaths);
+            // create new list of nodes to separate them as a block, which itself is unordered to its siblings
+            AstPathList<AstElem> unorderedPaths = new AstPathList<>(simpleName, false);
+            currentCollection.peek().add(unorderedPaths);
+            currentCollection.push(unorderedPaths);
             toPop.push(true);
         } else {
             toPop.push(false);
@@ -93,12 +146,18 @@ public class AstToPathTransformer implements ParseTreeListener {
     public void exitEveryRule(ParserRuleContext ctx) {
         lastNode.pop();
         if (toPop.pop()) {
-            current.pop();
+            currentCollection.pop();
         }
     }
 
-    public AstPathList getPaths() {
+    public AstPathList<AstElem> getPaths() {
         return paths;
+    }
+
+    private String convertToGrammarRuleName(ParseTree node) {
+        String basicName = node.getClass().getSimpleName().replace("Context", "");
+        basicName = Character.toLowerCase(basicName.charAt(0)) + basicName.substring(1);
+        return basicName;
     }
 
 }

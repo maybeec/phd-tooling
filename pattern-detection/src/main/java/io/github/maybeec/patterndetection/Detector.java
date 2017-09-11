@@ -14,6 +14,7 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.atn.PredictionMode;
+import org.antlr.v4.runtime.misc.MultiMap;
 
 import io.github.maybeec.antlr4.parser.TemplateParser;
 import io.github.maybeec.parsers.javatemplate.JavaTemplateLexer;
@@ -44,7 +45,7 @@ public class Detector {
         Map<Path, List<ParserRuleContext>> templateParseTrees = new HashMap<>();
 
         // all iterations will yield the same list patterns as we are parsing the same language
-        Map<String, String> listPatterns = new HashMap<>(0);
+        MultiMap<String, String> listPatterns = new MultiMap<>();
         for (Path template : pattern) {
             TemplateParser<JavaTemplateParser> parserWrapper = createParser(template);
             listPatterns = parserWrapper.getListPatterns();
