@@ -77,6 +77,7 @@ public class AstToPathTransformer implements ParseTreeListener {
         String symbolicName = vocabulary.getSymbolicName(node.getSymbol().getType());
         if (!withinAtomarPathSet) {
             AstPathList<AstElem> orderedPaths = new AstPathList<>("<Atom>", true);
+            orderedPaths.setAtomic(true);
             currentCollection.peek().add(orderedPaths);
             currentCollection.push(orderedPaths);
             withinAtomarPathSet = true;
@@ -94,15 +95,13 @@ public class AstToPathTransformer implements ParseTreeListener {
             currentCollection.peek().add(orderedPaths);
             currentCollection.push(orderedPaths);
             withinListPattern = true;
-        }
-
-        currentCollection.peek().add(new AstPath(symbolicName, node.getText(), lastNode.peek()));
-
-        if (withinListPattern && (!listPatternRules.containsKey(nameToTest)
+        } else if (withinListPattern && (!listPatternRules.containsKey(nameToTest)
             || !listPatternRules.get(nameToTest).contains(parentNameToTest))) {
             currentCollection.pop();
             withinListPattern = false;
         }
+
+        currentCollection.peek().add(new AstPath(symbolicName, node.getText(), lastNode.peek()));
 
         if (detectionTerminals.contains(node.getText())) {
             withinAtomarPathSet = false;

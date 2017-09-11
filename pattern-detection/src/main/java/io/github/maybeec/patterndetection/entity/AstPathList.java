@@ -11,6 +11,8 @@ public class AstPathList<T extends AstElem> extends ArrayList<T> implements AstP
 
     private boolean isOrdered;
 
+    private boolean isAtomic;
+
     /**
      * @param type
      */
@@ -28,6 +30,15 @@ public class AstPathList<T extends AstElem> extends ArrayList<T> implements AstP
     @Override
     public boolean isOrdered() {
         return isOrdered;
+    }
+
+    public void setAtomic(boolean isAtomic) {
+        this.isAtomic = isAtomic;
+    }
+
+    @Override
+    public boolean isAtomic() {
+        return isAtomic;
     }
 
 }

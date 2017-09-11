@@ -10,4 +10,6 @@ public interface AstPathCollection<T extends AstElem> extends Collection<T>, Ast
     public String getType();
 
     public boolean isOrdered();
+
+    public boolean isAtomic();
 }

@@ -11,6 +11,8 @@ public class AstPathSet<T extends AstElem> extends HashSet<T> implements AstPath
 
     private boolean isOrdered;
 
+    private boolean isAtomic;
+
     /**
      * @param type
      */
@@ -29,4 +31,8 @@ public class AstPathSet<T extends AstElem> extends HashSet<T> implements AstPath
         return isOrdered;
     }
 
+    @Override
+    public boolean isAtomic() {
+        return isAtomic;
+    }
 }

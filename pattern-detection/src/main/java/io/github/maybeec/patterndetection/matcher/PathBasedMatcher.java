@@ -148,17 +148,23 @@ public class PathBasedMatcher {
      */
     private Map<String, String> match(AstPathList<AstElem> templatePaths, AstPathList<AstElem> appPaths) {
         // separate unordered nodes from ordered ones
-        Set<AstPathList<AstElem>> unorderedTempPaths =
-            templatePaths.stream().filter(elem -> elem instanceof AstPathList).map(elem -> (AstPathList<AstElem>) elem)
-                .collect(Collectors.toSet());
-        Set<AstPathList<AstElem>> unorderedAppPaths = appPaths.stream().filter(elem -> elem instanceof AstPathList)
+        Set<AstPathList<AstElem>> unorderedTempPaths = templatePaths.stream()
+            .filter(elem -> elem instanceof AstPathList).filter(elem -> ((AstPathList) elem).isOrdered())
             .map(elem -> (AstPathList<AstElem>) elem).collect(Collectors.toSet());
-        List<AstPath> orderedTemplatePaths = templatePaths.stream().filter(elem -> elem instanceof AstPath)
-            .map(elem -> (AstPath) elem).collect(Collectors.toList());
-        List<AstPath> orderedAppPaths = appPaths.stream().filter(elem -> elem instanceof AstPath)
-            .map(elem -> (AstPath) elem).collect(Collectors.toList());
+        Set<AstPathList<AstElem>> unorderedAppPaths = appPaths.stream().filter(elem -> elem instanceof AstPathList)
+            .filter(elem -> ((AstPathList) elem).isOrdered()).map(elem -> (AstPathList<AstElem>) elem)
+            .collect(Collectors.toSet());
 
-        Map<String, String> variableSubstitutions = matchOrderedPaths(orderedTemplatePaths, orderedAppPaths);
+        List<AstElem> orderedTemplatePaths = templatePaths.stream()
+            .filter(elem -> (elem instanceof AstPath)
+                || (elem instanceof AstPathCollection<?>) && ((AstPathCollection<?>) elem).isOrdered())
+            .collect(Collectors.toList());
+        List<AstElem> orderedAppPaths = appPaths.stream()
+            .filter(elem -> (elem instanceof AstPath)
+                || (elem instanceof AstPathCollection<?>) && ((AstPathCollection<?>) elem).isOrdered())
+            .collect(Collectors.toList());
+
+        Map<String, String> variableSubstitutions = matchOrderedPaths(orderedTemplatePaths, orderedAppPaths, false);
 
         Map<AstPathList<AstElem>, AstPathList<AstElem>> matches = new HashMap<>();
         for (AstPathList<AstElem> tempElem : unorderedTempPaths) {
@@ -185,19 +191,21 @@ public class PathBasedMatcher {
      * @param orderedAppPaths
      * @return
      */
-    private Map<String, String> matchOrderedPaths(List<AstPath> orderedTemplatePaths, List<AstPath> orderedAppPaths) {
+    private Map<String, String> matchOrderedPaths(List<AstElem> orderedTemplatePaths, List<AstElem> orderedAppPaths,
+        boolean exactly) {
         Map<String, String> variableSubstitutions = new HashMap<>();
-        int j = 0, initialJ;
+        int j = 0;
         for (int i = 0; i < orderedTemplatePaths.size(); i++) {
-            initialJ = j;
-            AstPath tempElem = orderedTemplatePaths.get(i);
+            AstElem tempElem = orderedTemplatePaths.get(i);
 
-            AstPath appElem;
+            AstElem appElem;
             boolean matches;
             do {
                 if (j >= orderedAppPaths.size()) {
                     // template could not be found entirely in app!
-                    throw new NoMatchException("Could not find path " + tempElem.getPath());
+                    String debugVal = tempElem instanceof AstPath ? ((AstPath) tempElem).getPath()
+                        : ((AstPathCollection<?>) tempElem).getType();
+                    throw new NoMatchException("Could not find path " + debugVal);
                 }
                 appElem = orderedAppPaths.get(j);
 
@@ -208,7 +216,11 @@ public class PathBasedMatcher {
                     matches = false;
                 }
                 if (!matches) {
-                    j++;
+                    if (exactly) {
+                        j = orderedAppPaths.size(); // trigger error handling at loop start
+                    } else {
+                        j++;
+                    }
                 }
             } while (!matches);
         }
@@ -219,40 +231,50 @@ public class PathBasedMatcher {
      * @param appElem
      * @return
      */
-    public Map<String, String> matchPath(AstPath tempElem, AstPath appElem) {
-        AstPath startingTemp = tempElem;
-        AstPath startingApp = appElem;
+    public Map<String, String> matchPath(AstElem tempElem, AstElem appElem) {
+        if (tempElem instanceof AstPathList<?> && ((AstPathList<?>) tempElem).isAtomic()
+            && appElem instanceof AstPathList<?> && ((AstPathList<?>) appElem).isAtomic()) {
+            return matchOrderedPaths((AstPathList<AstElem>) tempElem, (AstPathList<AstElem>) appElem, true);
+        } else if (tempElem instanceof AstPath && appElem instanceof AstPath) {
+            AstPath startingTemp = (AstPath) tempElem;
+            AstPath startingApp = (AstPath) appElem;
+            AstPath currentTemp = startingTemp;
+            AstPath currentApp = startingApp;
 
-        Map<String, String> variableSubstitutions = new HashMap<>();
+            Map<String, String> variableSubstitutions = new HashMap<>();
 
-        // trivial case
-        if (appElem.getPath().equals(tempElem.getPath())) {
-            System.out.println("Consume (t->a): " + startingTemp + " --> " + startingApp);
-            return variableSubstitutions;
-        } else if (!tempElem.containsMetaLang()) {
-            throw new NoMatchException("Could not find " + startingTemp.getPath() + " in " + startingApp.getPath());
-        }
-
-        // meta code in path
-        do {
-            if (appElem == null) {
+            // trivial case
+            if (currentApp.getPath().equals(currentTemp.getPath())) {
+                System.out.println("Consume (t->a): " + startingTemp + " --> " + startingApp);
+                return variableSubstitutions;
+            } else if (!currentTemp.containsMetaLang()) {
                 throw new NoMatchException("Could not find " + startingTemp.getPath() + " in " + startingApp.getPath());
             }
-            if (tempElem.getName().equals(appElem.getName())) {
-                appElem = appElem.getParent();
-            } else if (tempElem.isMetaLang()) {
-                if (tempElem.getParent().getName().matches("Fm_" + appElem.getName() + "Context")) {
-                    variableSubstitutions.put(tempElem.getText(), appElem.getText());
-                    break;
-                }
-            } else {
-                appElem = appElem.getParent();
-            }
-            tempElem = tempElem.getParent();
-        } while (tempElem != null);
 
-        System.out.println("Consume (t->a): " + startingTemp + " --> " + startingApp);
-        return variableSubstitutions;
+            // meta code in path
+            do {
+                if (currentApp == null) {
+                    throw new NoMatchException(
+                        "Could not find " + startingTemp.getPath() + " in " + startingApp.getPath());
+                }
+                if (currentTemp.getName().equals(currentApp.getName())) {
+                    currentApp = currentApp.getParent();
+                } else if (currentTemp.isMetaLang()) {
+                    if (currentTemp.getParent().getName().matches("Fm_" + currentApp.getName() + "Context")) {
+                        variableSubstitutions.put(currentTemp.getText(), currentApp.getText());
+                        break;
+                    }
+                } else {
+                    currentApp = currentApp.getParent();
+                }
+                currentTemp = currentTemp.getParent();
+            } while (currentTemp != null);
+
+            System.out.println("Consume (t->a): " + startingTemp + " --> " + startingApp);
+            return variableSubstitutions;
+        } else {
+            throw new NoMatchException("Cannot match AstPath " + tempElem + " against AstPathCollection " + appElem);
+        }
     }
 
     /**
