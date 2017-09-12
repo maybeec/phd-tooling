@@ -1,5 +1,6 @@
 package io.github.maybeec.patterndetection.matcher;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -21,7 +22,9 @@ import io.github.maybeec.patterndetection.entity.AstPath;
 import io.github.maybeec.patterndetection.entity.AstPathCollection;
 import io.github.maybeec.patterndetection.entity.AstPathList;
 import io.github.maybeec.patterndetection.entity.AstPathSet;
+import io.github.maybeec.patterndetection.entity.Match;
 import io.github.maybeec.patterndetection.exception.NoMatchException;
+import io.github.maybeec.patterndetection.utils.MathUtil;
 
 /**
  *
@@ -149,10 +152,10 @@ public class PathBasedMatcher {
     private Map<String, String> match(AstPathList<AstElem> templatePaths, AstPathList<AstElem> appPaths) {
         // separate unordered nodes from ordered ones
         Set<AstPathList<AstElem>> unorderedTempPaths = templatePaths.stream()
-            .filter(elem -> elem instanceof AstPathList).filter(elem -> ((AstPathList) elem).isOrdered())
+            .filter(elem -> elem instanceof AstPathList).filter(elem -> !((AstPathList) elem).isOrdered())
             .map(elem -> (AstPathList<AstElem>) elem).collect(Collectors.toSet());
         Set<AstPathList<AstElem>> unorderedAppPaths = appPaths.stream().filter(elem -> elem instanceof AstPathList)
-            .filter(elem -> ((AstPathList) elem).isOrdered()).map(elem -> (AstPathList<AstElem>) elem)
+            .filter(elem -> !((AstPathList) elem).isOrdered()).map(elem -> (AstPathList<AstElem>) elem)
             .collect(Collectors.toSet());
 
         List<AstElem> orderedTemplatePaths = templatePaths.stream()
@@ -221,6 +224,8 @@ public class PathBasedMatcher {
                     } else {
                         j++;
                     }
+                } else {
+                    j++;
                 }
             } while (!matches);
         }
@@ -235,6 +240,9 @@ public class PathBasedMatcher {
         if (tempElem instanceof AstPathList<?> && ((AstPathList<?>) tempElem).isAtomic()
             && appElem instanceof AstPathList<?> && ((AstPathList<?>) appElem).isAtomic()) {
             return matchOrderedPaths((AstPathList<AstElem>) tempElem, (AstPathList<AstElem>) appElem, true);
+        } else if (tempElem instanceof AstPathList<?> && ((AstPathList<?>) tempElem).isListPattern()
+            && appElem instanceof AstPathList<?> && ((AstPathList<?>) appElem).isListPattern()) {
+            return matchListPattern((AstPathList<AstElem>) tempElem, (AstPathList<AstElem>) appElem);
         } else if (tempElem instanceof AstPath && appElem instanceof AstPath) {
             AstPath startingTemp = (AstPath) tempElem;
             AstPath startingApp = (AstPath) appElem;
@@ -275,6 +283,117 @@ public class PathBasedMatcher {
         } else {
             throw new NoMatchException("Cannot match AstPath " + tempElem + " against AstPathCollection " + appElem);
         }
+    }
+
+    /**
+     * @param tempElem
+     * @param appElem
+     * @return
+     */
+    private Map<String, String> matchListPattern(AstPathList<AstElem> orderedTemplatePaths,
+        AstPathList<AstElem> orderedAppPaths) {
+
+        int numPh = (int) orderedTemplatePaths.stream().filter(e -> e instanceof AstPath).map(e -> (AstPath) e)
+            .filter(e -> e.containsMetaLang()).count();
+        int maxSubstitutions = orderedAppPaths.size() - orderedTemplatePaths.size() + numPh;
+
+        // will be small enough to cast to int
+        int[][] combinations;
+        if (maxSubstitutions == 0) {
+            // if there are PHs, than all of them will just replace one element
+            combinations = new int[1][numPh];
+            Arrays.fill(combinations, new int[] { 1 });
+        } else if (maxSubstitutions < numPh) {
+            throw new NoMatchException("App path list to short. Could not instantiate all placeholders.");
+        } else {
+            // n = maxSubstitutions, k = PHs; different buckets, same balls.
+            combinations = MathUtil.multichooseMin1(maxSubstitutions, numPh);
+        }
+
+        List<Match<AstPathList<AstElem>>> foundMatches = new ArrayList<>();
+        for (int[] combination : combinations) {
+            Map<String, String> variableSubstitutions = new HashMap<>();
+
+            try {
+                int phPos = 0;
+                int phNumSubElems = 0;
+                int observedPhIndex = 0;
+                int j = 0;
+                for (int i = 0; i < orderedTemplatePaths.size(); i++) {
+
+                    boolean isPh = false;
+                    AstElem tempElem = orderedTemplatePaths.get(i);
+                    String tempName;
+                    if (tempElem instanceof AstPath) {
+                        isPh = ((AstPath) tempElem).isMetaLang();
+                        tempName = ((AstPath) tempElem).getName();
+                    } else {
+                        // let's not support this for now
+                        throw new IllegalStateException("AstPathCollection not supported here so far!");
+                    }
+
+                    AstElem appElem;
+                    String appMatch = "";
+                    boolean matches = false;
+                    int consumedAppElems = 0;
+                    do {
+                        if (j >= orderedAppPaths.size()) {
+                            // template could not be found entirely in app!
+                            String debugVal = tempElem instanceof AstPath ? ((AstPath) tempElem).getPath()
+                                : ((AstPathCollection<?>) tempElem).getType();
+                            throw new NoMatchException("Could not find path " + debugVal);
+                        }
+                        appElem = orderedAppPaths.get(j);
+
+                        if (appElem instanceof AstPath) {
+                            appMatch += ((AstPath) appElem).getText();
+                            consumedAppElems++;
+                        } else {
+                            // let's not support this for now
+                            throw new IllegalStateException("AstPathCollection not supported here so far!");
+                        }
+
+                        if (isPh) {
+                            if (combination[observedPhIndex] > consumedAppElems) {
+                                j++;
+                                continue;
+                            } else {
+                                System.out.println("Consume (t->a): " + tempElem + " --> " + appMatch);
+                                variableSubstitutions.put(((AstPath) tempElem).getText(), appMatch);
+                                j++;
+                                observedPhIndex++;
+                                break;
+                            }
+                        } else {
+                            matches = tempName.equals(((AstPath) appElem).getName())
+                                && ((AstPath) tempElem).getText().equals(((AstPath) appElem).getText());
+                        }
+
+                        if (!matches) {
+                            if (isPh) {
+                                j++;
+                            } else {
+                                throw new NoMatchException(
+                                    "Could not match template path " + ((AstPath) tempElem).getPath());
+                            }
+                        } else {
+                            System.out.println("Consume (t->a): " + tempElem + " --> " + appMatch);
+                            j++;
+                        }
+                    } while (!matches);
+                }
+
+                foundMatches.add(new Match<>(orderedTemplatePaths, orderedAppPaths, variableSubstitutions));
+            } catch (NoMatchException e) {
+                // ignore, try next
+            }
+        }
+
+        if (foundMatches.isEmpty()) {
+            throw new NoMatchException("Could not match template " + orderedTemplatePaths + " to " + orderedAppPaths);
+        }
+
+        return foundMatches.get(0).getVariableSubstitutions();
     }
 
     /**

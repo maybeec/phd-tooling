@@ -1,6 +1,8 @@
 package io.github.maybeec.patterndetection.entity;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -12,6 +14,10 @@ public class AstPathList<T extends AstElem> extends ArrayList<T> implements AstP
     private boolean isOrdered;
 
     private boolean isAtomic;
+
+    private boolean isListPattern;
+
+    private Map<AstPathList<T>, List<Map<String, String>>> matches;
 
     /**
      * @param type
@@ -41,4 +47,12 @@ public class AstPathList<T extends AstElem> extends ArrayList<T> implements AstP
         return isAtomic;
     }
 
+    @Override
+    public boolean isListPattern() {
+        return this.isListPattern;
+    }
+
+    public void setListPattern(boolean isListPattern) {
+        this.isListPattern = isListPattern;
+    }
 }

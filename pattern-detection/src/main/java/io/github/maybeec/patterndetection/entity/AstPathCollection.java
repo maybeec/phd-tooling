@@ -12,4 +12,6 @@ public interface AstPathCollection<T extends AstElem> extends Collection<T>, Ast
     public boolean isOrdered();
 
     public boolean isAtomic();
+
+    public boolean isListPattern();
 }

@@ -92,6 +92,7 @@ public class AstToPathTransformer implements ParseTreeListener {
         if (!withinListPattern && listPatternRules.containsKey(nameToTest)
             && listPatternRules.get(nameToTest).contains(parentNameToTest)) {
             AstPathList<AstElem> orderedPaths = new AstPathList<>("<ListPattern>", true);
+            orderedPaths.setListPattern(true);
             currentCollection.peek().add(orderedPaths);
             currentCollection.push(orderedPaths);
             withinListPattern = true;

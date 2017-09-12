@@ -13,6 +13,8 @@ public class AstPathSet<T extends AstElem> extends HashSet<T> implements AstPath
 
     private boolean isAtomic;
 
+    private boolean isListPattern;
+
     /**
      * @param type
      */
@@ -35,4 +37,10 @@ public class AstPathSet<T extends AstElem> extends HashSet<T> implements AstPath
     public boolean isAtomic() {
         return isAtomic;
     }
+
+    @Override
+    public boolean isListPattern() {
+        return this.isListPattern;
+    }
+
 }
