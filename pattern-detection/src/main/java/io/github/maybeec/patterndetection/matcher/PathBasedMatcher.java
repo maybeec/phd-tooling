@@ -4,10 +4,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Stack;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.antlr.v4.runtime.Vocabulary;
@@ -72,23 +73,8 @@ public class PathBasedMatcher {
     /** Root of the application CST */
     private ParseTree appPointerInit;
 
-    /** Visited nodes */
-    private Set<ParseTree> visited = new HashSet<>();
-
-    /** All token substitution covered so far */
-    private Map<String, Set<String>> tokenSubstituitions = new HashMap<>();
-
-    /** Currently selected token substitutions (matching token text to substitution string) */
-    private Map<String, String> selectedSubstitutions = new HashMap<>();
-
-    /** Number of tokens of the selected substitution for each token (key = token text) */
-    private Map<String, Integer> selectedSubstitutionTokenCount = new HashMap<>();
-
     /** Vocabulary of the parser to get the token names from */
     private Vocabulary parserVocabulary;
-
-    /** Decision points to may get back to during backtracking. */
-    private Stack<MatcherState> decisionPoints = new Stack<>();
 
     /** List patterns in the underlying grammar. See {@link ListPatternCollector} for more details */
     private MultiMap<String, String> listPatterns;
@@ -127,7 +113,7 @@ public class PathBasedMatcher {
         AstPathSet<AstElem> rootSet = new AstPathSet<>("ROOT");
         AstPathList<AstElem> templatePaths = listener.getPaths();
         rootSet.add(templatePaths);
-        printPaths(rootSet);
+        System.out.println(printPaths(rootSet, e -> e.getPath(), true));
 
         System.out.println("");
         System.out.println(">> APP: ");
@@ -139,7 +125,7 @@ public class PathBasedMatcher {
         rootSet = new AstPathSet<>("ROOT");
         AstPathList<AstElem> appPaths = listener.getPaths();
         rootSet.add(appPaths);
-        printPaths(rootSet);
+        System.out.println(printPaths(rootSet, e -> e.getPath(), true));
 
         return match(templatePaths, appPaths);
 
@@ -169,24 +155,115 @@ public class PathBasedMatcher {
 
         Map<String, String> variableSubstitutions = matchOrderedPaths(orderedTemplatePaths, orderedAppPaths, false);
 
-        Map<AstPathList<AstElem>, AstPathList<AstElem>> matches = new HashMap<>();
+        // get all unordered matches, contains multiple matches per template node
+        List<List<Match<AstPathList<AstElem>>>> matches = new ArrayList<>();
         for (AstPathList<AstElem> tempElem : unorderedTempPaths) {
+            List<Match<AstPathList<AstElem>>> matchesTemp = new ArrayList<>();
             for (AstPathList<AstElem> appElem : unorderedAppPaths) {
                 try {
-                    variableSubstitutions.putAll(match(tempElem, appElem));
-                    matches.put(tempElem, appElem);
+                    Map<String, String> variableAssignments = match(tempElem, appElem);
+                    matchesTemp.add(new Match<>(tempElem, appElem, variableAssignments));
                 } catch (NoMatchException e) {
                     // ignore as there might be another match
                 }
             }
+            if (!matchesTemp.isEmpty()) {
+                matches.add(matchesTemp);
+            }
         }
+
+        resolveVariableSubstitution(variableSubstitutions, matches);
+
         unorderedTempPaths.removeAll(matches.keySet());
         if (!unorderedTempPaths.isEmpty()) {
-            throw new NoMatchException("The following template paths could not be found: \n"
-                + unorderedTempPaths.stream().map(e -> e.toString()).collect(Collectors.joining("\n")));
+            throw new NoMatchException("The following template paths could not be found: \n" + unorderedTempPaths
+                .stream().map(e -> printPaths(e, p -> p.getText(), false)).collect(Collectors.joining("\n")));
         }
 
         return variableSubstitutions;
+    }
+
+    /**
+     * @param variableSubstitutions
+     * @param matches
+     */
+    private void resolveVariableSubstitution(Map<String, String> variableSubstitutions,
+        List<List<Match<AstPathList<AstElem>>>> matches) {
+        // === calculate a valid variable assignment
+        // erst ohne PH matches
+        // -> alle permutationen
+        // dann mit PHs
+        // -> erstelle liste von placeholders
+        // -> sortiere liste nach anzahl von matches
+        // -> prüfe alle mit einem match und setze die variableSubstitutions (fail wenn nicht konsistent)
+        // -> prüfe mit 2 Matches mit gegebenen variableSubstitutions
+        // ----> wenn dennoch weiterhin beide Alternativen existieren, eine wählen, eine weitere vormerken
+        List<List<Match<AstPathList<AstElem>>>> pureObjLangMatches =
+            matches.stream().filter(e -> !e.get(0).containsPh()).collect(Collectors.toList());
+
+        // matches to be selected grouped by template node
+        Map<AstPathList<AstElem>, Match<AstPathList<AstElem>>> selectedMatches = new HashMap<>();
+        Map<String, String> variableSubstitutionsTemp = new HashMap<>(variableSubstitutions);
+
+        int matchCountToAdress = 1;
+        List<List<Match<AstPathList<AstElem>>>> worklist = new ArrayList<>(pureObjLangMatches);
+        Object last = worklist.get(worklist.size() - 1);
+        Iterator<List<Match<AstPathList<AstElem>>>> it = worklist.iterator();
+        while (it.hasNext()) {
+            List<Match<AstPathList<AstElem>>> next = it.next();
+            if (next.size() > matchCountToAdress) {
+                // take variable assignments with match count alternatives first. -> Implicit sorting.
+                continue;
+            } else {
+                Match<AstPathList<AstElem>> selectedMatch = null;
+                for (int i = 0; i < next.size(); i++) {
+                    if (!selectedMatches.containsKey(next.get(i))) {
+                        if (isCompatible(variableSubstitutionsTemp, next.get(i).getVariableSubstitutions())) {
+                            selectedMatch = next.get(i);
+                            selectedMatches.put(selectedMatch.getAppCode(), selectedMatch);
+                            variableSubstitutionsTemp.putAll(selectedMatch.getVariableSubstitutions());
+                        }
+                        break;
+                    }
+                }
+
+                if (selectedMatch == null) {
+                    throw new NoMatchException(
+                        "Could not find any match for template fragment " + next.get(0).getTemplate());
+                }
+                // remove match after selecting one alternative
+                it.remove();
+            }
+
+            if (next == last) {
+                matchCountToAdress++;
+                if (!worklist.isEmpty()) {
+                    last = worklist.get(worklist.size() - 1);
+                    it = worklist.iterator(); // reset iterator
+                }
+            }
+        }
+    }
+
+    /**
+     * Checks whether there is any conflict (non equal variable substitution in both maps)
+     * @param variableSubstitutionsSource
+     *            already selected variable substitutions
+     * @param variableSubstitutionsToAdd
+     *            variable substitutions potentially to be added
+     * @return <code>true</code> if there are no conflicts, <code>false</code> otherwise
+     */
+    private boolean isCompatible(Map<String, String> variableSubstitutionsSource,
+        Map<String, String> variableSubstitutionsToAdd) {
+        Set<String> keysContainedInBoth = new HashSet<>(variableSubstitutionsSource.keySet());
+        keysContainedInBoth.retainAll(variableSubstitutionsToAdd.keySet()); // get intersection
+        // check all values in the intersection to be the same / compatible
+        for (String key : keysContainedInBoth) {
+            if (!variableSubstitutionsSource.get(key).equals(variableSubstitutionsToAdd.get(key))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -220,7 +297,7 @@ public class PathBasedMatcher {
                 }
                 if (!matches) {
                     if (exactly) {
-                        j = orderedAppPaths.size(); // trigger error handling at loop start
+                        j = orderedAppPaths.size() + 1; // trigger error handling at loop start
                     } else {
                         j++;
                     }
@@ -399,22 +476,36 @@ public class PathBasedMatcher {
     /**
      * @param listener
      */
-    private void printPaths(AstPathCollection<AstElem> paths) {
+    private String printPaths(AstPathCollection<AstElem> paths, Function<AstPath, String> pathToString,
+        boolean newLine) {
+        StringBuilder strB = new StringBuilder();
+
         for (AstElem elem : paths) {
             if (elem instanceof AstPath) {
-                System.out.println(((AstPath) elem).getPath());
+                strB.append(pathToString.apply(((AstPath) elem)));
+                if (newLine) {
+                    strB.append("\n");
+                }
             } else if (elem instanceof AstPathCollection) {
                 if (((AstPathCollection) elem).isOrdered()) {
-                    System.out.println("Ordered Path (" + ((AstPathCollection) elem).getType() + ") [");
+                    strB.append("Ordered Path (" + ((AstPathCollection) elem).getType() + ") [");
+                    strB.append("\n");
                 } else {
-                    System.out.println("UN-Ordered Path (" + ((AstPathCollection) elem).getType() + ") [");
+                    if (!newLine) {
+                        strB.append("\n");
+                    }
+                    strB.append("UN-Ordered Path (" + ((AstPathCollection) elem).getType() + ") [");
+                    strB.append("\n");
                 }
-                printPaths((AstPathList) elem);
-                System.out.println("]");
+                strB.append(printPaths((AstPathList) elem, pathToString, newLine));
+                strB.append("\n");
+                strB.append("]");
+                strB.append("\n");
             } else {
                 throw new IllegalStateException("Unknown AstElem type " + elem.getClass());
             }
         }
+        return strB.toString();
     }
 
 }

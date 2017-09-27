@@ -13,6 +13,8 @@ public class Match<T> {
 
     private Map<String, String> variableSubstitutions;
 
+    private boolean containsPh;
+
     /**
      * @param template
      * @param appCode
@@ -23,6 +25,8 @@ public class Match<T> {
         this.template = template;
         this.appCode = appCode;
         this.variableSubstitutions = variableSubstitutions;
+        this.containsPh = !variableSubstitutions.isEmpty();
+
     }
 
     public T getTemplate() {
@@ -35,6 +39,10 @@ public class Match<T> {
 
     public Map<String, String> getVariableSubstitutions() {
         return this.variableSubstitutions;
+    }
+
+    public boolean containsPh() {
+        return this.containsPh;
     }
 
 }

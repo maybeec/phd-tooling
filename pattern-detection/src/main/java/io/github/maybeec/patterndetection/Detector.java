@@ -86,7 +86,6 @@ public class Detector {
             }
             System.out.println(variableSubstitutions);
         } catch (NoMatchException e) {
-            System.out.println(e.getMessage());
             e.printStackTrace();
             throw e;
         }
