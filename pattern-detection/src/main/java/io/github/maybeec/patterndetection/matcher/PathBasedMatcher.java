@@ -23,7 +23,10 @@ import io.github.maybeec.patterndetection.entity.AstPath;
 import io.github.maybeec.patterndetection.entity.AstPathCollection;
 import io.github.maybeec.patterndetection.entity.AstPathList;
 import io.github.maybeec.patterndetection.entity.AstPathSet;
+import io.github.maybeec.patterndetection.entity.AtomarMatch;
 import io.github.maybeec.patterndetection.entity.Match;
+import io.github.maybeec.patterndetection.entity.NonOrderedContainerMatch;
+import io.github.maybeec.patterndetection.entity.OrderedContainerMatch;
 import io.github.maybeec.patterndetection.exception.NoMatchException;
 import io.github.maybeec.patterndetection.utils.MathUtil;
 
@@ -100,7 +103,7 @@ public class PathBasedMatcher {
         this.listPatterns = listPatterns;
     }
 
-    public Map<String, String> detect() {
+    public List<Match<AstElem>> match() {
 
         System.out.println("");
         System.out.println(">> Template: ");
@@ -135,7 +138,7 @@ public class PathBasedMatcher {
      * @param templatePaths
      * @param appPaths
      */
-    private Map<String, String> match(AstPathList<AstElem> templatePaths, AstPathList<AstElem> appPaths) {
+    private List<Match<AstElem>> match(AstPathList<AstElem> templatePaths, AstPathList<AstElem> appPaths) {
         // separate unordered nodes from ordered ones
         Set<AstPathList<AstElem>> unorderedTempPaths = templatePaths.stream()
             .filter(elem -> elem instanceof AstPathList).filter(elem -> !((AstPathList) elem).isOrdered())
@@ -153,117 +156,50 @@ public class PathBasedMatcher {
                 || (elem instanceof AstPathCollection<?>) && ((AstPathCollection<?>) elem).isOrdered())
             .collect(Collectors.toList());
 
-        Map<String, String> variableSubstitutions = matchOrderedPaths(orderedTemplatePaths, orderedAppPaths, false);
+        List<Match<AstElem>> listOfMatches = new ArrayList<>();
+        List<Match<AstElem>> matchesOrderedPaths = matchOrderedPaths(orderedTemplatePaths, orderedAppPaths, false);
+        listOfMatches.add(new OrderedContainerMatch<>(matchesOrderedPaths));
 
         // get all unordered matches, contains multiple matches per template node
-        List<List<Match<AstPathList<AstElem>>>> matches = new ArrayList<>();
-        for (AstPathList<AstElem> tempElem : unorderedTempPaths) {
-            List<Match<AstPathList<AstElem>>> matchesTemp = new ArrayList<>();
+        List<List<Match<AstElem>>> matches = getAllUnorderedMatches(unorderedTempPaths, unorderedAppPaths);
+        listOfMatches.add(new NonOrderedContainerMatch<>(matches));
+
+        return listOfMatches;
+    }
+
+    /**
+     * @param unorderedTempPaths
+     * @param unorderedAppPaths
+     * @return
+     */
+    private List<List<Match<AstElem>>> getAllUnorderedMatches(Set<AstPathList<AstElem>> unorderedTempPaths,
+        Set<AstPathList<AstElem>> unorderedAppPaths) {
+        List<List<Match<AstElem>>> matches = new ArrayList<>();
+        Iterator<AstPathList<AstElem>> it = unorderedTempPaths.iterator();
+        while (it.hasNext()) {
+            AstPathList<AstElem> tempElem = it.next();
+            List<Match<AstElem>> matchesTemp = new ArrayList<>();
             for (AstPathList<AstElem> appElem : unorderedAppPaths) {
                 try {
-                    Map<String, String> variableAssignments = match(tempElem, appElem);
-                    matchesTemp.add(new Match<>(tempElem, appElem, variableAssignments));
+                    // List<Map<String, String>> variableAssignments = match(tempElem, appElem);
+                    // for (Map<String, String> va : variableAssignments) {
+                    matchesTemp.add(new OrderedContainerMatch<>(match(tempElem, appElem)));
+                    // }
                 } catch (NoMatchException e) {
                     // ignore as there might be another match
                 }
             }
             if (!matchesTemp.isEmpty()) {
                 matches.add(matchesTemp);
+                it.remove();
             }
         }
 
-        resolveVariableSubstitution(variableSubstitutions, matches);
-
-        unorderedTempPaths.removeAll(matches.keySet());
         if (!unorderedTempPaths.isEmpty()) {
             throw new NoMatchException("The following template paths could not be found: \n" + unorderedTempPaths
                 .stream().map(e -> printPaths(e, p -> p.getText(), false)).collect(Collectors.joining("\n")));
         }
-
-        return variableSubstitutions;
-    }
-
-    /**
-     * @param variableSubstitutions
-     * @param matches
-     */
-    private void resolveVariableSubstitution(Map<String, String> variableSubstitutions,
-        List<List<Match<AstPathList<AstElem>>>> matches) {
-        // === calculate a valid variable assignment
-        // erst ohne PH matches
-        // -> alle permutationen
-        // dann mit PHs
-        // -> erstelle liste von placeholders
-        // -> sortiere liste nach anzahl von matches
-        // -> prüfe alle mit einem match und setze die variableSubstitutions (fail wenn nicht konsistent)
-        // -> prüfe mit 2 Matches mit gegebenen variableSubstitutions
-        // ----> wenn dennoch weiterhin beide Alternativen existieren, eine wählen, eine weitere vormerken
-        List<List<Match<AstPathList<AstElem>>>> pureObjLangMatches =
-            matches.stream().filter(e -> !e.get(0).containsPh()).collect(Collectors.toList());
-
-        // matches to be selected grouped by template node
-        Map<AstPathList<AstElem>, Match<AstPathList<AstElem>>> selectedMatches = new HashMap<>();
-        Map<String, String> variableSubstitutionsTemp = new HashMap<>(variableSubstitutions);
-
-        int matchCountToAdress = 1;
-        List<List<Match<AstPathList<AstElem>>>> worklist = new ArrayList<>(pureObjLangMatches);
-        Object last = worklist.get(worklist.size() - 1);
-        Iterator<List<Match<AstPathList<AstElem>>>> it = worklist.iterator();
-        while (it.hasNext()) {
-            List<Match<AstPathList<AstElem>>> next = it.next();
-            if (next.size() > matchCountToAdress) {
-                // take variable assignments with match count alternatives first. -> Implicit sorting.
-                continue;
-            } else {
-                Match<AstPathList<AstElem>> selectedMatch = null;
-                for (int i = 0; i < next.size(); i++) {
-                    if (!selectedMatches.containsKey(next.get(i))) {
-                        if (isCompatible(variableSubstitutionsTemp, next.get(i).getVariableSubstitutions())) {
-                            selectedMatch = next.get(i);
-                            selectedMatches.put(selectedMatch.getAppCode(), selectedMatch);
-                            variableSubstitutionsTemp.putAll(selectedMatch.getVariableSubstitutions());
-                        }
-                        break;
-                    }
-                }
-
-                if (selectedMatch == null) {
-                    throw new NoMatchException(
-                        "Could not find any match for template fragment " + next.get(0).getTemplate());
-                }
-                // remove match after selecting one alternative
-                it.remove();
-            }
-
-            if (next == last) {
-                matchCountToAdress++;
-                if (!worklist.isEmpty()) {
-                    last = worklist.get(worklist.size() - 1);
-                    it = worklist.iterator(); // reset iterator
-                }
-            }
-        }
-    }
-
-    /**
-     * Checks whether there is any conflict (non equal variable substitution in both maps)
-     * @param variableSubstitutionsSource
-     *            already selected variable substitutions
-     * @param variableSubstitutionsToAdd
-     *            variable substitutions potentially to be added
-     * @return <code>true</code> if there are no conflicts, <code>false</code> otherwise
-     */
-    private boolean isCompatible(Map<String, String> variableSubstitutionsSource,
-        Map<String, String> variableSubstitutionsToAdd) {
-        Set<String> keysContainedInBoth = new HashSet<>(variableSubstitutionsSource.keySet());
-        keysContainedInBoth.retainAll(variableSubstitutionsToAdd.keySet()); // get intersection
-        // check all values in the intersection to be the same / compatible
-        for (String key : keysContainedInBoth) {
-            if (!variableSubstitutionsSource.get(key).equals(variableSubstitutionsToAdd.get(key))) {
-                return false;
-            }
-        }
-        return true;
+        return matches;
     }
 
     /**
@@ -271,9 +207,10 @@ public class PathBasedMatcher {
      * @param orderedAppPaths
      * @return
      */
-    private Map<String, String> matchOrderedPaths(List<AstElem> orderedTemplatePaths, List<AstElem> orderedAppPaths,
+    private List<Match<AstElem>> matchOrderedPaths(List<AstElem> orderedTemplatePaths, List<AstElem> orderedAppPaths,
         boolean exactly) {
-        Map<String, String> variableSubstitutions = new HashMap<>();
+
+        List<Match<AstElem>> listOfMatches = new ArrayList<>();
         int j = 0;
         for (int i = 0; i < orderedTemplatePaths.size(); i++) {
             AstElem tempElem = orderedTemplatePaths.get(i);
@@ -291,7 +228,7 @@ public class PathBasedMatcher {
 
                 matches = true;
                 try {
-                    variableSubstitutions.putAll(matchPath(tempElem, appElem));
+                    listOfMatches.add(new OrderedContainerMatch<>(matchPath(tempElem, appElem)));
                 } catch (NoMatchException e) {
                     matches = false;
                 }
@@ -306,14 +243,14 @@ public class PathBasedMatcher {
                 }
             } while (!matches);
         }
-        return variableSubstitutions;
+        return listOfMatches;
     }
 
     /**
      * @param appElem
      * @return
      */
-    public Map<String, String> matchPath(AstElem tempElem, AstElem appElem) {
+    public List<Match<AstElem>> matchPath(AstElem tempElem, AstElem appElem) {
         if (tempElem instanceof AstPathList<?> && ((AstPathList<?>) tempElem).isAtomic()
             && appElem instanceof AstPathList<?> && ((AstPathList<?>) appElem).isAtomic()) {
             return matchOrderedPaths((AstPathList<AstElem>) tempElem, (AstPathList<AstElem>) appElem, true);
@@ -331,7 +268,9 @@ public class PathBasedMatcher {
             // trivial case
             if (currentApp.getPath().equals(currentTemp.getPath())) {
                 System.out.println("Consume (t->a): " + startingTemp + " --> " + startingApp);
-                return variableSubstitutions;
+                List<Match<AstElem>> listOfMatches = new ArrayList<>();
+                listOfMatches.add(new AtomarMatch<>(tempElem, appElem, variableSubstitutions));
+                return listOfMatches;
             } else if (!currentTemp.containsMetaLang()) {
                 throw new NoMatchException("Could not find " + startingTemp.getPath() + " in " + startingApp.getPath());
             }
@@ -356,7 +295,9 @@ public class PathBasedMatcher {
             } while (currentTemp != null);
 
             System.out.println("Consume (t->a): " + startingTemp + " --> " + startingApp);
-            return variableSubstitutions;
+            List<Match<AstElem>> listOfMatches = new ArrayList<>();
+            listOfMatches.add(new AtomarMatch<>(tempElem, appElem, variableSubstitutions));
+            return listOfMatches;
         } else {
             throw new NoMatchException("Cannot match AstPath " + tempElem + " against AstPathCollection " + appElem);
         }
@@ -367,7 +308,7 @@ public class PathBasedMatcher {
      * @param appElem
      * @return
      */
-    private Map<String, String> matchListPattern(AstPathList<AstElem> orderedTemplatePaths,
+    private List<Match<AstElem>> matchListPattern(AstPathList<AstElem> orderedTemplatePaths,
         AstPathList<AstElem> orderedAppPaths) {
 
         int numPh = (int) orderedTemplatePaths.stream().filter(e -> e instanceof AstPath).map(e -> (AstPath) e)
@@ -387,13 +328,11 @@ public class PathBasedMatcher {
             combinations = MathUtil.multichooseMin1(maxSubstitutions, numPh);
         }
 
-        List<Match<AstPathList<AstElem>>> foundMatches = new ArrayList<>();
+        List<Match<AstElem>> foundMatches = new ArrayList<>();
         for (int[] combination : combinations) {
             Map<String, String> variableSubstitutions = new HashMap<>();
 
             try {
-                int phPos = 0;
-                int phNumSubElems = 0;
                 int observedPhIndex = 0;
                 int j = 0;
                 for (int i = 0; i < orderedTemplatePaths.size(); i++) {
@@ -460,7 +399,7 @@ public class PathBasedMatcher {
                     } while (!matches);
                 }
 
-                foundMatches.add(new Match<>(orderedTemplatePaths, orderedAppPaths, variableSubstitutions));
+                foundMatches.add(new AtomarMatch<>(orderedTemplatePaths, orderedAppPaths, variableSubstitutions));
             } catch (NoMatchException e) {
                 // ignore, try next
             }
@@ -470,7 +409,7 @@ public class PathBasedMatcher {
             throw new NoMatchException("Could not match template " + orderedTemplatePaths + " to " + orderedAppPaths);
         }
 
-        return foundMatches.get(0).getVariableSubstitutions();
+        return foundMatches;
     }
 
     /**
@@ -487,17 +426,17 @@ public class PathBasedMatcher {
                     strB.append("\n");
                 }
             } else if (elem instanceof AstPathCollection) {
-                if (((AstPathCollection) elem).isOrdered()) {
-                    strB.append("Ordered Path (" + ((AstPathCollection) elem).getType() + ") [");
+                if (((AstPathCollection<?>) elem).isOrdered()) {
+                    strB.append("Ordered Path (" + ((AstPathCollection<?>) elem).getType() + ") [");
                     strB.append("\n");
                 } else {
                     if (!newLine) {
                         strB.append("\n");
                     }
-                    strB.append("UN-Ordered Path (" + ((AstPathCollection) elem).getType() + ") [");
+                    strB.append("UN-Ordered Path (" + ((AstPathCollection<?>) elem).getType() + ") [");
                     strB.append("\n");
                 }
-                strB.append(printPaths((AstPathList) elem, pathToString, newLine));
+                strB.append(printPaths((AstPathList<AstElem>) elem, pathToString, newLine));
                 strB.append("\n");
                 strB.append("]");
                 strB.append("\n");

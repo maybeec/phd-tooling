@@ -1,48 +1,19 @@
 package io.github.maybeec.patterndetection.entity;
 
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  *
  */
-public class Match<T> {
-
-    private T template;
-
-    private T appCode;
-
-    private Map<String, String> variableSubstitutions;
-
-    private boolean containsPh;
+public interface Match<T> {
 
     /**
-     * @param template
-     * @param appCode
-     * @param variableSubstitutions
+     *
      */
-    public Match(T template, T appCode, Map<String, String> variableSubstitutions) {
-        super();
-        this.template = template;
-        this.appCode = appCode;
-        this.variableSubstitutions = variableSubstitutions;
-        this.containsPh = !variableSubstitutions.isEmpty();
+    List<Map<String, String>> getVariableSubstitutions();
 
-    }
-
-    public T getTemplate() {
-        return this.template;
-    }
-
-    public T getAppCode() {
-        return this.appCode;
-    }
-
-    public Map<String, String> getVariableSubstitutions() {
-        return this.variableSubstitutions;
-    }
-
-    public boolean containsPh() {
-        return this.containsPh;
-    }
+    Set<String> getMatchedPaths();
 
 }
