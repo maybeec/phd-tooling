@@ -5,7 +5,7 @@ import java.util.Collection;
 /**
  *
  */
-public interface AstPathCollection<T extends AstElem> extends Collection<T>, AstElem {
+public interface AstPathCollection extends Collection<AstElem>, AstElem {
 
     public String getType();
 

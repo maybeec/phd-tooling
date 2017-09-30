@@ -2,18 +2,17 @@ package io.github.maybeec.patterndetection.entity;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.assertj.core.util.Lists;
 
 /**
  *
  */
-public class AtomarMatch<T> implements Match<T> {
+public class AtomarMatch implements Match {
 
-    private T template;
+    private AstElem template;
 
-    private T appCode;
+    private AstElem appCode;
 
     private List<Map<String, String>> variableSubstitutions;
 
@@ -24,7 +23,7 @@ public class AtomarMatch<T> implements Match<T> {
      * @param appCode
      * @param variableSubstitutions
      */
-    public AtomarMatch(T template, T appCode, Map<String, String> variableSubstitutions) {
+    public AtomarMatch(AstElem template, AstElem appCode, Map<String, String> variableSubstitutions) {
         this(template, appCode,
             variableSubstitutions.isEmpty() ? Lists.newArrayList() : Lists.newArrayList(variableSubstitutions));
     }
@@ -34,41 +33,54 @@ public class AtomarMatch<T> implements Match<T> {
      * @param appCode
      * @param variableSubstitutions
      */
-    public AtomarMatch(T template, T appCode, List<Map<String, String>> variableSubstitutions) {
+    public AtomarMatch(AstElem template, AstElem appCode, List<Map<String, String>> variableSubstitutions) {
         this.template = template;
         this.appCode = appCode;
         this.variableSubstitutions =
             variableSubstitutions.isEmpty() ? Lists.newArrayList() : Lists.newArrayList(variableSubstitutions);
-        this.containsPh = !variableSubstitutions.isEmpty();
+        containsPh = !variableSubstitutions.isEmpty();
 
     }
 
-    public T getTemplate() {
-        return this.template;
+    public AstElem getTemplate() {
+        return template;
     }
 
-    public T getAppCode() {
-        return this.appCode;
+    public AstElem getAppCode() {
+        return appCode;
     }
 
     @Override
-    public List<Map<String, String>> getVariableSubstitutions() {
-        return this.variableSubstitutions;
+    public List<Map<String, String>> resolveVariableSubstitutions() {
+        return variableSubstitutions;
     }
 
     public boolean containsPh() {
-        return this.containsPh;
+        return containsPh;
     }
 
-    @Override
-    public Set<String> getMatchedPaths() {
-        if (appCode instanceof AstPathCollection) {
-            AstPathCollection<T> appCodeC = ((AstPathCollection<T>) appCode);
+    // @Override
+    // public Set<String> getMatchedPaths() {
+    // if (appCode instanceof AstPathCollection) {
+    // return getMatchedPaths((AstPathCollection) appCode);
+    // } else if (appCode instanceof AstPath) {
+    // Set<String> paths = new HashSet<>();
+    // paths.add(((AstPath) appCode).getPath());
+    // return paths;
+    // }
+    // return null;
+    // }
 
-            for (AstPathCollection ac : appCodeC) {
-
-            }
-        }
-        return null;
-    }
+    // private Set<String> getMatchedPaths(AstPathCollection collection) {
+    //
+    // Set<String> paths = new HashSet<>();
+    // for (AstElem ac : collection) {
+    // if (ac instanceof AstPath) {
+    // paths.add(((AstPath) ac).getPath());
+    // } else if (ac instanceof AstPathCollection) {
+    // paths.addAll(getMatchedPaths((AstPathCollection) ac));
+    // }
+    // }
+    // return paths;
+    // }
 }

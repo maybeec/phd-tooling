@@ -6,10 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
-import io.github.maybeec.patterndetection.entity.AstElem;
-import io.github.maybeec.patterndetection.entity.AtomarMatch;
 import io.github.maybeec.patterndetection.entity.Match;
 import io.github.maybeec.patterndetection.exception.NoMatchException;
 import io.github.maybeec.patterndetection.utils.CartesianIterator;
@@ -22,65 +19,55 @@ public class VariableSubstitutionResolver {
     /**
      *
      */
-    public List<Map<String, String>> resolve(List<Match<AstElem>> matches) {
-
-        for (Match<AstElem> match : matches) {
-
-        }
+    public List<Map<String, String>> resolve(Match match) {
 
         return null;
     }
 
-    /**
-     * @param variableSubstitutions
-     * @param matches
-     */
-    public static List<Map<String, String>> resolveVariableSubstitution(List<List<AtomarMatch<AstElem>>> matches) {
-        // === calculate a valid variable assignment
-        // erst ohne PH matches
-        // -> alle permutationen
-        // dann mit PHs
-        // -> erstelle liste von placeholders
-        // -> sortiere liste nach anzahl von matches
-        // -> prüfe alle mit einem match und setze die variableSubstitutions (fail wenn nicht konsistent)
-        // -> prüfe mit 2 Matches mit gegebenen variableSubstitutions
-        // ----> wenn dennoch weiterhin beide Alternativen existieren, eine wählen, eine weitere vormerken
-        List<List<AtomarMatch<AstElem>>> pureObjLangMatches =
-            matches.stream().filter(e -> !e.get(0).containsPh()).collect(Collectors.toList());
-
-        // matches to be selected grouped by template node
-        // Map<AstPathList<AstElem>, Match<AstPathList<AstElem>>> selectedMatches = new HashMap<>();
-
-        List<Map<String, String>> possibleVariableSubstitutions = new ArrayList<>();
-
-        CartesianIterator<AtomarMatch<AstElem>> it = new CartesianIterator<>(pureObjLangMatches);
-        while (it.hasNext()) {
-            List<AtomarMatch<AstElem>> next = it.next();
-            List<AstElem> matchedTempEng = new ArrayList<>();
-            Map<String, String> variableSubstitutionsTemp = new HashMap<>();
-            boolean consistentMatch = true;
-            for (AtomarMatch<AstElem> e : next) {
-                if (!matchedTempEng.contains(e.getTemplate())) {
-                    matchedTempEng.add(e.getTemplate());
-                } else {
-                    consistentMatch = false;
-                    break;
-                }
-                if (isCompatible(variableSubstitutionsTemp, e.getVariableSubstitutions())) {
-                    variableSubstitutionsTemp.putAll(e.getVariableSubstitutions());
-                } else {
-                    consistentMatch = false;
-                    break;
-                }
-            }
-
-            if (consistentMatch && !variableSubstitutionsTemp.isEmpty()) {
-                possibleVariableSubstitutions.add(variableSubstitutionsTemp);
-            }
-        }
-
-        return possibleVariableSubstitutions;
-    }
+    // /**
+    // * @param variableSubstitutions
+    // * @param matches
+    // */
+    // public static List<Map<String, String>> resolveVariableSubstitution(List<List<Match>> matches) {
+    // // === calculate a valid variable assignment
+    // // erst ohne PH matches
+    // // -> alle permutationen
+    // // dann mit PHs
+    // // -> erstelle liste von placeholders
+    // // -> sortiere liste nach anzahl von matches
+    // // -> prüfe alle mit einem match und setze die variableSubstitutions (fail wenn nicht konsistent)
+    // // -> prüfe mit 2 Matches mit gegebenen variableSubstitutions
+    // // ----> wenn dennoch weiterhin beide Alternativen existieren, eine wählen, eine weitere vormerken
+    // List<List<Match>> pureObjLangMatches =
+    // matches.stream().filter(e -> !e.get(0).containsPh()).collect(Collectors.toList());
+    //
+    // // matches to be selected grouped by template node
+    // // Map<AstPathList<AstElem>, Match<AstPathList<AstElem>>> selectedMatches = new HashMap<>();
+    //
+    // List<Map<String, String>> possibleVariableSubstitutions = new ArrayList<>();
+    //
+    // CartesianIterator<Match> it = new CartesianIterator<>(pureObjLangMatches);
+    // while (it.hasNext()) {
+    // List<Match> next = it.next();
+    // List<AstElem> matchedTempEng = new ArrayList<>();
+    // Map<String, String> variableSubstitutionsTemp = new HashMap<>();
+    // boolean consistentMatch = true;
+    // for (Match e : next) {
+    // if (isCompatible(variableSubstitutionsTemp, e.getVariableSubstitutions())) {
+    // variableSubstitutionsTemp.putAll(e.getVariableSubstitutions());
+    // } else {
+    // consistentMatch = false;
+    // break;
+    // }
+    // }
+    //
+    // if (consistentMatch && !variableSubstitutionsTemp.isEmpty()) {
+    // possibleVariableSubstitutions.add(variableSubstitutionsTemp);
+    // }
+    // }
+    //
+    // return possibleVariableSubstitutions;
+    // }
 
     /**
      * Calculate the valid combined variable substitutions of a and b. If no valid combination can be found, a

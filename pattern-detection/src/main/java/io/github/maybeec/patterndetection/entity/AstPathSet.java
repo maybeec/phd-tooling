@@ -5,7 +5,7 @@ import java.util.HashSet;
 /**
  *
  */
-public class AstPathSet<T extends AstElem> extends HashSet<T> implements AstPathCollection<T> {
+public class AstPathSet extends HashSet<AstElem> implements AstPathCollection {
 
     private String type;
 
@@ -40,7 +40,7 @@ public class AstPathSet<T extends AstElem> extends HashSet<T> implements AstPath
 
     @Override
     public boolean isListPattern() {
-        return this.isListPattern;
+        return isListPattern;
     }
 
 }

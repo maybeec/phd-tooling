@@ -13,7 +13,6 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeListener;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
-import io.github.maybeec.patterndetection.entity.AstElem;
 import io.github.maybeec.patterndetection.entity.AstPath;
 import io.github.maybeec.patterndetection.entity.AstPathCollection;
 import io.github.maybeec.patterndetection.entity.AstPathList;
@@ -41,9 +40,9 @@ public class AstToPathTransformer implements ParseTreeListener {
         }
     }
 
-    private AstPathList<AstElem> paths;
+    private AstPathList paths;
 
-    private Stack<AstPathCollection<AstElem>> currentCollection = new Stack<>();
+    private Stack<AstPathCollection> currentCollection = new Stack<>();
 
     private Stack<AstPath> lastNode = new Stack<>();
 
@@ -76,7 +75,7 @@ public class AstToPathTransformer implements ParseTreeListener {
 
         String symbolicName = vocabulary.getSymbolicName(node.getSymbol().getType());
         if (!withinAtomarPathSet) {
-            AstPathList<AstElem> orderedPaths = new AstPathList<>("<Atom>", true);
+            AstPathList orderedPaths = new AstPathList("<Atom>", true);
             orderedPaths.setAtomic(true);
             currentCollection.peek().add(orderedPaths);
             currentCollection.push(orderedPaths);
@@ -91,7 +90,7 @@ public class AstToPathTransformer implements ParseTreeListener {
         }
         if (!withinListPattern && listPatternRules.containsKey(nameToTest)
             && listPatternRules.get(nameToTest).contains(parentNameToTest)) {
-            AstPathList<AstElem> orderedPaths = new AstPathList<>("<ListPattern>", true);
+            AstPathList orderedPaths = new AstPathList("<ListPattern>", true);
             orderedPaths.setListPattern(true);
             currentCollection.peek().add(orderedPaths);
             currentCollection.push(orderedPaths);
@@ -123,7 +122,7 @@ public class AstToPathTransformer implements ParseTreeListener {
         if (lastNode.isEmpty()) {
             // initialization
             lastNode.push(new AstPath(simpleName, ctx.getText(), null));
-            paths = new AstPathList<>(simpleName, true);
+            paths = new AstPathList(simpleName, true);
             currentCollection.push(paths);
             toPop.push(true);
         } else {
@@ -133,7 +132,7 @@ public class AstToPathTransformer implements ParseTreeListener {
 
         if (nonOrderedNodes.contains(simpleName)) {
             // create new list of nodes to separate them as a block, which itself is unordered to its siblings
-            AstPathList<AstElem> unorderedPaths = new AstPathList<>(simpleName, false);
+            AstPathList unorderedPaths = new AstPathList(simpleName, false);
             currentCollection.peek().add(unorderedPaths);
             currentCollection.push(unorderedPaths);
             toPop.push(true);
@@ -150,7 +149,7 @@ public class AstToPathTransformer implements ParseTreeListener {
         }
     }
 
-    public AstPathList<AstElem> getPaths() {
+    public AstPathList getPaths() {
         return paths;
     }
 

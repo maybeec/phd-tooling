@@ -5,7 +5,7 @@ import java.util.ArrayList;
 /**
  *
  */
-public class AstPathList<T extends AstElem> extends ArrayList<T> implements AstPathCollection<T> {
+public class AstPathList extends ArrayList<AstElem> implements AstPathCollection {
 
     private String type;
 
@@ -45,7 +45,7 @@ public class AstPathList<T extends AstElem> extends ArrayList<T> implements AstP
 
     @Override
     public boolean isListPattern() {
-        return this.isListPattern;
+        return isListPattern;
     }
 
     public void setListPattern(boolean isListPattern) {

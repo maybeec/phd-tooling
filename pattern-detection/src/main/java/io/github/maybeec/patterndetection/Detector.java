@@ -19,11 +19,9 @@ import org.antlr.v4.runtime.misc.MultiMap;
 import io.github.maybeec.antlr4.parser.TemplateParser;
 import io.github.maybeec.parsers.javatemplate.JavaTemplateLexer;
 import io.github.maybeec.parsers.javatemplate.JavaTemplateParser;
-import io.github.maybeec.patterndetection.entity.AstElem;
 import io.github.maybeec.patterndetection.entity.Match;
 import io.github.maybeec.patterndetection.exception.NoMatchException;
 import io.github.maybeec.patterndetection.matcher.PathBasedMatcher;
-import io.github.maybeec.patterndetection.resolver.VariableSubstitutionResolver;
 
 /** Application interface of the pattern detection implementation. */
 public class Detector {
@@ -82,9 +80,9 @@ public class Detector {
                         System.out.println(">>> Matching " + template.toFile().getAbsolutePath());
                         System.out.println(">>> AT " + file.toFile().getAbsolutePath());
                         System.out.println("");
-                        List<Match<AstElem>> match = new PathBasedMatcher(templateCST, applicationParseTrees.get(file),
+                        Match match = new PathBasedMatcher(templateCST, applicationParseTrees.get(file),
                             new JavaTemplateParser(null).getVocabulary(), listPatterns).match();
-                        variableSubstitutions.addAll(new VariableSubstitutionResolver().resolve(match));
+                        variableSubstitutions.addAll(match.resolveVariableSubstitutions());
                     }
                 }
             }
