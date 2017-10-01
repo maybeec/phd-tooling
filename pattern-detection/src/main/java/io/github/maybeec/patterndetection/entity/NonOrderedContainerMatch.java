@@ -65,6 +65,12 @@ public class NonOrderedContainerMatch implements Match {
         }
         return validVariableSubstitutions;
     }
+
+    @Override
+    public String toString() {
+        return subsequentMatches.toString();
+    }
+
     //
     // /**
     // * @return

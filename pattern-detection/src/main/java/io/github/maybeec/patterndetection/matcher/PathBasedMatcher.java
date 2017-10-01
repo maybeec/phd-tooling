@@ -174,6 +174,10 @@ public class PathBasedMatcher {
      */
     private List<List<Match>> getAllUnorderedMatches(Set<AstPathList> unorderedTempPaths,
         Set<AstPathList> unorderedAppPaths) {
+        if (unorderedTempPaths.isEmpty()) {
+            return new ArrayList<>();
+        }
+
         List<List<Match>> matches = new ArrayList<>();
         Iterator<AstPathList> it = unorderedTempPaths.iterator();
         Map<OrderedContainerMatch, AstPathList> matchTargets = new HashMap<>();
@@ -287,38 +291,40 @@ public class PathBasedMatcher {
 
             Map<String, String> variableSubstitutions = new HashMap<>();
 
-            // trivial case
-            if (currentApp.getPath().equals(currentTemp.getPath())) {
-                System.out.println("Consume (t->a): " + startingTemp + " --> " + startingApp);
-                List<Match> listOfMatches = new ArrayList<>();
-                listOfMatches.add(new AtomarMatch(tempElem, appElem, variableSubstitutions));
-                return Lists.<List<Match>> newArrayList(listOfMatches);
-            } else if (!currentTemp.containsMetaLang()) {
-                throw new NoMatchException("Could not find " + startingTemp.getPath() + " in " + startingApp.getPath());
-            }
-
-            // meta code in path
-            do {
-                if (currentApp == null) {
+            List<Match> listOfMatches = new ArrayList<>();
+            if (!currentTemp.isMetaLang()) {
+                // trivial case
+                if (currentApp.getPath().equals(currentTemp.getPath())
+                    && currentApp.getText().equals(currentTemp.getText())) {
+                    System.out.println("Consume (t->a): " + startingTemp + " --> " + startingApp);
+                    listOfMatches.add(new AtomarMatch(tempElem, appElem, variableSubstitutions));
+                } else if (!currentTemp.containsMetaLang()) {
                     throw new NoMatchException(
                         "Could not find " + startingTemp.getPath() + " in " + startingApp.getPath());
                 }
-                if (currentTemp.getName().equals(currentApp.getName())) {
-                    currentApp = currentApp.getParent();
-                } else if (currentTemp.isMetaLang()) {
-                    if (currentTemp.getParent().getName().matches("Fm_" + currentApp.getName() + "Context")) {
-                        variableSubstitutions.put(currentTemp.getText(), currentApp.getText());
-                        break;
+            } else {
+                // meta code in path
+                do {
+                    if (currentApp == null) {
+                        throw new NoMatchException(
+                            "Could not find " + startingTemp.getPath() + " in " + startingApp.getPath());
                     }
-                } else {
-                    currentApp = currentApp.getParent();
-                }
-                currentTemp = currentTemp.getParent();
-            } while (currentTemp != null);
+                    if (currentTemp.getName().equals(currentApp.getName())) {
+                        currentApp = currentApp.getParent();
+                    } else if (currentTemp.isMetaLang()) {
+                        if (currentTemp.getParent().getName().matches("Fm_" + currentApp.getName() + "Context")) {
+                            variableSubstitutions.put(currentTemp.getText(), currentApp.getText());
+                            break;
+                        }
+                    } else {
+                        currentApp = currentApp.getParent();
+                    }
+                    currentTemp = currentTemp.getParent();
+                } while (currentTemp != null);
 
-            System.out.println("Consume (t->a): " + startingTemp + " --> " + startingApp);
-            List<Match> listOfMatches = new ArrayList<>();
-            listOfMatches.add(new AtomarMatch(tempElem, appElem, variableSubstitutions));
+                System.out.println("Consume (t->a): " + startingTemp + " --> " + startingApp);
+                listOfMatches.add(new AtomarMatch(tempElem, appElem, variableSubstitutions));
+            }
             return Lists.<List<Match>> newArrayList(listOfMatches);
         } else {
             throw new NoMatchException("Cannot match AstPath " + tempElem + " against AstPathCollection " + appElem);

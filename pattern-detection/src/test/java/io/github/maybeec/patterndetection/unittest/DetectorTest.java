@@ -70,9 +70,11 @@ public class DetectorTest {
 
         List<Map<String, String>> variableStubsitutions = new Detector().detect(pattern, applicationFiles, ".ftl");
 
-        assertThat(variableStubsitutions).hasSize(1);
+        assertThat(variableStubsitutions).hasSize(2);
         assertThat(variableStubsitutions.get(0)).hasSize(3).extracting("${a}", "${b}", "${e}").containsExactly("a",
             "b.c", "e.f.g.h");
+        assertThat(variableStubsitutions.get(1)).hasSize(3).extracting("${a}", "${b}", "${e}").containsExactly("a.b",
+            "c", "e.f.g.h");
     }
 
     @Test

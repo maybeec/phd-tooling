@@ -59,6 +59,11 @@ public class AtomarMatch implements Match {
         return containsPh;
     }
 
+    @Override
+    public String toString() {
+        return template.toString() + " -> " + appCode.toString();
+    }
+
     // @Override
     // public Set<String> getMatchedPaths() {
     // if (appCode instanceof AstPathCollection) {

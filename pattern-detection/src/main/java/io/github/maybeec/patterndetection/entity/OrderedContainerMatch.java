@@ -55,6 +55,11 @@ public class OrderedContainerMatch implements Match {
         return validVariableSubstitutions;
     }
 
+    @Override
+    public String toString() {
+        return subsequentMatchesNonAmbigous.toString();
+    }
+
     // @Override
     // public List<Map<String, String>> resolveVariableSubstitutions() {
     //

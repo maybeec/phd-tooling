@@ -64,6 +64,15 @@ public class AstPath implements AstElem {
         return text;
     }
 
+    public String getFullPathText() {
+        String fullText = "";
+        if (parent != null) {
+            fullText = parent.getFullPathText();
+        }
+        fullText += text;
+        return fullText;
+    }
+
     public String getPath() {
         return getPathSegments().stream().collect(Collectors.joining("/"));
     }
@@ -79,7 +88,7 @@ public class AstPath implements AstElem {
 
     @Override
     public String toString() {
-        return getPath();
+        return getText();
     }
 
 }
