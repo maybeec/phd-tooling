@@ -102,21 +102,10 @@ public class DetectorTest {
         List<Path> pattern = new ArrayList<>();
         pattern.add(componentFacade);
 
-        // Set<String> fileEndingsOfInterest = retrieveFileEndingsOfInterest(pattern, ".ftl");
-
-        // Set<Path> applicationFiles =
-        // Files.walk(new
-        // File("").getAbsoluteFile().toPath().resolve("../oasp4j/samples/core/src/main/").normalize())
-        // .filter(path -> !path.toString().matches(".*target.*")).filter(path -> //
-        // Files.isRegularFile(path)//
-        // ).filter(path -> //
-        // fileEndingsOfInterest.contains(getFileExtension(path.getFileName().toString()))//
-        // ).collect(Collectors.toSet());
-
         Set<Path> applicationFiles = new HashSet<>();
         applicationFiles.add(new File(testResourcesRootPath + "ComponentFacadeInstance.java").toPath());
 
-        new Detector().detect(pattern, applicationFiles, ".ftl");
+        List<Map<String, String>> variableSubstitutions = new Detector().detect(pattern, applicationFiles, ".ftl");
 
     }
 

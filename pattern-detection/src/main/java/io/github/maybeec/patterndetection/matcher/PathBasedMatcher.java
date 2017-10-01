@@ -191,6 +191,8 @@ public class PathBasedMatcher {
                     matchTargets.put(match, appElem);
                 } catch (NoMatchException e) {
                     // ignore as there might be another match
+                    // System.out.println(e.getMessage());
+                    // e.printStackTrace();
                 }
             }
             if (!matchesTemp.isEmpty()) {
@@ -283,6 +285,9 @@ public class PathBasedMatcher {
         } else if (tempElem instanceof AstPathList && ((AstPathList) tempElem).isListPattern()
             && appElem instanceof AstPathList && ((AstPathList) appElem).isListPattern()) {
             return matchListPattern((AstPathList) tempElem, (AstPathList) appElem);
+        } else if (tempElem instanceof AstPathList && !((AstPathList) tempElem).isAtomic()
+            && appElem instanceof AstPathList && !((AstPathList) appElem).isAtomic()) {
+            return matchOrderedPaths((AstPathList) tempElem, (AstPathList) appElem, false);
         } else if (tempElem instanceof AstPath && appElem instanceof AstPath) {
             AstPath startingTemp = (AstPath) tempElem;
             AstPath startingApp = (AstPath) appElem;
