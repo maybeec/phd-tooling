@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.assertj.core.groups.Tuple;
 import org.junit.Test;
 
 import io.github.maybeec.patterndetection.Detector;
@@ -107,6 +108,44 @@ public class DetectorTest {
 
         List<Map<String, String>> variableSubstitutions = new Detector().detect(pattern, applicationFiles, ".ftl");
 
+        assertThat(variableSubstitutions).hasSize(2)
+            .extracting("variables.rootPackage", "variables.component", "variables.entityName")
+            .containsExactlyInAnyOrder(new Tuple("io.oasp.gastronomy.restaurant", "offermanagement", "Offer"),
+                new Tuple("io.oasp.gastronomy.restaurant", "offermanagement", "Product"));
+    }
+
+    @Test
+    public void testClassMethodStatementMatches() throws Exception {
+        Path template = new File(testResourcesRootPath + "Class_Method_Statements.java.ftl").toPath();
+        List<Path> pattern = new ArrayList<>();
+        pattern.add(template);
+
+        Path file = new File(testResourcesRootPath + "Class_Method_Statements.java").toPath();
+        Set<Path> applicationFiles = new HashSet<>();
+        applicationFiles.add(file);
+
+        List<Map<String, String>> variableStubsitutions = new Detector().detect(pattern, applicationFiles, ".ftl");
+
+        assertThat(variableStubsitutions).hasSize(1);
+        assertThat(variableStubsitutions.get(0)).hasSize(2).extracting("clazz", "entity").containsExactly("A",
+            "Whatever");
+    }
+
+    @Test
+    public void testClassMethodStatementMatches_missingStatement() throws Exception {
+        Path template = new File(testResourcesRootPath + "Class_Method_Statements_missingStatement.java.ftl").toPath();
+        List<Path> pattern = new ArrayList<>();
+        pattern.add(template);
+
+        Path file = new File(testResourcesRootPath + "Class_Method_Statements_missingStatement.java").toPath();
+        Set<Path> applicationFiles = new HashSet<>();
+        applicationFiles.add(file);
+
+        List<Map<String, String>> variableStubsitutions = new Detector().detect(pattern, applicationFiles, ".ftl");
+
+        assertThat(variableStubsitutions).hasSize(1);
+        assertThat(variableStubsitutions.get(0)).hasSize(2).extracting("clazz", "entity").containsExactly("A",
+            "Whatever");
     }
 
     private Set<String> retrieveFileEndingsOfInterest(Iterable<Path> pattern, String templateFileEnding) {

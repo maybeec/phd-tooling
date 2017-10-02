@@ -22,6 +22,7 @@ import io.github.maybeec.parsers.javatemplate.JavaTemplateParser;
 import io.github.maybeec.patterndetection.entity.Match;
 import io.github.maybeec.patterndetection.exception.NoMatchException;
 import io.github.maybeec.patterndetection.matcher.PathBasedMatcher;
+import io.github.maybeec.patterndetection.resolver.VariableSubstitutionResolver;
 
 /** Application interface of the pattern detection implementation. */
 public class Detector {
@@ -86,6 +87,7 @@ public class Detector {
                     }
                 }
             }
+            variableSubstitutions = VariableSubstitutionResolver.languageSpecificReduce(variableSubstitutions);
             System.out.println(variableSubstitutions);
         } catch (NoMatchException e) {
             e.printStackTrace();

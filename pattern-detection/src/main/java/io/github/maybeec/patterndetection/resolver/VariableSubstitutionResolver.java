@@ -1,13 +1,21 @@
 package io.github.maybeec.patterndetection.resolver;
 
+import java.io.IOException;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import freemarker.template.Configuration;
+import freemarker.template.Template;
+import freemarker.template.TemplateException;
+import freemarker.template.TemplateExceptionHandler;
 import io.github.maybeec.patterndetection.entity.Match;
 import io.github.maybeec.patterndetection.exception.NoMatchException;
 import io.github.maybeec.patterndetection.utils.CartesianIterator;
@@ -159,23 +167,105 @@ public class VariableSubstitutionResolver {
         return true;
     }
 
-    /**
-     * Combines the set of variable substitutions if there is not conflict, meaning a mapping of the same key
-     * with different values.
-     * @param variableSubstitutions
-     *            variable substitutions to be combined
-     * @return the combined variable substitution or <code>null</code> in case of conflicting variable
-     *         substitutions
-     */
-    public static Map<String, String> combine(List<Map<String, String>> variableSubstitutions) {
-        Map<String, String> variableSubstitution = new HashMap<>();
-        for (Map<String, String> elem : variableSubstitutions) {
-            if (!isCompatible(variableSubstitution, elem)) {
-                return null;
-            } else {
-                variableSubstitution.putAll(elem);
-            }
+    // /**
+    // * Combines the set of variable substitutions if there is not conflict, meaning a mapping of the same
+    // key
+    // * with different values.
+    // * @param variableSubstitutions
+    // * variable substitutions to be combined
+    // * @return the combined variable substitution or <code>null</code> in case of conflicting variable
+    // * substitutions
+    // */
+    // public static Map<String, String> combine(List<Map<String, String>> variableSubstitutions) {
+    // Map<String, String> variableSubstitution = new HashMap<>();
+    // for (Map<String, String> elem : variableSubstitutions) {
+    // if (!isCompatible(variableSubstitution, elem)) {
+    // return null;
+    // } else {
+    // variableSubstitution.putAll(elem);
+    // }
+    // }
+    // return variableSubstitution;
+    // }
+    /** Basic FreeMarker configuration */
+    private static Configuration cfg;
+
+    static {
+        cfg = new Configuration(Configuration.VERSION_2_3_23);
+        cfg.setDefaultEncoding("UTF-8");
+        cfg.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
+        cfg.setLogTemplateExceptions(false);
+    }
+
+    public static List<Map<String, String>> languageSpecificReduce(List<Map<String, String>> variables) {
+
+        List<Map<String, String>> reducedVariables = new ArrayList<>();
+        int min = Integer.MAX_VALUE;
+        for (Map<String, String> elem : variables) {
+            List<String> partiallyContainedKeys = getPartiallyContainedKeys(elem);
+            elem.keySet().removeAll(partiallyContainedKeys);
+            reducedVariables.add(elem);
+            min = Math.min(min, elem.size());
         }
-        return variableSubstitution;
+        final int _min = min;
+        return reducedVariables.stream().filter(e -> e.size() == _min).collect(Collectors.toList());
+    }
+
+    private static List<String> getPartiallyContainedKeys(Map<String, String> variables) {
+        List<String> partiallyContained = new ArrayList<>();
+
+        for (String current : variables.keySet()) {
+            List<String> collect = variables.keySet().stream().filter(e -> !e.equals(current) && e.contains(current))
+                .collect(Collectors.toList());
+
+            Iterator<String> it = collect.iterator();
+            while (it.hasNext()) {
+                String potentiallyRedundant = it.next();
+                Map<String, String> tmp = new HashMap<>(variables);
+                if (tmp.remove(potentiallyRedundant) != null) {
+                    Template template;
+                    String output = null;
+
+                    try (StringWriter out = new StringWriter()) {
+                        template = new Template("temp", new StringReader("${" + potentiallyRedundant + "}"), cfg);
+                        template.process(buildModel(tmp), out);
+                        output = out.toString();
+                    } catch (IOException | TemplateException ex) {
+                        // e.printStackTrace();
+                    }
+
+                    if (output == null || output.isEmpty() || !variables.get(potentiallyRedundant).equals(output)) {
+                        it.remove(); // could not be missed
+                    }
+                }
+            }
+            partiallyContained.addAll(collect);
+        }
+        return partiallyContained;
+    }
+
+    private static Map<String, Object> buildModel(Map<String, String> flatModel) {
+
+        Map<String, Object> model = new HashMap<>();
+        for (String key : flatModel.keySet()) {
+            buildModel(model, key, flatModel.get(key));
+        }
+        return model;
+    }
+
+    private static void buildModel(Map<String, Object> model, String remainingKey, String value) {
+        String[] fragments = remainingKey.split("\\.");
+        if (fragments.length == 1) {
+            model.put(fragments[0], value); // there will be no conflicts
+        } else if (fragments.length > 1) {
+            Map<String, Object> childModel = (Map<String, Object>) model.get(fragments[0]);
+            if (childModel == null) {
+                childModel = new HashMap<>();
+                model.put(fragments[0], childModel);
+            }
+            String[] remainingFragments = new String[fragments.length - 1];
+            System.arraycopy(fragments, 1, remainingFragments, 0, fragments.length - 1);
+            buildModel(childModel, String.join(".", remainingFragments), value);
+        }
     }
 }
