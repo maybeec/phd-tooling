@@ -37,7 +37,7 @@ public class DetectorTest {
         List<Map<String, String>> variableStubsitutions = new Detector().detect(pattern, applicationFiles, ".ftl");
 
         assertThat(variableStubsitutions).hasSize(1);
-        assertThat(variableStubsitutions.get(0)).hasSize(1).extracting("${clazz}").containsExactly("A");
+        assertThat(variableStubsitutions.get(0)).hasSize(1).extracting("clazz").containsExactly("A");
     }
 
     @Test
@@ -54,7 +54,7 @@ public class DetectorTest {
         List<Map<String, String>> variableStubsitutions = new Detector().detect(pattern, applicationFiles, ".ftl");
 
         assertThat(variableStubsitutions).hasSize(1);
-        assertThat(variableStubsitutions.get(0)).hasSize(2).extracting("${c}", "${e}").containsExactly("c", "e");
+        assertThat(variableStubsitutions.get(0)).hasSize(2).extracting("c", "e").containsExactly("c", "e");
     }
 
     @Test
@@ -71,10 +71,10 @@ public class DetectorTest {
         List<Map<String, String>> variableStubsitutions = new Detector().detect(pattern, applicationFiles, ".ftl");
 
         assertThat(variableStubsitutions).hasSize(2);
-        assertThat(variableStubsitutions.get(0)).hasSize(3).extracting("${a}", "${b}", "${e}").containsExactly("a",
-            "b.c", "e.f.g.h");
-        assertThat(variableStubsitutions.get(1)).hasSize(3).extracting("${a}", "${b}", "${e}").containsExactly("a.b",
-            "c", "e.f.g.h");
+        assertThat(variableStubsitutions.get(0)).hasSize(3).extracting("a", "b", "e").containsExactly("a", "b.c",
+            "e.f.g.h");
+        assertThat(variableStubsitutions.get(1)).hasSize(3).extracting("a", "b", "e").containsExactly("a.b", "c",
+            "e.f.g.h");
     }
 
     @Test
@@ -91,7 +91,7 @@ public class DetectorTest {
         List<Map<String, String>> variableStubsitutions = new Detector().detect(pattern, applicationFiles, ".ftl");
 
         assertThat(variableStubsitutions).hasSize(1);
-        assertThat(variableStubsitutions.get(0)).hasSize(1).extracting("${D}").containsExactly("D");
+        assertThat(variableStubsitutions.get(0)).hasSize(1).extracting("D").containsExactly("D");
     }
 
     @Test

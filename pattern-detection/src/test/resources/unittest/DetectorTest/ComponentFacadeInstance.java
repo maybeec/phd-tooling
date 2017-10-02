@@ -202,7 +202,7 @@ public interface Offermanagement {
    *
    * @param productId is the ID of the {@link ProductEto} to delete
    */
-  void deleteProduct(Long productId);
+  boolean deleteProduct(Long productId);
 
   /**
    * Updates the picture of the product.

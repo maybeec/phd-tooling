@@ -53,10 +53,6 @@ public class AstToPathTransformer implements ParseTreeListener {
     /** Terminal symbols of the smallest entry to be detected. */
     private Set<String> detectionTerminals;
 
-    private boolean withinAtomarPathSet = false;
-
-    private boolean withinListPattern = false;
-
     /** Found list pattern occurrences mapping list element and separator to list parent rule name */
     private MultiMap<String, String> listPatternRules;
 
@@ -74,13 +70,12 @@ public class AstToPathTransformer implements ParseTreeListener {
     public void visitTerminal(TerminalNode node) {
 
         String symbolicName = vocabulary.getSymbolicName(node.getSymbol().getType());
-        if (!withinAtomarPathSet) {
-            AstPathList orderedPaths = new AstPathList("<Atom>", true);
-            orderedPaths.setAtomic(true);
-            currentCollection.peek().add(orderedPaths);
-            currentCollection.push(orderedPaths);
-            withinAtomarPathSet = true;
-        }
+        // if (!currentCollection.peek().isAtomic()) {
+        // AstPathList orderedPaths = new AstPathList("<Atom>", true);
+        // orderedPaths.setAtomic(true);
+        // currentCollection.peek().add(orderedPaths);
+        // currentCollection.push(orderedPaths);
+        // }
 
         String nameToTest = symbolicName;
         String parentNameToTest = convertToGrammarRuleName(node.getParent());
@@ -88,26 +83,23 @@ public class AstToPathTransformer implements ParseTreeListener {
             nameToTest = convertToGrammarRuleName(node.getParent());
             parentNameToTest = convertToGrammarRuleName(node.getParent().getParent());
         }
-        if (!withinListPattern && listPatternRules.containsKey(nameToTest)
+        if (!currentCollection.peek().isListPattern() && listPatternRules.containsKey(nameToTest)
             && listPatternRules.get(nameToTest).contains(parentNameToTest)) {
             AstPathList orderedPaths = new AstPathList("<ListPattern>", true);
             orderedPaths.setListPattern(true);
             currentCollection.peek().add(orderedPaths);
             currentCollection.push(orderedPaths);
-            withinListPattern = true;
-        } else if (withinListPattern && (!listPatternRules.containsKey(nameToTest)
+        } else if (currentCollection.peek().isListPattern() && (!listPatternRules.containsKey(nameToTest)
             || !listPatternRules.get(nameToTest).contains(parentNameToTest))) {
             currentCollection.pop();
-            withinListPattern = false;
         }
 
         currentCollection.peek().add(new AstPath(symbolicName, node.getText(), lastNode.peek()));
 
-        if (detectionTerminals.contains(node.getText())) {
-            withinAtomarPathSet = false;
-            currentCollection.pop(); // works on the assumption, that no currentCollection.pop is called
-                                     // before in #enterEveryRule
-        }
+        // if (detectionTerminals.contains(node.getText())) {
+        // // works on the assumption, that no currentCollection.pop is called before in #enterEveryRule
+        // currentCollection.pop();
+        // }
     }
 
     @Override

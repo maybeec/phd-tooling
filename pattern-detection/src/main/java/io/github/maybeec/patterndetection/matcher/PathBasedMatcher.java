@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.antlr.v4.runtime.Vocabulary;
@@ -318,7 +320,7 @@ public class PathBasedMatcher {
                         currentApp = currentApp.getParent();
                     } else if (currentTemp.isMetaLang()) {
                         if (currentTemp.getParent().getName().matches("Fm_" + currentApp.getName() + "Context")) {
-                            variableSubstitutions.put(currentTemp.getText(), currentApp.getText());
+                            variableSubstitutions.putAll(matchPlaceholder(currentTemp.getText(), currentApp.getText()));
                             break;
                         }
                     } else {
@@ -333,6 +335,52 @@ public class PathBasedMatcher {
             return Lists.<List<Match>> newArrayList(listOfMatches);
         } else {
             throw new NoMatchException("Cannot match AstPath " + tempElem + " against AstPathCollection " + appElem);
+        }
+    }
+
+    /**
+     * @param placeholder
+     * @param appCode
+     * @return
+     */
+    private Map<String, String> matchPlaceholder(String placeholder, String appCode) {
+        // get list of concatenated constant or variable fragments within placeholder decl
+        if (!placeholder.matches("\\$\\{.+\\}")) {
+            throw new NoMatchException("Unknown placeholder syntax: " + placeholder);
+        }
+        placeholder = placeholder.substring(2, placeholder.length() - 1);
+
+        Map<String, String> variableAssignments = new HashMap<>();
+        String[] fragments = placeholder.split("\\+");
+        if (fragments.length == 1) {
+            variableAssignments.put(placeholder, appCode);
+            return variableAssignments;
+        }
+
+        StringBuilder regexBuilder = new StringBuilder();
+        List<String> phVariables = new ArrayList<>();
+        for (String frag : fragments) {
+            frag = frag.trim();
+            if (frag.matches("\".*\"")) {
+                regexBuilder.append(frag.substring(1, frag.length() - 1));
+            } else {
+                phVariables.add(frag);
+                regexBuilder.append("(.+)");
+            }
+        }
+        String[] phVariablesArr = phVariables.toArray(new String[0]);
+
+        Pattern p = Pattern.compile(regexBuilder.toString());
+        Matcher m = p.matcher(appCode);
+        if (m.matches()) {
+            for (int i = 1; i <= m.groupCount(); i++) {
+                // this is a workaround to find matching/conflicting variable substitutions
+                // as variable substitutions are currently stored with the complete syntax
+                variableAssignments.put(phVariablesArr[i - 1], m.group(i));
+            }
+            return variableAssignments;
+        } else {
+            throw new NoMatchException("Could not match placeholder " + placeholder + " against " + appCode);
         }
     }
 
@@ -407,7 +455,8 @@ public class PathBasedMatcher {
                                 continue;
                             } else {
                                 System.out.println("Consume (t->a): " + tempElem + " --> " + appMatch);
-                                variableSubstitutions.put(((AstPath) tempElem).getText(), appMatch);
+                                variableSubstitutions
+                                    .putAll(matchPlaceholder(((AstPath) tempElem).getText(), appMatch));
                                 j++;
                                 observedPhIndex++;
                                 break;

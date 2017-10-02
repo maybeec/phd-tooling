@@ -64,28 +64,4 @@ public class AtomarMatch implements Match {
         return template.toString() + " -> " + appCode.toString();
     }
 
-    // @Override
-    // public Set<String> getMatchedPaths() {
-    // if (appCode instanceof AstPathCollection) {
-    // return getMatchedPaths((AstPathCollection) appCode);
-    // } else if (appCode instanceof AstPath) {
-    // Set<String> paths = new HashSet<>();
-    // paths.add(((AstPath) appCode).getPath());
-    // return paths;
-    // }
-    // return null;
-    // }
-
-    // private Set<String> getMatchedPaths(AstPathCollection collection) {
-    //
-    // Set<String> paths = new HashSet<>();
-    // for (AstElem ac : collection) {
-    // if (ac instanceof AstPath) {
-    // paths.add(((AstPath) ac).getPath());
-    // } else if (ac instanceof AstPathCollection) {
-    // paths.addAll(getMatchedPaths((AstPathCollection) ac));
-    // }
-    // }
-    // return paths;
-    // }
 }

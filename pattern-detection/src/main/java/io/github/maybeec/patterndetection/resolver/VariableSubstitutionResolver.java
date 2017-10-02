@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import io.github.maybeec.patterndetection.entity.Match;
 import io.github.maybeec.patterndetection.exception.NoMatchException;
@@ -22,6 +23,38 @@ public class VariableSubstitutionResolver {
     public List<Map<String, String>> resolve(Match match) {
 
         return null;
+    }
+
+    /**
+     * @param validMatches
+     * @return
+     */
+    public static List<Map<String, String>> calculateVariableSubstitutions(List<List<Match>> validMatches) {
+        List<Map<String, String>> validVariableSubstitutions = new ArrayList<>();
+        for (List<Match> validMatch : validMatches) {
+            List<List<Map<String, String>>> variableSubstitutionsPerMatch =
+                validMatch.stream().map(Match::resolveVariableSubstitutions).filter(e -> !e.isEmpty())
+                    .filter(e -> !e.get(0).isEmpty()).distinct().collect(Collectors.toList());
+            CartesianIterator<Map<String, String>> it = new CartesianIterator<>(variableSubstitutionsPerMatch);
+            while (it.hasNext()) {
+                List<Map<String, String>> combination = it.next();
+
+                Map<String, String> variableSubstitution = new HashMap<>();
+                boolean consistentMatch = true;
+                for (Map<String, String> elem : combination) {
+                    if (VariableSubstitutionResolver.isCompatible(variableSubstitution, elem)) {
+                        variableSubstitution.putAll(elem);
+                    } else {
+                        consistentMatch = false;
+                        break;
+                    }
+                }
+                if (consistentMatch && !validVariableSubstitutions.contains(variableSubstitution)) {
+                    validVariableSubstitutions.add(variableSubstitution);
+                }
+            }
+        }
+        return validVariableSubstitutions;
     }
 
     // /**
