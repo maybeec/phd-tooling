@@ -1,9 +1,9 @@
 package io.github.maybeec.patterndetection.entity;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-
-import org.assertj.core.util.Lists;
 
 /**
  *
@@ -24,8 +24,8 @@ public class AtomarMatch implements Match {
      * @param variableSubstitutions
      */
     public AtomarMatch(AstElem template, AstElem appCode, Map<String, String> variableSubstitutions) {
-        this(template, appCode,
-            variableSubstitutions.isEmpty() ? Lists.newArrayList() : Lists.newArrayList(variableSubstitutions));
+        this(template, appCode, variableSubstitutions == null || variableSubstitutions.isEmpty() ? new ArrayList<>()
+            : Arrays.asList(variableSubstitutions));
     }
 
     /**
@@ -36,9 +36,8 @@ public class AtomarMatch implements Match {
     public AtomarMatch(AstElem template, AstElem appCode, List<Map<String, String>> variableSubstitutions) {
         this.template = template;
         this.appCode = appCode;
-        this.variableSubstitutions =
-            variableSubstitutions.isEmpty() ? Lists.newArrayList() : Lists.newArrayList(variableSubstitutions);
-        containsPh = !variableSubstitutions.isEmpty();
+        this.variableSubstitutions = variableSubstitutions == null ? new ArrayList<>() : variableSubstitutions;
+        containsPh = !this.variableSubstitutions.isEmpty();
 
     }
 

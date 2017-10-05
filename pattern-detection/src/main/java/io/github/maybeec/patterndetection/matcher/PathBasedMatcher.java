@@ -17,7 +17,6 @@ import org.antlr.v4.runtime.Vocabulary;
 import org.antlr.v4.runtime.misc.MultiMap;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
-import org.assertj.core.util.Lists;
 
 import io.github.maybeec.antlr4.parser.ListPatternCollector;
 import io.github.maybeec.parsers.javatemplate.JavaTemplateParser;
@@ -166,7 +165,7 @@ public class PathBasedMatcher {
         List<List<Match>> matches = getAllUnorderedMatches(unorderedTempPaths, unorderedAppPaths);
         listOfMatches.add(new NonOrderedContainerMatch(matches));
 
-        return Lists.<List<Match>> newArrayList(listOfMatches);
+        return Arrays.asList(listOfMatches);
     }
 
     /**
@@ -273,7 +272,7 @@ public class PathBasedMatcher {
                 }
             } while (!matches);
         }
-        return Lists.<List<Match>> newArrayList(listOfMatches);
+        return Arrays.asList(listOfMatches);
     }
 
     /**
@@ -332,7 +331,7 @@ public class PathBasedMatcher {
                 System.out.println("Consume (t->a): " + startingTemp + " --> " + startingApp);
                 listOfMatches.add(new AtomarMatch(tempElem, appElem, variableSubstitutions));
             }
-            return Lists.<List<Match>> newArrayList(listOfMatches);
+            return Arrays.asList(listOfMatches);
         } else {
             throw new NoMatchException("Cannot match AstPath " + tempElem + " against AstPathCollection " + appElem);
         }
@@ -480,8 +479,8 @@ public class PathBasedMatcher {
                     } while (!matches);
                 }
 
-                foundMatches.add(Lists.<Match> newArrayList(
-                    new AtomarMatch(orderedTemplatePaths, orderedAppPaths, variableSubstitutions)));
+                foundMatches
+                    .add(Arrays.asList(new AtomarMatch(orderedTemplatePaths, orderedAppPaths, variableSubstitutions)));
             } catch (NoMatchException e) {
                 // ignore, try next
             }
