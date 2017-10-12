@@ -1,9 +1,9 @@
 package io.github.maybeec.patterndetection.matcher;
 
-import java.util.Arrays;
-import java.util.HashSet;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.Iterator;
 import java.util.Set;
-import java.util.Stack;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Vocabulary;
@@ -16,37 +16,26 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 import io.github.maybeec.patterndetection.entity.AstPath;
 import io.github.maybeec.patterndetection.entity.AstPathCollection;
 import io.github.maybeec.patterndetection.entity.AstPathList;
+import io.github.maybeec.patterndetection.entity.ListType;
 
 /**
  *
  */
 public class AstToPathTransformer implements ParseTreeListener {
 
-    /** Non ordered productions. Might be served as input later on */
-    private static final Set<String> _nonOrderedNodes = new HashSet<>(Arrays.asList(new String[] { "ImportDeclaration",
-        "InterfaceMemberDeclaration", "ClassMemberDeclaration", "TypeDeclaration" }));
-
-    /** Non ordered node class names, prepared on the basis of {@value #_nonOrderedNodes} */
-    private static Set<String> nonOrderedNodes;
-
-    static {
-        nonOrderedNodes = new HashSet<>();
-        for (String production : _nonOrderedNodes) {
-            nonOrderedNodes.add(production + "Context");
-            nonOrderedNodes.add("Fm_" + production + "Context");
-            nonOrderedNodes.add("Fm_" + production + "OptContext");
-            nonOrderedNodes.add("Fm_" + production + "StarContext");
-            nonOrderedNodes.add("Fm_" + production + "PlusContext");
-        }
-    }
+    /** Non ordered node class names */
+    private Set<String> nonOrderedNodes;
 
     private AstPathList paths;
 
-    private Stack<AstPathCollection> currentCollection = new Stack<>();
+    // private Stack<AstPathCollection> currentCollection = new Stack<>();
+    private Deque<AstPathCollection> currentCollection = new ArrayDeque<>();
 
-    private Stack<AstPath> lastNode = new Stack<>();
+    private Deque<AstPath> lastNode = new ArrayDeque<>();
 
-    private Stack<Boolean> toPop = new Stack<>();
+    private Deque<AstPathCollection> lastPotentialMetaElseLocation = new ArrayDeque<>();
+
+    private Deque<Boolean> toPop = new ArrayDeque<>();
 
     private Vocabulary vocabulary;
 
@@ -60,22 +49,17 @@ public class AstToPathTransformer implements ParseTreeListener {
      *
      */
     public AstToPathTransformer(Vocabulary vocabulary, Set<String> detectionTerminals,
-        MultiMap<String, String> listPatternRules) {
+        MultiMap<String, String> listPatternRules, Set<String> nonOrderedNodes) {
         this.vocabulary = vocabulary;
         this.detectionTerminals = detectionTerminals;
         this.listPatternRules = listPatternRules;
+        this.nonOrderedNodes = nonOrderedNodes;
     }
 
     @Override
     public void visitTerminal(TerminalNode node) {
 
         String symbolicName = vocabulary.getSymbolicName(node.getSymbol().getType());
-        // if (!currentCollection.peek().isAtomic()) {
-        // AstPathList orderedPaths = new AstPathList("<Atom>", true);
-        // orderedPaths.setAtomic(true);
-        // currentCollection.peek().add(orderedPaths);
-        // currentCollection.push(orderedPaths);
-        // }
 
         String nameToTest = symbolicName;
         String parentNameToTest = convertToGrammarRuleName(node.getParent());
@@ -85,8 +69,7 @@ public class AstToPathTransformer implements ParseTreeListener {
         }
         if (!currentCollection.peek().isListPattern() && listPatternRules.containsKey(nameToTest)
             && listPatternRules.get(nameToTest).contains(parentNameToTest)) {
-            AstPathList orderedPaths = new AstPathList("<ListPattern>", true);
-            orderedPaths.setListPattern(true);
+            AstPathList orderedPaths = new AstPathList(ListType.LIST_PATTERN, "<ListPattern>");
             currentCollection.peek().add(orderedPaths);
             currentCollection.push(orderedPaths);
         } else if (currentCollection.peek().isListPattern() && (!listPatternRules.containsKey(nameToTest)
@@ -94,12 +77,57 @@ public class AstToPathTransformer implements ParseTreeListener {
             currentCollection.pop();
         }
 
-        currentCollection.peek().add(new AstPath(symbolicName, node.getText(), lastNode.peek()));
+        if ("FM_IF".equals(nameToTest)) {
+            // TODO check if previous token is else to change again the type to optional
+            AstPathList optional = new AstPathList(ListType.OPTIONAL, node.getText());
+            currentCollection.peek().add(optional);
+            currentCollection.push(optional);
+            lastPotentialMetaElseLocation.push(optional);
+            AstPathList atomic = new AstPathList(ListType.ATOMIC, "<if-then-body>");
+            atomic.setIsMetaLang(true);
+            currentCollection.peek().add(atomic);
+            currentCollection.push(atomic);
+        } else if ("FM_LIST_CLOSE".equals(nameToTest) || "FM_IF_CLOSE".equals(nameToTest)) {
+            currentCollection.pop();
+            currentCollection.pop();
+            lastPotentialMetaElseLocation.pop();
+        } else if ("FM_ELSE".equals(nameToTest)) {
+            lastPotentialMetaElseLocation.peek().setType(ListType.ALTERNATIVE);
+            currentCollection.pop();
+            AstPathList atomic = new AstPathList(ListType.ATOMIC, "<else-body>");
+            atomic.setIsMetaLang(true);
+            currentCollection.peek().add(atomic);
+            currentCollection.push(atomic);
+        } else if ("FM_ELSE_IF".equals(nameToTest)) {
+            currentCollection.pop();
+            AstPathList atomic = new AstPathList(ListType.ATOMIC, "<else-if-body>");
+            atomic.setIsMetaLang(true);
+            currentCollection.peek().add(atomic);
+            currentCollection.push(atomic);
+        } else if ("FM_LIST".equals(nameToTest)) {
+            AstPathList optional = new AstPathList(ListType.OPTIONAL, node.getText());
+            currentCollection.peek().add(optional);
+            currentCollection.push(optional);
+            lastPotentialMetaElseLocation.push(optional);
+            AstPathList atomic = new AstPathList(ListType.ARBITRARY, "<loop-body>");
+            currentCollection.peek().add(atomic);
+            currentCollection.push(atomic);
+        } else {
+            currentCollection.peek().add(new AstPath(symbolicName, node.getText(), lastNode.peek()));
+        }
+    }
 
-        // if (detectionTerminals.contains(node.getText())) {
-        // // works on the assumption, that no currentCollection.pop is called before in #enterEveryRule
-        // currentCollection.pop();
-        // }
+    /**
+     * @return
+     */
+    private AstPathCollection getParentMetaLangCollection() {
+        for (Iterator<AstPathCollection> it = currentCollection.iterator(); it.hasNext();) {
+            AstPathCollection next = it.next();
+            if (next.isMetaLang()) {
+                return next;
+            }
+        }
+        return null;
     }
 
     @Override
@@ -111,10 +139,11 @@ public class AstToPathTransformer implements ParseTreeListener {
     public void enterEveryRule(ParserRuleContext ctx) {
         String simpleName = ctx.getClass().getSimpleName();
 
+        // initialization
         if (lastNode.isEmpty()) {
             // initialization
-            lastNode.push(new AstPath(simpleName, ctx.getText(), null));
-            paths = new AstPathList(simpleName, true);
+            lastNode.push(new AstPath("<<ROOT>>", "<<ROOT>>", null));
+            paths = new AstPathList(ListType.ORDERED, "<<ROOT>>");
             currentCollection.push(paths);
             toPop.push(true);
         } else {
@@ -122,12 +151,38 @@ public class AstToPathTransformer implements ParseTreeListener {
             lastNode.push(new AstPath(simpleName, ctx.getText(), lastNode.peek()));
         }
 
+        // regular
         if (nonOrderedNodes.contains(simpleName)) {
             // create new list of nodes to separate them as a block, which itself is unordered to its siblings
-            AstPathList unorderedPaths = new AstPathList(simpleName, false);
+            AstPathList unorderedPaths = new AstPathList(ListType.NONORDERED, simpleName);
+            if (simpleName.matches("Fm_(.+)(Opt|Star|Plus)?Context")) {
+                unorderedPaths.setIsMetaLang(true);
+            }
             currentCollection.peek().add(unorderedPaths);
             currentCollection.push(unorderedPaths);
             toPop.push(true);
+            // } else if (!currentCollection.peek().is(ListType.LIST_PATTERN)
+            // && simpleName.matches("Fm_(.+)(Opt|Star|Plus)?Context")) {
+            // AstPathList alternativePaths = new AstPathList(ListType.ORDERED, simpleName);
+            // alternativePaths.setIsMetaLang(true);
+            // currentCollection.peek().add(alternativePaths);
+            // currentCollection.push(alternativePaths);
+            // toPop.push(true);
+            // } else if (simpleName.matches("Fm_(.+)ContextOpt")) {
+            // AstPathList optionalPaths = new AstPathList(ListType.OPTIONAL, simpleName);
+            // currentCollection.peek().add(optionalPaths);
+            // currentCollection.push(optionalPaths);
+            // toPop.push(true);
+            // } else if (simpleName.matches("Fm_(.+)ContextStar")) {
+            // AstPathList arbitraryPaths = new AstPathList(ListType.ARBITRARY, simpleName);
+            // currentCollection.peek().add(arbitraryPaths);
+            // currentCollection.push(arbitraryPaths);
+            // toPop.push(true);
+            // } else if (simpleName.matches("Fm_(.+)ContextPlus")) {
+            // AstPathList atLeastOnePaths = new AstPathList(ListType.AT_LEAST_ONE, simpleName);
+            // currentCollection.peek().add(atLeastOnePaths);
+            // currentCollection.push(atLeastOnePaths);
+            // toPop.push(true);
         } else {
             toPop.push(false);
         }

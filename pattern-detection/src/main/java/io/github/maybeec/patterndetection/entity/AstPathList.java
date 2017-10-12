@@ -7,48 +7,58 @@ import java.util.ArrayList;
  */
 public class AstPathList extends ArrayList<AstElem> implements AstPathCollection {
 
-    private String type;
+    private ListType type;
 
-    private boolean isOrdered;
+    private String hint;
 
-    private boolean isAtomic;
-
-    private boolean isListPattern;
+    private Boolean isMetaLang;
 
     /**
-     * @param type
+     * @param hint
      */
-    public AstPathList(String type, boolean isOrdered) {
-        super();
+    public AstPathList(ListType type, String hint) {
+        this.hint = hint;
         this.type = type;
-        this.isOrdered = isOrdered;
     }
 
     @Override
-    public String getType() {
+    public void setType(ListType type) {
+        this.type = type;
+    }
+
+    @Override
+    public ListType getType() {
         return type;
     }
 
     @Override
-    public boolean isOrdered() {
-        return isOrdered;
+    public String getHint() {
+        return hint;
     }
 
-    public void setAtomic(boolean isAtomic) {
-        this.isAtomic = isAtomic;
+    @Override
+    public boolean isOrdered() {
+        return type == ListType.ORDERED || type == ListType.LIST_PATTERN;
     }
 
     @Override
     public boolean isAtomic() {
-        return isAtomic;
+        return type == ListType.ATOMIC;
     }
 
     @Override
     public boolean isListPattern() {
-        return isListPattern;
+        return type == ListType.LIST_PATTERN;
     }
 
-    public void setListPattern(boolean isListPattern) {
-        this.isListPattern = isListPattern;
+    @Override
+    public boolean isMetaLang() {
+        return isMetaLang != null ? isMetaLang : type.isMetaLang();
     }
+
+    @Override
+    public void setIsMetaLang(boolean isMetaLang) {
+        this.isMetaLang = isMetaLang;
+    }
+
 }

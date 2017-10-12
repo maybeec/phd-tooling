@@ -148,6 +148,36 @@ public class DetectorTest {
             "Whatever");
     }
 
+    @Test
+    public void testMetaLangIfThenElse() throws Exception {
+        Path template = new File(testResourcesRootPath + "Class_Meta_Lang_IfThenElse.java.ftl").toPath();
+        List<Path> pattern = new ArrayList<>();
+        pattern.add(template);
+
+        Set<Path> applicationFiles = new HashSet<>();
+        applicationFiles.add(new File(testResourcesRootPath + "Class_Meta_Lang_IfThenElse_A.java").toPath());
+        applicationFiles.add(new File(testResourcesRootPath + "Class_Meta_Lang_IfThenElse_B.java").toPath());
+
+        List<Map<String, String>> variableStubsitutions = new Detector().detect(pattern, applicationFiles, ".ftl");
+
+        assertThat(variableStubsitutions).hasSize(2);
+    }
+
+    @Test
+    public void testMetaLangIfThenElse_withPH() throws Exception {
+        Path template = new File(testResourcesRootPath + "Class_Meta_Lang_IfThenElse_withPH.java.ftl").toPath();
+        List<Path> pattern = new ArrayList<>();
+        pattern.add(template);
+
+        Set<Path> applicationFiles = new HashSet<>();
+        applicationFiles.add(new File(testResourcesRootPath + "Class_Meta_Lang_IfThenElse_A.java").toPath());
+        applicationFiles.add(new File(testResourcesRootPath + "Class_Meta_Lang_IfThenElse_B.java").toPath());
+
+        List<Map<String, String>> variableStubsitutions = new Detector().detect(pattern, applicationFiles, ".ftl");
+
+        assertThat(variableStubsitutions).hasSize(2).extracting("B").containsExactlyInAnyOrder(null, "B");
+    }
+
     private Set<String> retrieveFileEndingsOfInterest(Iterable<Path> pattern, String templateFileEnding) {
         Set<String> fileEndingsOfInterest = new HashSet<>();
         PathMatcher matcher = FileSystems.getDefault().getPathMatcher("glob:**" + templateFileEnding);

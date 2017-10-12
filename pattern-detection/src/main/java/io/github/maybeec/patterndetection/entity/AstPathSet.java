@@ -7,40 +7,57 @@ import java.util.HashSet;
  */
 public class AstPathSet extends HashSet<AstElem> implements AstPathCollection {
 
-    private String type;
+    private ListType type;
 
-    private boolean isOrdered;
+    private String hint;
 
-    private boolean isAtomic;
-
-    private boolean isListPattern;
+    private Boolean isMetaLang;
 
     /**
      * @param type
      */
-    public AstPathSet(String type) {
-        super();
+    public AstPathSet(ListType type, String hint) {
+        this.hint = hint;
         this.type = type;
     }
 
     @Override
-    public String getType() {
+    public void setType(ListType type) {
+        this.type = type;
+    }
+
+    @Override
+    public ListType getType() {
         return type;
     }
 
     @Override
+    public String getHint() {
+        return hint;
+    }
+
+    @Override
     public boolean isOrdered() {
-        return isOrdered;
+        return type == ListType.ORDERED || type == ListType.LIST_PATTERN;
     }
 
     @Override
     public boolean isAtomic() {
-        return isAtomic;
+        return type == ListType.ATOMIC;
     }
 
     @Override
     public boolean isListPattern() {
-        return isListPattern;
+        return type == ListType.LIST_PATTERN;
     }
 
+    @Override
+    public boolean isMetaLang() {
+        return isMetaLang != null ? isMetaLang : type.isMetaLang();
+    }
+
+    @Override
+    public void setIsMetaLang(boolean isMetaLang) {
+        this.isMetaLang = isMetaLang;
+    }
 }
