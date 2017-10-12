@@ -26,10 +26,9 @@ import io.github.maybeec.patterndetection.entity.AstPathCollection;
 import io.github.maybeec.patterndetection.entity.AstPathList;
 import io.github.maybeec.patterndetection.entity.AstPathSet;
 import io.github.maybeec.patterndetection.entity.AtomarMatch;
+import io.github.maybeec.patterndetection.entity.ContainerMatch;
 import io.github.maybeec.patterndetection.entity.ListType;
 import io.github.maybeec.patterndetection.entity.Match;
-import io.github.maybeec.patterndetection.entity.NonOrderedContainerMatch;
-import io.github.maybeec.patterndetection.entity.OrderedContainerMatch;
 import io.github.maybeec.patterndetection.exception.NoMatchException;
 import io.github.maybeec.patterndetection.utils.CartesianIterator;
 import io.github.maybeec.patterndetection.utils.MathUtil;
@@ -138,7 +137,7 @@ public class PathBasedMatcher {
         rootSet.add(appPaths);
         System.out.println(printPaths(rootSet, e -> e.getPath(), true));
 
-        return new OrderedContainerMatch(match(templatePaths, appPaths));
+        return new ContainerMatch(match(templatePaths, appPaths));
     }
 
     /**
@@ -165,10 +164,10 @@ public class PathBasedMatcher {
 
         List<Match> listOfMatches = new ArrayList<>();
         List<List<Match>> matchesOrderedPaths = matchOrderedPaths(orderedTemplatePaths, orderedAppPaths, false);
-        listOfMatches.add(new OrderedContainerMatch(matchesOrderedPaths));
+        listOfMatches.add(new ContainerMatch(matchesOrderedPaths));
 
         List<List<Match>> matches = getAllUnorderedMatches(unorderedTempPaths, unorderedAppPaths);
-        listOfMatches.add(new NonOrderedContainerMatch(matches));
+        listOfMatches.add(new ContainerMatch(matches));
 
         return Arrays.asList(listOfMatches);
     }
@@ -193,18 +192,18 @@ public class PathBasedMatcher {
 
         List<List<Match>> matches = new ArrayList<>();
         Iterator<AstPathList> it = unorderedTempPaths.iterator();
-        Map<OrderedContainerMatch, AstPathList> matchTargets = new HashMap<>();
+        Map<ContainerMatch, AstPathList> matchTargets = new HashMap<>();
         while (it.hasNext()) {
             AstPathList tempElem = it.next();
 
             List<Match> matchesTemp = new ArrayList<>();
             for (AstPathList appElem : unorderedAppPaths) {
                 try {
-                    OrderedContainerMatch match;
+                    ContainerMatch match;
                     if (tempElem.isMetaLang()) {
-                        match = new OrderedContainerMatch(matchMetaRule(tempElem, appElem));
+                        match = new ContainerMatch(matchMetaRule(tempElem, appElem));
                     } else {
-                        match = new OrderedContainerMatch(match(tempElem, appElem));
+                        match = new ContainerMatch(match(tempElem, appElem));
                     }
                     matchesTemp.add(match);
                     matchTargets.put(match, appElem);
@@ -304,7 +303,7 @@ public class PathBasedMatcher {
     }
 
     private List<List<Match>> getAllDistinctMatches(List<List<Match>> subsequentMatches,
-        Map<OrderedContainerMatch, AstPathList> matchTargets) {
+        Map<ContainerMatch, AstPathList> matchTargets) {
         List<List<Match>> validMatches = new ArrayList<>();
         CartesianIterator<Match> it = new CartesianIterator<>(subsequentMatches);
         while (it.hasNext()) {
@@ -345,7 +344,7 @@ public class PathBasedMatcher {
 
                 matches = true;
                 try {
-                    listOfMatches.add(new OrderedContainerMatch(matchPath(tempElem, appElem)));
+                    listOfMatches.add(new ContainerMatch(matchPath(tempElem, appElem)));
                 } catch (NoMatchException e) {
                     matches = false;
                 }

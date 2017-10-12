@@ -8,14 +8,14 @@ import io.github.maybeec.patterndetection.resolver.VariableSubstitutionResolver;
 /**
  *
  */
-public class NonOrderedContainerMatch implements Match {
+public class ContainerMatch implements Match {
 
     /**
-     * Matches of unordered nodes. Each set represents a valid match of the underlying app templates.
+     * Secured by construction, that no match points to the same app node
      */
     private List<List<Match>> subsequentMatches;
 
-    public NonOrderedContainerMatch(List<List<Match>> subsequentMatches) {
+    public ContainerMatch(List<List<Match>> subsequentMatches) {
         this.subsequentMatches = subsequentMatches;
     }
 
