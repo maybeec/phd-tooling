@@ -38,6 +38,10 @@ import io.github.maybeec.patterndetection.utils.MathUtil;
  */
 public class PathBasedMatcher {
 
+    private static Pattern FM_IF = Pattern.compile("<#if(.+)>");
+
+    private static Pattern FM_IFELSE = Pattern.compile("<#elseif(.+)>");
+
     /** Non ordered productions. Might be served as input later on */
     private static final Set<String> _nonOrderedNodes = new HashSet<>(Arrays.asList(new String[] { "ImportDeclaration",
         "InterfaceMemberDeclaration", "ClassMemberDeclaration", "TypeDeclaration" }));
@@ -268,16 +272,20 @@ public class PathBasedMatcher {
                 }
                 break;
             case ALTERNATIVE:
+                List<String> conditions = new ArrayList<>();
                 for (AstElem tempChildElem : (AstPathCollection) firstTempElemChild) {
                     try {
+                        ContainerMatch match;
+                        Map<String, String> conditionValues = getConditionSubstitutions(tempChildElem, conditions);
                         if (((AstPathList) tempChildElem).isMetaLang()) {
-                            matches = matchMetaRule((AstPathList) tempChildElem, appElem);
+                            match = new ContainerMatch(matchMetaRule((AstPathList) tempChildElem, appElem),
+                                conditionValues);
                         } else {
-                            // TODO check if we can return a match object instead as currently it would mix up
-                            // multiple alternative matches here
-                            matches.addAll(match((AstPathList) tempChildElem, appElem));
+                            match = new ContainerMatch(match((AstPathList) tempChildElem, appElem), conditionValues);
                         }
-                        // TODO add variableAssignment (AstPathCollection) firstTempElemChild.getHint()
+                        List<Match> tmp = new ArrayList<>();
+                        tmp.add(match);
+                        matches.add(tmp);
                     } catch (NoMatchException e) {
                         // ignore, check later as of consistency
                     }
@@ -300,6 +308,51 @@ public class PathBasedMatcher {
             return match((AstPathList) firstTempElemChild, appElem);
         }
         return matches;
+    }
+
+    /**
+     * @param tempChildElem
+     * @param conditions
+     * @return
+     */
+    private Map<String, String> getConditionSubstitutions(AstElem tempChildElem, List<String> conditions) {
+        Map<String, String> conditionValues = new HashMap<>();
+        for (String condition : conditions) {
+            conditionValues.put(condition, "false");
+        }
+        String rawHint = ((AstPathCollection) tempChildElem).getHint();
+        String condition = parseMetaLangIfCondition(rawHint);
+        if (condition != null) {
+            conditions.add(condition);
+            conditionValues.put(condition, "true");
+        }
+        return conditionValues;
+    }
+
+    /**
+     * @param rawHint
+     * @return
+     */
+    private String parseMetaLangIfCondition(String rawHint) {
+
+        String result = null;
+        Matcher m = FM_IF.matcher(rawHint);
+        if (m.matches()) {
+            result = m.group(1).trim();
+        }
+        if (result == null) {
+            m = FM_IFELSE.matcher(rawHint);
+            if (m.matches()) {
+                result = m.group(1).trim();
+            }
+        }
+        return result;
+    }
+
+    private <K, V> Map<K, V> newMap(K key, V value) {
+        Map<K, V> map = new HashMap<>();
+        map.put(key, value);
+        return map;
     }
 
     private List<List<Match>> getAllDistinctMatches(List<List<Match>> subsequentMatches,
@@ -392,6 +445,13 @@ public class PathBasedMatcher {
                     System.out.println("Consume (t->a): " + startingTemp + " --> " + startingApp);
                     listOfMatches.add(new AtomarMatch(tempElem, appElem, variableSubstitutions));
                 } else if (!currentTemp.containsMetaLang()) {
+                    throw new NoMatchException(
+                        "Could not find " + startingTemp.getPath() + " in " + startingApp.getPath());
+                } else if (currentApp.getPureObjLangPath().equals(currentTemp.getPureObjLangPath())
+                    && currentApp.getText().equals(currentTemp.getText())) {
+                    System.out.println("Consume (t->a): " + startingTemp + " --> " + startingApp);
+                    listOfMatches.add(new AtomarMatch(tempElem, appElem, variableSubstitutions));
+                } else {
                     throw new NoMatchException(
                         "Could not find " + startingTemp.getPath() + " in " + startingApp.getPath());
                 }

@@ -83,7 +83,7 @@ public class AstToPathTransformer implements ParseTreeListener {
             currentCollection.peek().add(optional);
             currentCollection.push(optional);
             lastPotentialMetaElseLocation.push(optional);
-            AstPathList atomic = new AstPathList(ListType.ATOMIC, "<if-then-body>");
+            AstPathList atomic = new AstPathList(ListType.ATOMIC, /* "<if-then-body>" */node.getText());
             atomic.setIsMetaLang(true);
             currentCollection.peek().add(atomic);
             currentCollection.push(atomic);
@@ -100,7 +100,7 @@ public class AstToPathTransformer implements ParseTreeListener {
             currentCollection.push(atomic);
         } else if ("FM_ELSE_IF".equals(nameToTest)) {
             currentCollection.pop();
-            AstPathList atomic = new AstPathList(ListType.ATOMIC, "<else-if-body>");
+            AstPathList atomic = new AstPathList(ListType.ATOMIC, /* "<else-if-body>" */ node.getText());
             atomic.setIsMetaLang(true);
             currentCollection.peek().add(atomic);
             currentCollection.push(atomic);
@@ -109,7 +109,7 @@ public class AstToPathTransformer implements ParseTreeListener {
             currentCollection.peek().add(optional);
             currentCollection.push(optional);
             lastPotentialMetaElseLocation.push(optional);
-            AstPathList atomic = new AstPathList(ListType.ARBITRARY, "<loop-body>");
+            AstPathList atomic = new AstPathList(ListType.ARBITRARY, /* "<loop-body>" */ node.getText());
             currentCollection.peek().add(atomic);
             currentCollection.push(atomic);
         } else {

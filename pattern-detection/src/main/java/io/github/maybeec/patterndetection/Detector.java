@@ -19,6 +19,7 @@ import org.antlr.v4.runtime.misc.MultiMap;
 import io.github.maybeec.antlr4.parser.TemplateParser;
 import io.github.maybeec.parsers.javatemplate.JavaTemplateLexer;
 import io.github.maybeec.parsers.javatemplate.JavaTemplateParser;
+import io.github.maybeec.patterndetection.entity.FileMatch;
 import io.github.maybeec.patterndetection.entity.Match;
 import io.github.maybeec.patterndetection.exception.NoMatchException;
 import io.github.maybeec.patterndetection.matcher.PathBasedMatcher;
@@ -40,8 +41,8 @@ public class Detector {
      * @throws Exception
      *             if anything fails.
      */
-    public List<Map<String, String>> detect(Iterable<Path> pattern, Iterable<Path> applicationFiles,
-        String templateFileEnding) throws Exception {
+    public List<FileMatch> detect(Iterable<Path> pattern, Iterable<Path> applicationFiles, String templateFileEnding)
+        throws Exception {
 
         long start = System.currentTimeMillis();
         Map<Path, List<ParserRuleContext>> templateParseTrees = new HashMap<>();
@@ -72,7 +73,7 @@ public class Detector {
         System.out.println(" ===================================================================================== ");
         System.out.println();
 
-        List<Map<String, String>> variableSubstitutions = new ArrayList<>();
+        List<FileMatch> matches = new ArrayList<>();
         try {
             for (Path template : pattern) {
                 for (Path file : applicationFiles) {
@@ -83,18 +84,20 @@ public class Detector {
                         System.out.println("");
                         Match match = new PathBasedMatcher(templateCST, applicationParseTrees.get(file),
                             new JavaTemplateParser(null).getVocabulary(), listPatterns).match();
-                        variableSubstitutions.addAll(match.resolveVariableSubstitutions());
+                        List<Map<String, String>> variableSubstitutions = match.resolveVariableSubstitutions();
+                        variableSubstitutions =
+                            VariableSubstitutionResolver.languageSpecificReduce(variableSubstitutions);
+                        matches.add(new FileMatch(template, file, variableSubstitutions));
                     }
                 }
             }
-            variableSubstitutions = VariableSubstitutionResolver.languageSpecificReduce(variableSubstitutions);
-            System.out.println(variableSubstitutions);
+            System.out.println(matches);
         } catch (NoMatchException e) {
             e.printStackTrace();
             throw e;
         }
 
-        return variableSubstitutions;
+        return matches;
     }
 
     /**

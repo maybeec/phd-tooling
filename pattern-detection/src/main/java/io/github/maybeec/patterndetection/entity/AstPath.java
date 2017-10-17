@@ -3,6 +3,7 @@ package io.github.maybeec.patterndetection.entity;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  *
@@ -86,9 +87,31 @@ public class AstPath implements AstElem {
         return pathSegments;
     }
 
+    private List<AstPath> getPathElements() {
+        List<AstPath> pathElements = new ArrayList<>();
+        AstPath currParent = parent;
+        while (currParent != null) {
+            pathElements.add(currParent);
+            currParent = currParent.parent;
+        }
+        // return in reverse order
+        return IntStream.rangeClosed(1, pathElements.size()).mapToObj(i -> pathElements.get(pathElements.size() - i))
+            .collect(Collectors.toList());
+    }
+
     @Override
     public String toString() {
         return getText();
+    }
+
+    /**
+     * In contrast to {@link #getPath()}, returns the complete path of this element eliminating all meta
+     * language segments
+     * @return the pure object language path
+     */
+    public Object getPureObjLangPath() {
+        return getPathElements().stream().filter(e -> !e.isMetaLang).map(AstPath::getName)
+            .collect(Collectors.joining("/"));
     }
 
 }

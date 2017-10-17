@@ -11,11 +11,15 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.assertj.core.groups.Tuple;
 import org.junit.Test;
 
+import com.google.common.collect.ImmutableMap;
+
 import io.github.maybeec.patterndetection.Detector;
+import io.github.maybeec.patterndetection.entity.FileMatch;
 
 /**
  *
@@ -35,10 +39,12 @@ public class DetectorTest {
         Set<Path> applicationFiles = new HashSet<>();
         applicationFiles.add(file);
 
-        List<Map<String, String>> variableStubsitutions = new Detector().detect(pattern, applicationFiles, ".ftl");
+        List<FileMatch> matches = new Detector().detect(pattern, applicationFiles, ".ftl");
 
-        assertThat(variableStubsitutions).hasSize(1);
-        assertThat(variableStubsitutions.get(0)).hasSize(1).extracting("clazz").containsExactly("A");
+        assertThat(matches).hasSize(1);
+        List<Map<String, String>> variableSubstitutions = matches.get(0).getVariableSubstitutions();
+        assertThat(variableSubstitutions).hasSize(1);
+        assertThat(variableSubstitutions.get(0)).hasSize(1).extracting("clazz").containsExactly("A");
     }
 
     @Test
@@ -52,10 +58,12 @@ public class DetectorTest {
         Set<Path> applicationFiles = new HashSet<>();
         applicationFiles.add(file);
 
-        List<Map<String, String>> variableStubsitutions = new Detector().detect(pattern, applicationFiles, ".ftl");
+        List<FileMatch> matches = new Detector().detect(pattern, applicationFiles, ".ftl");
 
-        assertThat(variableStubsitutions).hasSize(1);
-        assertThat(variableStubsitutions.get(0)).hasSize(2).extracting("c", "e").containsExactly("c", "e");
+        assertThat(matches).hasSize(1);
+        List<Map<String, String>> variableSubstitutions = matches.get(0).getVariableSubstitutions();
+        assertThat(variableSubstitutions).hasSize(1);
+        assertThat(variableSubstitutions.get(0)).hasSize(2).extracting("c", "e").containsExactly("c", "e");
     }
 
     @Test
@@ -69,12 +77,14 @@ public class DetectorTest {
         Set<Path> applicationFiles = new HashSet<>();
         applicationFiles.add(file);
 
-        List<Map<String, String>> variableStubsitutions = new Detector().detect(pattern, applicationFiles, ".ftl");
+        List<FileMatch> matches = new Detector().detect(pattern, applicationFiles, ".ftl");
 
-        assertThat(variableStubsitutions).hasSize(2);
-        assertThat(variableStubsitutions.get(0)).hasSize(3).extracting("a", "b", "e").containsExactly("a", "b.c",
+        assertThat(matches).hasSize(1);
+        List<Map<String, String>> variableSubstitutions = matches.get(0).getVariableSubstitutions();
+        assertThat(variableSubstitutions).hasSize(2);
+        assertThat(variableSubstitutions.get(0)).hasSize(3).extracting("a", "b", "e").containsExactly("a", "b.c",
             "e.f.g.h");
-        assertThat(variableStubsitutions.get(1)).hasSize(3).extracting("a", "b", "e").containsExactly("a.b", "c",
+        assertThat(variableSubstitutions.get(1)).hasSize(3).extracting("a", "b", "e").containsExactly("a.b", "c",
             "e.f.g.h");
     }
 
@@ -89,10 +99,12 @@ public class DetectorTest {
         Set<Path> applicationFiles = new HashSet<>();
         applicationFiles.add(file);
 
-        List<Map<String, String>> variableStubsitutions = new Detector().detect(pattern, applicationFiles, ".ftl");
+        List<FileMatch> matches = new Detector().detect(pattern, applicationFiles, ".ftl");
 
-        assertThat(variableStubsitutions).hasSize(1);
-        assertThat(variableStubsitutions.get(0)).hasSize(1).extracting("D").containsExactly("D");
+        assertThat(matches).hasSize(1);
+        List<Map<String, String>> variableSubstitutions = matches.get(0).getVariableSubstitutions();
+        assertThat(variableSubstitutions).hasSize(1);
+        assertThat(variableSubstitutions.get(0)).hasSize(1).extracting("D").containsExactly("D");
     }
 
     @Test
@@ -106,8 +118,10 @@ public class DetectorTest {
         Set<Path> applicationFiles = new HashSet<>();
         applicationFiles.add(new File(testResourcesRootPath + "ComponentFacadeInstance.java").toPath());
 
-        List<Map<String, String>> variableSubstitutions = new Detector().detect(pattern, applicationFiles, ".ftl");
+        List<FileMatch> matches = new Detector().detect(pattern, applicationFiles, ".ftl");
 
+        assertThat(matches).hasSize(1);
+        List<Map<String, String>> variableSubstitutions = matches.get(0).getVariableSubstitutions();
         assertThat(variableSubstitutions).hasSize(2)
             .extracting("variables.rootPackage", "variables.component", "variables.entityName")
             .containsExactlyInAnyOrder(new Tuple("io.oasp.gastronomy.restaurant", "offermanagement", "Offer"),
@@ -124,10 +138,12 @@ public class DetectorTest {
         Set<Path> applicationFiles = new HashSet<>();
         applicationFiles.add(file);
 
-        List<Map<String, String>> variableStubsitutions = new Detector().detect(pattern, applicationFiles, ".ftl");
+        List<FileMatch> matches = new Detector().detect(pattern, applicationFiles, ".ftl");
 
-        assertThat(variableStubsitutions).hasSize(1);
-        assertThat(variableStubsitutions.get(0)).hasSize(2).extracting("clazz", "entity").containsExactly("A",
+        assertThat(matches).hasSize(1);
+        List<Map<String, String>> variableSubstitutions = matches.get(0).getVariableSubstitutions();
+        assertThat(variableSubstitutions).hasSize(1);
+        assertThat(variableSubstitutions.get(0)).hasSize(2).extracting("clazz", "entity").containsExactly("A",
             "Whatever");
     }
 
@@ -141,10 +157,12 @@ public class DetectorTest {
         Set<Path> applicationFiles = new HashSet<>();
         applicationFiles.add(file);
 
-        List<Map<String, String>> variableStubsitutions = new Detector().detect(pattern, applicationFiles, ".ftl");
+        List<FileMatch> matches = new Detector().detect(pattern, applicationFiles, ".ftl");
 
-        assertThat(variableStubsitutions).hasSize(1);
-        assertThat(variableStubsitutions.get(0)).hasSize(2).extracting("clazz", "entity").containsExactly("A",
+        assertThat(matches).hasSize(1);
+        List<Map<String, String>> variableSubstitutions = matches.get(0).getVariableSubstitutions();
+        assertThat(variableSubstitutions).hasSize(1);
+        assertThat(variableSubstitutions.get(0)).hasSize(2).extracting("clazz", "entity").containsExactly("A",
             "Whatever");
     }
 
@@ -158,9 +176,21 @@ public class DetectorTest {
         applicationFiles.add(new File(testResourcesRootPath + "Class_Meta_Lang_IfThenElse_A.java").toPath());
         applicationFiles.add(new File(testResourcesRootPath + "Class_Meta_Lang_IfThenElse_B.java").toPath());
 
-        List<Map<String, String>> variableStubsitutions = new Detector().detect(pattern, applicationFiles, ".ftl");
+        List<FileMatch> matches = new Detector().detect(pattern, applicationFiles, ".ftl");
 
-        assertThat(variableStubsitutions).hasSize(2);
+        assertThat(matches).hasSize(2);
+
+        FileMatch matchesWithA = matches.stream()
+            .filter(e -> e.getSourceFile().getFileName().toString().equals("Class_Meta_Lang_IfThenElse_A.java"))
+            .collect(Collectors.toList()).get(0);
+        assertThat(matchesWithA.getVariableSubstitutions()).hasSize(1);
+        assertThat(matchesWithA.getVariableSubstitutions().get(0)).containsEntry("anything", "true");
+
+        FileMatch matchesWithB = matches.stream()
+            .filter(e -> e.getSourceFile().getFileName().toString().equals("Class_Meta_Lang_IfThenElse_B.java"))
+            .collect(Collectors.toList()).get(0);
+        assertThat(matchesWithB.getVariableSubstitutions()).hasSize(1);
+        assertThat(matchesWithB.getVariableSubstitutions().get(0)).containsEntry("anything", "false");
     }
 
     @Test
@@ -173,9 +203,21 @@ public class DetectorTest {
         applicationFiles.add(new File(testResourcesRootPath + "Class_Meta_Lang_IfThenElse_A.java").toPath());
         applicationFiles.add(new File(testResourcesRootPath + "Class_Meta_Lang_IfThenElse_B.java").toPath());
 
-        List<Map<String, String>> variableStubsitutions = new Detector().detect(pattern, applicationFiles, ".ftl");
+        List<FileMatch> matches = new Detector().detect(pattern, applicationFiles, ".ftl");
 
-        assertThat(variableStubsitutions).hasSize(2).extracting("B").containsExactlyInAnyOrder(null, "B");
+        assertThat(matches).hasSize(2);
+
+        FileMatch matchesWithA = matches.stream()
+            .filter(e -> e.getSourceFile().getFileName().toString().equals("Class_Meta_Lang_IfThenElse_A.java"))
+            .collect(Collectors.toList()).get(0);
+        assertThat(matchesWithA.getVariableSubstitutions()).containsExactlyInAnyOrder(
+            ImmutableMap.of("anything", "false", "B", "A"), ImmutableMap.of("anything", "true"));
+
+        FileMatch matchesWithB = matches.stream()
+            .filter(e -> e.getSourceFile().getFileName().toString().equals("Class_Meta_Lang_IfThenElse_B.java"))
+            .collect(Collectors.toList()).get(0);
+        assertThat(matchesWithB.getVariableSubstitutions())
+            .containsExactlyInAnyOrder(ImmutableMap.of("anything", "false", "B", "B"));
     }
 
     private Set<String> retrieveFileEndingsOfInterest(Iterable<Path> pattern, String templateFileEnding) {

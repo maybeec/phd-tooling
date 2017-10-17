@@ -167,26 +167,6 @@ public class VariableSubstitutionResolver {
         return true;
     }
 
-    // /**
-    // * Combines the set of variable substitutions if there is not conflict, meaning a mapping of the same
-    // key
-    // * with different values.
-    // * @param variableSubstitutions
-    // * variable substitutions to be combined
-    // * @return the combined variable substitution or <code>null</code> in case of conflicting variable
-    // * substitutions
-    // */
-    // public static Map<String, String> combine(List<Map<String, String>> variableSubstitutions) {
-    // Map<String, String> variableSubstitution = new HashMap<>();
-    // for (Map<String, String> elem : variableSubstitutions) {
-    // if (!isCompatible(variableSubstitution, elem)) {
-    // return null;
-    // } else {
-    // variableSubstitution.putAll(elem);
-    // }
-    // }
-    // return variableSubstitution;
-    // }
     /** Basic FreeMarker configuration */
     private static Configuration cfg;
 
@@ -199,16 +179,25 @@ public class VariableSubstitutionResolver {
 
     public static List<Map<String, String>> languageSpecificReduce(List<Map<String, String>> variables) {
 
-        List<Map<String, String>> reducedVariables = new ArrayList<>();
-        int min = Integer.MAX_VALUE;
+        Map<Set<String>, Map<String, String>> effectivelyReduced = new HashMap<>();
         for (Map<String, String> elem : variables) {
             List<String> partiallyContainedKeys = getPartiallyContainedKeys(elem);
-            elem.keySet().removeAll(partiallyContainedKeys);
-            reducedVariables.add(elem);
-            min = Math.min(min, elem.size());
+            // if there was a change, we reduced something
+            Set<String> oldKeySet = new HashSet<>(elem.keySet());
+            if (elem.keySet().removeAll(partiallyContainedKeys)) {
+                effectivelyReduced.put(oldKeySet, elem);
+            }
         }
-        final int _min = min;
-        return reducedVariables.stream().filter(e -> e.size() == _min).collect(Collectors.toList());
+
+        List<Map<String, String>> resultingSubstitutions = new ArrayList<>(effectivelyReduced.values());
+        for (Map<String, String> elem : variables) {
+            if (!effectivelyReduced.containsKey(elem.keySet()) && !resultingSubstitutions.contains(elem)) {
+                resultingSubstitutions.add(elem);
+            }
+        }
+
+        return resultingSubstitutions; // .stream().filter(e -> e.size() ==
+        // _min).collect(Collectors.toList());
     }
 
     private static List<String> getPartiallyContainedKeys(Map<String, String> variables) {
